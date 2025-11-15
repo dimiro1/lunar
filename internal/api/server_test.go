@@ -64,8 +64,19 @@ func createTestExecution(t *testing.T, db DB, functionID, versionID string) Exec
 	return created
 }
 
+// Helper function to create a test server with full configuration
+func createTestServer(db DB) *Server {
+	return NewServer(ServerConfig{
+		DB:         db,
+		Logger:     logger.NewMemoryLogger(),
+		KVStore:    kv.NewMemoryStore(),
+		EnvStore:   env.NewMemoryStore(),
+		HTTPClient: internalhttp.NewDefaultClient(),
+	})
+}
+
 func TestCreateFunction(t *testing.T) {
-	server := NewServer(NewMemoryDB())
+	server := createTestServer(NewMemoryDB())
 
 	reqBody := CreateFunctionRequest{
 		Name: "test-function",
@@ -99,7 +110,7 @@ func TestCreateFunction(t *testing.T) {
 
 func TestListFunctions(t *testing.T) {
 	db := NewMemoryDB()
-	server := NewServer(db)
+	server := createTestServer(db)
 
 	// Create a test function first
 	createTestFunction(t, db)
@@ -125,7 +136,7 @@ func TestListFunctions(t *testing.T) {
 
 func TestGetFunction(t *testing.T) {
 	db := NewMemoryDB()
-	server := NewServer(db)
+	server := createTestServer(db)
 
 	// Create a test function first
 	fn := createTestFunction(t, db)
@@ -151,7 +162,7 @@ func TestGetFunction(t *testing.T) {
 
 func TestUpdateFunction(t *testing.T) {
 	db := NewMemoryDB()
-	server := NewServer(db)
+	server := createTestServer(db)
 
 	// Create a test function first
 	fn := createTestFunction(t, db)
@@ -175,7 +186,7 @@ func TestUpdateFunction(t *testing.T) {
 
 func TestDeleteFunction(t *testing.T) {
 	db := NewMemoryDB()
-	server := NewServer(db)
+	server := createTestServer(db)
 
 	// Create a test function first
 	fn := createTestFunction(t, db)
@@ -192,7 +203,7 @@ func TestDeleteFunction(t *testing.T) {
 
 func TestListVersions(t *testing.T) {
 	db := NewMemoryDB()
-	server := NewServer(db)
+	server := createTestServer(db)
 
 	// Create a test function and version
 	fn := createTestFunction(t, db)
@@ -219,7 +230,7 @@ func TestListVersions(t *testing.T) {
 
 func TestGetVersion(t *testing.T) {
 	db := NewMemoryDB()
-	server := NewServer(db)
+	server := createTestServer(db)
 
 	// Create a test function (which creates version 1) and another version (version 2)
 	fn := createTestFunction(t, db)
@@ -251,7 +262,7 @@ func TestGetVersion(t *testing.T) {
 
 func TestActivateVersion(t *testing.T) {
 	db := NewMemoryDB()
-	server := NewServer(db)
+	server := createTestServer(db)
 
 	// Create a test function and two versions
 	fn := createTestFunction(t, db)
@@ -270,7 +281,7 @@ func TestActivateVersion(t *testing.T) {
 
 func TestGetVersionDiff(t *testing.T) {
 	db := NewMemoryDB()
-	server := NewServer(db)
+	server := createTestServer(db)
 
 	// Create a test function and two versions with different code
 	fn := createTestFunction(t, db)
@@ -298,7 +309,7 @@ func TestGetVersionDiff(t *testing.T) {
 
 func TestUpdateEnvVars(t *testing.T) {
 	db := NewMemoryDB()
-	server := NewServer(db)
+	server := createTestServer(db)
 
 	// Create a test function first
 	fn := createTestFunction(t, db)
@@ -324,7 +335,7 @@ func TestUpdateEnvVars(t *testing.T) {
 
 func TestListExecutions(t *testing.T) {
 	db := NewMemoryDB()
-	server := NewServer(db)
+	server := createTestServer(db)
 
 	// Create a test function and execution
 	fn := createTestFunction(t, db)
@@ -348,7 +359,7 @@ func TestListExecutions(t *testing.T) {
 
 func TestGetExecution(t *testing.T) {
 	db := NewMemoryDB()
-	server := NewServer(db)
+	server := createTestServer(db)
 
 	// Create a test function, version and execution
 	fn := createTestFunction(t, db)
@@ -372,23 +383,23 @@ func TestGetExecution(t *testing.T) {
 
 func TestGetExecutionLogs(t *testing.T) {
 	db := NewMemoryDB()
-	server := NewServer(db)
+	memLogger := logger.NewMemoryLogger()
 
-	// Create a test function, version, execution and log
+	server := NewServer(ServerConfig{
+		DB:         db,
+		Logger:     memLogger,
+		KVStore:    kv.NewMemoryStore(),
+		EnvStore:   env.NewMemoryStore(),
+		HTTPClient: internalhttp.NewDefaultClient(),
+	})
+
+	// Create a test function, version, execution
 	fn := createTestFunction(t, db)
 	ver := createTestVersion(t, db, fn.ID, "function handler(ctx, event)\n  return {statusCode = 200}\nend")
 	exec := createTestExecution(t, db, fn.ID, ver.ID)
 
-	// Create a log entry for the execution
-	log := LogEntry{
-		ID:          "log_test_123",
-		ExecutionID: exec.ID,
-		Level:       LogLevelInfo,
-		Message:     "Test log message",
-	}
-	if err := db.CreateLog(context.Background(), log); err != nil {
-		t.Fatalf("failed to create test log: %v", err)
-	}
+	// Create a log entry for the execution using the logger
+	memLogger.Info(exec.ID, "Test log message")
 
 	req := httptest.NewRequest(http.MethodGet, "/api/executions/"+exec.ID+"/logs", nil)
 	w := httptest.NewRecorder()
@@ -412,7 +423,7 @@ func TestGetExecutionLogs(t *testing.T) {
 func TestExecuteFunction(t *testing.T) {
 	t.Run("success with simple response", func(t *testing.T) {
 		db := NewMemoryDB()
-		server := NewServerWithConfig(ServerConfig{
+		server := NewServer(ServerConfig{
 			DB:         db,
 			Logger:     logger.NewMemoryLogger(),
 			KVStore:    kv.NewMemoryStore(),
@@ -455,7 +466,7 @@ end
 
 	t.Run("success with request body", func(t *testing.T) {
 		db := NewMemoryDB()
-		server := NewServerWithConfig(ServerConfig{
+		server := NewServer(ServerConfig{
 			DB:         db,
 			Logger:     logger.NewMemoryLogger(),
 			KVStore:    kv.NewMemoryStore(),
@@ -493,7 +504,7 @@ end
 
 	t.Run("success with custom status code", func(t *testing.T) {
 		db := NewMemoryDB()
-		server := NewServerWithConfig(ServerConfig{
+		server := NewServer(ServerConfig{
 			DB:         db,
 			Logger:     logger.NewMemoryLogger(),
 			KVStore:    kv.NewMemoryStore(),
@@ -526,7 +537,7 @@ end
 
 	t.Run("success with custom headers", func(t *testing.T) {
 		db := NewMemoryDB()
-		server := NewServerWithConfig(ServerConfig{
+		server := NewServer(ServerConfig{
 			DB:         db,
 			Logger:     logger.NewMemoryLogger(),
 			KVStore:    kv.NewMemoryStore(),
@@ -567,7 +578,7 @@ end
 
 	t.Run("error with syntax error in lua code", func(t *testing.T) {
 		db := NewMemoryDB()
-		server := NewServerWithConfig(ServerConfig{
+		server := NewServer(ServerConfig{
 			DB:         db,
 			Logger:     logger.NewMemoryLogger(),
 			KVStore:    kv.NewMemoryStore(),
@@ -601,7 +612,7 @@ end
 
 	t.Run("error with runtime error in lua code", func(t *testing.T) {
 		db := NewMemoryDB()
-		server := NewServerWithConfig(ServerConfig{
+		server := NewServer(ServerConfig{
 			DB:         db,
 			Logger:     logger.NewMemoryLogger(),
 			KVStore:    kv.NewMemoryStore(),
@@ -644,7 +655,7 @@ end
 
 	t.Run("error with function not found", func(t *testing.T) {
 		db := NewMemoryDB()
-		server := NewServerWithConfig(ServerConfig{
+		server := NewServer(ServerConfig{
 			DB:         db,
 			Logger:     logger.NewMemoryLogger(),
 			KVStore:    kv.NewMemoryStore(),
@@ -664,7 +675,7 @@ end
 
 	t.Run("error with no active version", func(t *testing.T) {
 		db := NewMemoryDB()
-		server := NewServerWithConfig(ServerConfig{
+		server := NewServer(ServerConfig{
 			DB:         db,
 			Logger:     logger.NewMemoryLogger(),
 			KVStore:    kv.NewMemoryStore(),
@@ -695,7 +706,7 @@ end
 
 	t.Run("different HTTP methods", func(t *testing.T) {
 		db := NewMemoryDB()
-		server := NewServerWithConfig(ServerConfig{
+		server := NewServer(ServerConfig{
 			DB:         db,
 			Logger:     logger.NewMemoryLogger(),
 			KVStore:    kv.NewMemoryStore(),
@@ -733,7 +744,7 @@ end
 }
 
 func TestCORSMiddleware(t *testing.T) {
-	server := NewServer(NewMemoryDB())
+	server := createTestServer(NewMemoryDB())
 
 	req := httptest.NewRequest(http.MethodOptions, "/api/functions", nil)
 	w := httptest.NewRecorder()

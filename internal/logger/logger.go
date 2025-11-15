@@ -52,6 +52,8 @@ type Logger interface {
 	Debug(namespace string, message string)
 	Warn(namespace string, message string)
 	Error(namespace string, message string)
+	Entries(namespace string) []LogEntry
+	EntriesPaginated(namespace string, limit, offset int) ([]LogEntry, int64)
 }
 
 // MemoryLogger is an in-memory implementation of Logger
@@ -114,6 +116,31 @@ func (m *MemoryLogger) Entries(namespace string) []LogEntry {
 		}
 	}
 	return entries
+}
+
+// EntriesPaginated returns paginated log entries for the specified namespace
+func (m *MemoryLogger) EntriesPaginated(namespace string, limit, offset int) ([]LogEntry, int64) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	// Filter entries by namespace
+	filtered := make([]LogEntry, 0)
+	for _, entry := range m.entries {
+		if entry.Namespace == namespace {
+			filtered = append(filtered, entry)
+		}
+	}
+
+	total := int64(len(filtered))
+
+	// Apply pagination
+	if offset >= len(filtered) {
+		return []LogEntry{}, total
+	}
+
+	end := min(offset+limit, len(filtered))
+
+	return filtered[offset:end], total
 }
 
 // EntriesByLevel returns all log entries with the specified namespace and level
@@ -236,6 +263,28 @@ func (s *SQLiteLogger) Entries(namespace string) []LogEntry {
 	defer func() { _ = rows.Close() }()
 
 	return s.scanEntries(rows)
+}
+
+// EntriesPaginated returns paginated log entries for the specified namespace
+func (s *SQLiteLogger) EntriesPaginated(namespace string, limit, offset int) ([]LogEntry, int64) {
+	// Get total count
+	var total int64
+	err := s.db.QueryRow("SELECT COUNT(*) FROM logs WHERE namespace = ?", namespace).Scan(&total)
+	if err != nil {
+		return []LogEntry{}, 0
+	}
+
+	// Get paginated entries
+	rows, err := s.db.Query(
+		"SELECT namespace, level, message, timestamp FROM logs WHERE namespace = ? ORDER BY timestamp LIMIT ? OFFSET ?",
+		namespace, limit, offset,
+	)
+	if err != nil {
+		return []LogEntry{}, total
+	}
+	defer func() { _ = rows.Close() }()
+
+	return s.scanEntries(rows), total
 }
 
 // EntriesByLevel returns all log entries with the specified namespace and level

@@ -60,17 +60,6 @@ func Migrate(db *sql.DB) error {
 	);
 
 	CREATE INDEX IF NOT EXISTS idx_executions_function_id ON executions(function_id);
-
-	CREATE TABLE IF NOT EXISTS logs (
-		id TEXT PRIMARY KEY,
-		execution_id TEXT NOT NULL,
-		level TEXT NOT NULL,
-		message TEXT NOT NULL,
-		created_at INTEGER NOT NULL,
-		FOREIGN KEY (execution_id) REFERENCES executions(id) ON DELETE CASCADE
-	);
-
-	CREATE INDEX IF NOT EXISTS idx_logs_execution_id ON logs(execution_id);
 	`
 
 	if _, err := db.Exec(schema); err != nil {
@@ -535,7 +524,7 @@ func (db *SQLiteDB) UpdateExecution(ctx context.Context, executionID string, sta
 	return nil
 }
 
-func (db *SQLiteDB) ListExecutions(ctx context.Context, functionID string, params PaginationParams) ([]ExecutionWithLogCount, int64, error) {
+func (db *SQLiteDB) ListExecutions(ctx context.Context, functionID string, params PaginationParams) ([]Execution, int64, error) {
 	// Get total count
 	var total int64
 	err := db.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM executions WHERE function_id = ?`, functionID).Scan(&total)
@@ -548,8 +537,7 @@ func (db *SQLiteDB) ListExecutions(ctx context.Context, functionID string, param
 
 	query := `
 		SELECT e.id, e.function_id, e.function_version_id, e.status,
-		       e.duration_ms, e.error_message, e.created_at,
-		       (SELECT COUNT(*) FROM logs WHERE execution_id = e.id) as log_count
+		       e.duration_ms, e.error_message, e.created_at
 		FROM executions e
 		WHERE e.function_id = ?
 		ORDER BY e.created_at DESC
@@ -562,14 +550,14 @@ func (db *SQLiteDB) ListExecutions(ctx context.Context, functionID string, param
 	}
 	defer func() { _ = rows.Close() }()
 
-	var executions []ExecutionWithLogCount
+	var executions []Execution
 	for rows.Next() {
-		var exec ExecutionWithLogCount
+		var exec Execution
 		var durationMs sql.NullInt64
 		var errorMessage sql.NullString
 
 		if err := rows.Scan(&exec.ID, &exec.FunctionID, &exec.FunctionVersionID,
-			&exec.Status, &durationMs, &errorMessage, &exec.CreatedAt, &exec.LogCount); err != nil {
+			&exec.Status, &durationMs, &errorMessage, &exec.CreatedAt); err != nil {
 			return nil, 0, fmt.Errorf("failed to scan execution: %w", err)
 		}
 
@@ -584,65 +572,6 @@ func (db *SQLiteDB) ListExecutions(ctx context.Context, functionID string, param
 	}
 
 	return executions, total, rows.Err()
-}
-
-// Log operations
-
-func (db *SQLiteDB) CreateLog(ctx context.Context, log LogEntry) error {
-	log.CreatedAt = time.Now().Unix()
-
-	query := `INSERT INTO logs (id, execution_id, level, message, created_at)
-	          VALUES (?, ?, ?, ?, ?)`
-
-	_, err := db.db.ExecContext(ctx, query, log.ID, log.ExecutionID, log.Level, log.Message, log.CreatedAt)
-	if err != nil {
-		return fmt.Errorf("failed to insert log: %w", err)
-	}
-
-	return nil
-}
-
-func (db *SQLiteDB) GetExecutionLogs(ctx context.Context, executionID string, params PaginationParams) ([]LogEntry, int64, error) {
-	// Get total count
-	var total int64
-	err := db.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM logs WHERE execution_id = ?`, executionID).Scan(&total)
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to count logs: %w", err)
-	}
-
-	// Normalize pagination parameters
-	params = params.Normalize()
-
-	query := `SELECT id, execution_id, level, message, created_at
-	          FROM logs WHERE execution_id = ?
-	          ORDER BY created_at ASC
-	          LIMIT ? OFFSET ?`
-
-	rows, err := db.db.QueryContext(ctx, query, executionID, params.Limit, params.Offset)
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to query logs: %w", err)
-	}
-	defer func() { _ = rows.Close() }()
-
-	var logs []LogEntry
-	for rows.Next() {
-		var log LogEntry
-		if err := rows.Scan(&log.ID, &log.ExecutionID, &log.Level, &log.Message, &log.CreatedAt); err != nil {
-			return nil, 0, fmt.Errorf("failed to scan log: %w", err)
-		}
-		logs = append(logs, log)
-	}
-
-	return logs, total, rows.Err()
-}
-
-func (db *SQLiteDB) GetLogCount(ctx context.Context, executionID string) (int64, error) {
-	var count int64
-	err := db.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM logs WHERE execution_id = ?", executionID).Scan(&count)
-	if err != nil {
-		return 0, fmt.Errorf("failed to count logs: %w", err)
-	}
-	return count, nil
 }
 
 // Health check

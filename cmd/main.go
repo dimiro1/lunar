@@ -4,9 +4,12 @@ import (
 	"database/sql"
 	"log"
 	"os"
+	"time"
 
+	"github.com/dimiro1/faas-go/frontend"
 	"github.com/dimiro1/faas-go/internal/api"
 	"github.com/dimiro1/faas-go/internal/env"
+	internalhttp "github.com/dimiro1/faas-go/internal/http"
 	"github.com/dimiro1/faas-go/internal/kv"
 	"github.com/dimiro1/faas-go/internal/logger"
 	_ "modernc.org/sqlite"
@@ -53,12 +56,28 @@ func main() {
 	// Create API database
 	apiDB := api.NewSQLiteDB(db)
 
-	// Create API server
-	server := api.NewServer(apiDB)
+	// Create stores and services
+	kvStore := kv.NewSQLiteStore(db)
+	envStore := env.NewSQLiteStore(db)
+	appLogger := logger.NewSQLiteLogger(db)
+	httpClient := internalhttp.NewDefaultClient()
+
+	// Create API server with full configuration
+	server := api.NewServer(api.ServerConfig{
+		DB:               apiDB,
+		Logger:           appLogger,
+		KVStore:          kvStore,
+		EnvStore:         envStore,
+		HTTPClient:       httpClient,
+		ExecutionTimeout: 30 * time.Second,
+		FrontendHandler:  frontend.Handler(),
+	})
 
 	// Start server
 	addr := ":3000"
-	log.Printf("Starting FaaS-Go API server on %s", addr)
+	log.Printf("Starting FaaS-Go server on %s", addr)
+	log.Printf("Frontend available at http://localhost%s", addr)
+	log.Printf("API available at http://localhost%s/api", addr)
 	if err := server.ListenAndServe(addr); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}

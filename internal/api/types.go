@@ -60,19 +60,11 @@ type Execution struct {
 	CreatedAt         int64           `json:"created_at"`
 }
 
-// ExecutionWithLogCount extends Execution with log count
-type ExecutionWithLogCount struct {
-	Execution
-	LogCount int64 `json:"log_count"`
-}
-
 // LogEntry represents a log entry from function execution
 type LogEntry struct {
-	ID          string   `json:"id"`
-	ExecutionID string   `json:"execution_id"`
-	Level       LogLevel `json:"level"`
-	Message     string   `json:"message"`
-	CreatedAt   int64    `json:"created_at"`
+	Level     LogLevel `json:"level"`
+	Message   string   `json:"message"`
+	CreatedAt int64    `json:"created_at"`
 }
 
 // DiffLine represents a line in a version diff
@@ -120,7 +112,7 @@ type ListVersionsResponse struct {
 
 // ListExecutionsResponse is the response for listing executions
 type ListExecutionsResponse struct {
-	Executions []ExecutionWithLogCount `json:"executions"`
+	Executions []Execution `json:"executions"`
 }
 
 // ExecutionWithLogs includes execution details and logs
@@ -182,8 +174,8 @@ type PaginatedVersionsResponse struct {
 
 // PaginatedExecutionsResponse is the paginated response for listing executions
 type PaginatedExecutionsResponse struct {
-	Executions []ExecutionWithLogCount `json:"executions"`
-	Pagination PaginationInfo          `json:"pagination"`
+	Executions []Execution    `json:"executions"`
+	Pagination PaginationInfo `json:"pagination"`
 }
 
 // PaginatedLogsResponse is the paginated response for listing logs

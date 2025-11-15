@@ -211,7 +211,7 @@ end
 		t.Fatalf("Run failed: %v", err)
 	}
 
-	entries := memLogger.Entries("test-function")
+	entries := memLogger.Entries("exec-123")
 	if len(entries) != 4 {
 		t.Fatalf("expected 4 log entries, got %d", len(entries))
 	}

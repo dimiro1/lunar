@@ -12,9 +12,11 @@ import (
 
 // Server represents the API server
 type Server struct {
-	mux      *http.ServeMux
-	db       DB
-	execDeps *ExecuteFunctionDeps
+	mux             *http.ServeMux
+	db              DB
+	execDeps        *ExecuteFunctionDeps
+	logger          logger.Logger
+	frontendHandler http.Handler
 }
 
 // ServerConfig holds configuration for creating a Server
@@ -25,21 +27,11 @@ type ServerConfig struct {
 	EnvStore         env.Store
 	HTTPClient       internalhttp.Client
 	ExecutionTimeout time.Duration
+	FrontendHandler  http.Handler
 }
 
-// NewServer creates a new API server with minimal configuration (for testing)
-func NewServer(db DB) *Server {
-	s := &Server{
-		mux: http.NewServeMux(),
-		db:  db,
-	}
-
-	s.setupRoutes()
-	return s
-}
-
-// NewServerWithConfig creates a new API server with full configuration
-func NewServerWithConfig(config ServerConfig) *Server {
+// NewServer creates a new API server with full configuration
+func NewServer(config ServerConfig) *Server {
 	execDeps := &ExecuteFunctionDeps{
 		DB:               config.DB,
 		Logger:           config.Logger,
@@ -50,9 +42,11 @@ func NewServerWithConfig(config ServerConfig) *Server {
 	}
 
 	s := &Server{
-		mux:      http.NewServeMux(),
-		db:       config.DB,
-		execDeps: execDeps,
+		mux:             http.NewServeMux(),
+		db:              config.DB,
+		execDeps:        execDeps,
+		logger:          config.Logger,
+		frontendHandler: config.FrontendHandler,
 	}
 
 	s.setupRoutes()
@@ -78,15 +72,18 @@ func (s *Server) setupRoutes() {
 	// Execution History - only need DB
 	s.mux.HandleFunc("GET /api/functions/{id}/executions", ListExecutionsHandler(s.db))
 	s.mux.HandleFunc("GET /api/executions/{id}", GetExecutionHandler(s.db))
-	s.mux.HandleFunc("GET /api/executions/{id}/logs", GetExecutionLogsHandler(s.db))
+	s.mux.HandleFunc("GET /api/executions/{id}/logs", GetExecutionLogsHandler(s.db, s.logger))
 
 	// Runtime Execution - needs all dependencies
-	if s.execDeps != nil {
-		executeHandler := ExecuteFunctionHandler(*s.execDeps)
-		s.mux.HandleFunc("GET /fn/{function_id}", executeHandler)
-		s.mux.HandleFunc("POST /fn/{function_id}", executeHandler)
-		s.mux.HandleFunc("PUT /fn/{function_id}", executeHandler)
-		s.mux.HandleFunc("DELETE /fn/{function_id}", executeHandler)
+	executeHandler := ExecuteFunctionHandler(*s.execDeps)
+	s.mux.HandleFunc("GET /fn/{function_id}", executeHandler)
+	s.mux.HandleFunc("POST /fn/{function_id}", executeHandler)
+	s.mux.HandleFunc("PUT /fn/{function_id}", executeHandler)
+	s.mux.HandleFunc("DELETE /fn/{function_id}", executeHandler)
+
+	// Serve frontend files (catch-all route for SPA)
+	if s.frontendHandler != nil {
+		s.mux.Handle("/", s.frontendHandler)
 	}
 }
 

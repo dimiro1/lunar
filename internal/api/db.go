@@ -24,12 +24,7 @@ type DB interface {
 	CreateExecution(ctx context.Context, exec Execution) (Execution, error)
 	GetExecution(ctx context.Context, executionID string) (Execution, error)
 	UpdateExecution(ctx context.Context, executionID string, status ExecutionStatus, durationMs *int64, errorMsg *string) error
-	ListExecutions(ctx context.Context, functionID string, params PaginationParams) ([]ExecutionWithLogCount, int64, error)
-
-	// Log operations
-	CreateLog(ctx context.Context, log LogEntry) error
-	GetExecutionLogs(ctx context.Context, executionID string, params PaginationParams) ([]LogEntry, int64, error)
-	GetLogCount(ctx context.Context, executionID string) (int64, error)
+	ListExecutions(ctx context.Context, functionID string, params PaginationParams) ([]Execution, int64, error)
 
 	// Health check
 	Ping(ctx context.Context) error

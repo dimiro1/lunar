@@ -447,7 +447,7 @@ func GetExecutionHandler(db DB) http.HandlerFunc {
 }
 
 // GetExecutionLogsHandler returns a handler for getting execution logs
-func GetExecutionLogsHandler(db DB) http.HandlerFunc {
+func GetExecutionLogsHandler(db DB, appLogger logger.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 		params := parsePaginationParams(r)
@@ -459,17 +459,38 @@ func GetExecutionLogsHandler(db DB) http.HandlerFunc {
 			return
 		}
 
-		// Get the logs for this execution
-		logs, total, err := db.GetExecutionLogs(r.Context(), id, params)
-		if err != nil {
-			writeError(w, http.StatusInternalServerError, "Failed to get execution logs")
-			return
+		// Get the logs for this execution from the logger (using execution_id as namespace)
+		params = params.Normalize()
+		logEntries, total := appLogger.EntriesPaginated(id, params.Limit, params.Offset)
+
+		// Convert logger.LogEntry to API LogEntry format
+		apiLogs := make([]LogEntry, len(logEntries))
+		for i, entry := range logEntries {
+			// Map logger.LogLevel (int) to API LogLevel (string)
+			var level LogLevel
+			switch entry.Level {
+			case logger.Debug:
+				level = LogLevelDebug
+			case logger.Info:
+				level = LogLevelInfo
+			case logger.Warn:
+				level = LogLevelWarn
+			case logger.Error:
+				level = LogLevelError
+			default:
+				level = LogLevelInfo
+			}
+
+			apiLogs[i] = LogEntry{
+				Level:     level,
+				Message:   entry.Message,
+				CreatedAt: entry.Timestamp,
+			}
 		}
 
-		params = params.Normalize()
 		resp := PaginatedExecutionWithLogs{
 			Execution: execution,
-			Logs:      logs,
+			Logs:      apiLogs,
 			Pagination: PaginationInfo{
 				Total:  total,
 				Limit:  params.Limit,

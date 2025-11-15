@@ -20,3 +20,4 @@ go.work
 # Build artifacts
 /bin/
 /dist/
+/build/

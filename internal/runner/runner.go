@@ -54,8 +54,8 @@ func Run(ctx context.Context, deps Dependencies, req Request) (Response, error) 
 	// Set the context to enable timeout
 	L.SetContext(ctx)
 
-	// Register global modules using FunctionID as namespace
-	registerLogger(L, deps.Logger, req.Context.FunctionID)
+	// Register global modules
+	registerLogger(L, deps.Logger, req.Context.ExecutionID)
 	registerKV(L, deps.KV, req.Context.FunctionID)
 	registerEnv(L, deps.Env, req.Context.FunctionID)
 	registerHTTP(L, deps.HTTP)
