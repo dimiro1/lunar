@@ -32,7 +32,7 @@ func setupTestDB(t *testing.T) (*sql.DB, *SQLiteDB) {
 
 func TestSQLiteDB_CreateFunction(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -68,7 +68,7 @@ func TestSQLiteDB_CreateFunction(t *testing.T) {
 
 func TestSQLiteDB_GetFunction(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -103,7 +103,7 @@ func TestSQLiteDB_GetFunction(t *testing.T) {
 
 func TestSQLiteDB_GetFunction_NotFound(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -115,7 +115,7 @@ func TestSQLiteDB_GetFunction_NotFound(t *testing.T) {
 
 func TestSQLiteDB_ListFunctions(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -146,7 +146,7 @@ func TestSQLiteDB_ListFunctions(t *testing.T) {
 
 func TestSQLiteDB_UpdateFunction(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -196,7 +196,7 @@ func TestSQLiteDB_UpdateFunction(t *testing.T) {
 
 func TestSQLiteDB_DeleteFunction(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -225,7 +225,7 @@ func TestSQLiteDB_DeleteFunction(t *testing.T) {
 
 func TestSQLiteDB_UpdateFunctionEnvVars(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -271,7 +271,7 @@ func TestSQLiteDB_UpdateFunctionEnvVars(t *testing.T) {
 
 func TestSQLiteDB_CreateVersion(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -309,7 +309,7 @@ func TestSQLiteDB_CreateVersion(t *testing.T) {
 
 func TestSQLiteDB_CreateVersion_DeactivatesPrevious(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -353,7 +353,7 @@ func TestSQLiteDB_CreateVersion_DeactivatesPrevious(t *testing.T) {
 
 func TestSQLiteDB_GetVersion(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -390,7 +390,7 @@ func TestSQLiteDB_GetVersion(t *testing.T) {
 
 func TestSQLiteDB_GetVersionByID(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -423,7 +423,7 @@ func TestSQLiteDB_GetVersionByID(t *testing.T) {
 
 func TestSQLiteDB_ListVersions(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -466,7 +466,7 @@ func TestSQLiteDB_ListVersions(t *testing.T) {
 
 func TestSQLiteDB_GetActiveVersion(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -506,7 +506,7 @@ func TestSQLiteDB_GetActiveVersion(t *testing.T) {
 
 func TestSQLiteDB_ActivateVersion(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -549,7 +549,7 @@ func TestSQLiteDB_ActivateVersion(t *testing.T) {
 
 func TestSQLiteDB_CreateExecution(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -595,7 +595,7 @@ func TestSQLiteDB_CreateExecution(t *testing.T) {
 
 func TestSQLiteDB_GetExecution(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -642,7 +642,7 @@ func TestSQLiteDB_GetExecution(t *testing.T) {
 
 func TestSQLiteDB_UpdateExecution(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -699,7 +699,7 @@ func TestSQLiteDB_UpdateExecution(t *testing.T) {
 
 func TestSQLiteDB_ListExecutions(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -750,7 +750,7 @@ func TestSQLiteDB_ListExecutions(t *testing.T) {
 
 func TestSQLiteDB_CreateLog(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -806,7 +806,7 @@ func TestSQLiteDB_CreateLog(t *testing.T) {
 
 func TestSQLiteDB_GetExecutionLogs(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -879,7 +879,7 @@ func TestSQLiteDB_GetExecutionLogs(t *testing.T) {
 
 func TestSQLiteDB_GetLogCount(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -946,7 +946,7 @@ func TestSQLiteDB_GetLogCount(t *testing.T) {
 
 func TestSQLiteDB_DeleteFunction_CascadesVersions(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -980,7 +980,7 @@ func TestSQLiteDB_DeleteFunction_CascadesVersions(t *testing.T) {
 
 func TestSQLiteDB_DeleteFunction_CascadesExecutions(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -1025,7 +1025,7 @@ func TestSQLiteDB_DeleteFunction_CascadesExecutions(t *testing.T) {
 
 func TestSQLiteDB_DeleteExecution_CascadesLogs(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 
@@ -1097,7 +1097,7 @@ func TestSQLiteDB_DeleteExecution_CascadesLogs(t *testing.T) {
 
 func TestSQLiteDB_Ping(t *testing.T) {
 	db, sqliteDB := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 

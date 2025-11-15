@@ -5,7 +5,10 @@ import (
 	"log"
 	"os"
 
+	"github.com/dimiro1/faas-go/internal/api"
+	"github.com/dimiro1/faas-go/internal/env"
 	"github.com/dimiro1/faas-go/internal/kv"
+	"github.com/dimiro1/faas-go/internal/logger"
 	_ "modernc.org/sqlite"
 )
 
@@ -26,25 +29,37 @@ func main() {
 		}
 	}()
 
-	// Run KV store migrations
+	// Enable foreign keys
+	if _, err := db.Exec("PRAGMA foreign_keys = ON"); err != nil {
+		log.Fatalf("Failed to enable foreign keys: %v", err)
+	}
+
+	// Run migrations
+	log.Println("Running database migrations...")
 	if err := kv.Migrate(db); err != nil {
-		log.Fatalf("Failed to run migrations: %v", err)
+		log.Fatalf("Failed to run KV migrations: %v", err)
 	}
-
-	// Create KV store
-	store := kv.NewSQLiteStore(db)
-
-	// Example usage
-	if err := store.Set("function-123", "counter", "0"); err != nil {
-		log.Printf("Failed to set value: %v", err)
+	if err := env.Migrate(db); err != nil {
+		log.Fatalf("Failed to run env migrations: %v", err)
 	}
-
-	value, err := store.Get("function-123", "counter")
-	if err != nil {
-		log.Printf("Failed to get value: %v", err)
-	} else {
-		log.Printf("Counter value: %s", value)
+	if err := logger.Migrate(db); err != nil {
+		log.Fatalf("Failed to run logger migrations: %v", err)
 	}
+	if err := api.Migrate(db); err != nil {
+		log.Fatalf("Failed to run API migrations: %v", err)
+	}
+	log.Println("Migrations completed successfully")
 
-	log.Println("FaaS-Go started successfully")
+	// Create API database
+	apiDB := api.NewSQLiteDB(db)
+
+	// Create API server
+	server := api.NewServer(apiDB)
+
+	// Start server
+	addr := ":3000"
+	log.Printf("Starting FaaS-Go API server on %s", addr)
+	if err := server.ListenAndServe(addr); err != nil {
+		log.Fatalf("Server failed: %v", err)
+	}
 }
