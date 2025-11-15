@@ -493,7 +493,7 @@ end
 	}
 }
 
-func TestRun_NamespaceIsolation(t *testing.T) {
+func TestRun_FunctionIsolation(t *testing.T) {
 	kvStore := kv.NewMemoryStore()
 	deps := Dependencies{
 		Logger: logger.NewMemoryLogger(),
@@ -526,7 +526,7 @@ end
 		t.Fatalf("Run failed for function-1: %v", err)
 	}
 
-	// Function 2 sets the same key (different namespace)
+	// Function 2 sets the same key (different function)
 	execCtx2 := &events.ExecutionContext{
 		ExecutionID: "exec-2",
 		FunctionID:  "function-2",
@@ -545,7 +545,7 @@ end
 		t.Fatalf("Run failed for function-2: %v", err)
 	}
 
-	// Verify namespace isolation
+	// Verify function isolation
 	val1, _ := kvStore.Get("function-1", "shared-key")
 	val2, _ := kvStore.Get("function-2", "shared-key")
 

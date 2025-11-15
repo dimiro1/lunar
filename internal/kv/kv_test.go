@@ -137,22 +137,22 @@ func TestSQLiteStore_DeleteNonExistent(t *testing.T) {
 	}
 }
 
-func TestSQLiteStore_NamespaceIsolation(t *testing.T) {
+func TestSQLiteStore_FunctionIsolation(t *testing.T) {
 	db := setupTestDB(t)
 	store := NewSQLiteStore(db)
 
-	// Set values in different namespaces
+	// Set values for different functions
 	err := store.Set("func-123", "key", "value-123")
 	if err != nil {
-		t.Fatalf("Failed to set value in namespace func-123: %v", err)
+		t.Fatalf("Failed to set value for function func-123: %v", err)
 	}
 
 	err = store.Set("func-456", "key", "value-456")
 	if err != nil {
-		t.Fatalf("Failed to set value in namespace func-456: %v", err)
+		t.Fatalf("Failed to set value for function func-456: %v", err)
 	}
 
-	// Get values from each namespace
+	// Get values from each function
 	value1, err := store.Get("func-123", "key")
 	if err != nil {
 		t.Fatalf("Failed to get value from func-123: %v", err)
@@ -172,7 +172,7 @@ func TestSQLiteStore_NamespaceIsolation(t *testing.T) {
 		t.Errorf("Expected value 'value-456' from func-456, got '%s'", value2)
 	}
 
-	// Delete from one namespace shouldn't affect the other
+	// Delete from one function shouldn't affect the other
 	err = store.Delete("func-123", "key")
 	if err != nil {
 		t.Fatalf("Failed to delete from func-123: %v", err)

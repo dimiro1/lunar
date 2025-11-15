@@ -486,7 +486,7 @@ func GetExecutionLogsHandler(db DB, appLogger logger.Logger) http.HandlerFunc {
 			return
 		}
 
-		// Get the logs for this execution from the logger (using execution_id as namespace)
+		// Get the logs for this execution from the logger
 		params = params.Normalize()
 		logEntries, total := appLogger.EntriesPaginated(id, params.Limit, params.Offset)
 

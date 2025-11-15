@@ -124,18 +124,18 @@ func TestSQLiteStore_DeleteNonExistent(t *testing.T) {
 	}
 }
 
-func TestSQLiteStore_NamespaceIsolation(t *testing.T) {
+func TestSQLiteStore_FunctionIsolation(t *testing.T) {
 	db := setupTestDB(t)
 	store := NewSQLiteStore(db)
 
 	err := store.Set("func-123", "API_KEY", "key-123")
 	if err != nil {
-		t.Fatalf("Failed to set value in namespace func-123: %v", err)
+		t.Fatalf("Failed to set value for function func-123: %v", err)
 	}
 
 	err = store.Set("func-456", "API_KEY", "key-456")
 	if err != nil {
-		t.Fatalf("Failed to set value in namespace func-456: %v", err)
+		t.Fatalf("Failed to set value for function func-456: %v", err)
 	}
 
 	value1, err := store.Get("func-123", "API_KEY")
@@ -156,7 +156,7 @@ func TestSQLiteStore_NamespaceIsolation(t *testing.T) {
 		t.Errorf("Expected 'key-456' from func-456, got '%s'", value2)
 	}
 
-	// Delete from one namespace shouldn't affect the other
+	// Delete from one function shouldn't affect the other
 	err = store.Delete("func-123", "API_KEY")
 	if err != nil {
 		t.Fatalf("Failed to delete from func-123: %v", err)
@@ -218,13 +218,13 @@ func TestSQLiteStore_AllEmpty(t *testing.T) {
 	db := setupTestDB(t)
 	store := NewSQLiteStore(db)
 
-	all, err := store.All("nonexistent-namespace")
+	all, err := store.All("nonexistent-function")
 	if err != nil {
 		t.Fatalf("Failed to get all vars: %v", err)
 	}
 
 	if len(all) != 0 {
-		t.Errorf("Expected 0 env vars for empty namespace, got %d", len(all))
+		t.Errorf("Expected 0 env vars for non-existent function, got %d", len(all))
 	}
 }
 
@@ -246,7 +246,7 @@ func TestMemoryStore_SetAndGet(t *testing.T) {
 	}
 }
 
-func TestMemoryStore_NamespaceIsolation(t *testing.T) {
+func TestMemoryStore_FunctionIsolation(t *testing.T) {
 	store := NewMemoryStore()
 
 	_ = store.Set("func-123", "API_KEY", "key-123")

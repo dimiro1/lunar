@@ -5,7 +5,7 @@ type ExecutionContext struct {
 	// Unique identifier for this execution
 	ExecutionID string `json:"execution_id"`
 
-	// Function ID (used as namespace for KV, Env, Logger)
+	// Function ID (used for isolating KV and Env data)
 	FunctionID string `json:"function_id"`
 
 	// Timestamp when execution started (Unix epoch in seconds)

@@ -38,22 +38,22 @@ func (l LogLevel) String() string {
 
 // LogEntry represents a single log entry
 type LogEntry struct {
-	Namespace string
-	Level     LogLevel
-	Message   string
-	Timestamp int64
+	ExecutionID string
+	Level       LogLevel
+	Message     string
+	Timestamp   int64
 }
 
 // Logger is an interface for logging operations
-// namespace is typically the function ID to isolate logs between functions
+// executionID is used to isolate logs for each function execution
 type Logger interface {
-	Log(namespace string, level LogLevel, message string)
-	Info(namespace string, message string)
-	Debug(namespace string, message string)
-	Warn(namespace string, message string)
-	Error(namespace string, message string)
-	Entries(namespace string) []LogEntry
-	EntriesPaginated(namespace string, limit, offset int) ([]LogEntry, int64)
+	Log(executionID string, level LogLevel, message string)
+	Info(executionID string, message string)
+	Debug(executionID string, message string)
+	Warn(executionID string, message string)
+	Error(executionID string, message string)
+	Entries(executionID string) []LogEntry
+	EntriesPaginated(executionID string, limit, offset int) ([]LogEntry, int64)
 }
 
 // MemoryLogger is an in-memory implementation of Logger
@@ -69,64 +69,64 @@ func NewMemoryLogger() *MemoryLogger {
 	}
 }
 
-// Log records a log entry with the specified namespace, level and message
-func (m *MemoryLogger) Log(namespace string, level LogLevel, message string) {
+// Log records a log entry with the specified executionID, level and message
+func (m *MemoryLogger) Log(executionID string, level LogLevel, message string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	entry := LogEntry{
-		Namespace: namespace,
-		Level:     level,
-		Message:   message,
-		Timestamp: time.Now().Unix(),
+		ExecutionID: executionID,
+		Level:       level,
+		Message:     message,
+		Timestamp:   time.Now().Unix(),
 	}
 
 	m.entries = append(m.entries, entry)
 }
 
 // Info logs an informational message
-func (m *MemoryLogger) Info(namespace string, message string) {
-	m.Log(namespace, Info, message)
+func (m *MemoryLogger) Info(executionID string, message string) {
+	m.Log(executionID, Info, message)
 }
 
 // Debug logs a debug message
-func (m *MemoryLogger) Debug(namespace string, message string) {
-	m.Log(namespace, Debug, message)
+func (m *MemoryLogger) Debug(executionID string, message string) {
+	m.Log(executionID, Debug, message)
 }
 
 // Warn logs a warning message
-func (m *MemoryLogger) Warn(namespace string, message string) {
-	m.Log(namespace, Warn, message)
+func (m *MemoryLogger) Warn(executionID string, message string) {
+	m.Log(executionID, Warn, message)
 }
 
 // Error logs an error message
-func (m *MemoryLogger) Error(namespace string, message string) {
-	m.Log(namespace, Error, message)
+func (m *MemoryLogger) Error(executionID string, message string) {
+	m.Log(executionID, Error, message)
 }
 
-// Entries returns all log entries for the specified namespace
-func (m *MemoryLogger) Entries(namespace string) []LogEntry {
+// Entries returns all log entries for the specified executionID
+func (m *MemoryLogger) Entries(executionID string) []LogEntry {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	entries := make([]LogEntry, 0)
 	for _, entry := range m.entries {
-		if entry.Namespace == namespace {
+		if entry.ExecutionID == executionID {
 			entries = append(entries, entry)
 		}
 	}
 	return entries
 }
 
-// EntriesPaginated returns paginated log entries for the specified namespace
-func (m *MemoryLogger) EntriesPaginated(namespace string, limit, offset int) ([]LogEntry, int64) {
+// EntriesPaginated returns paginated log entries for the specified executionID
+func (m *MemoryLogger) EntriesPaginated(executionID string, limit, offset int) ([]LogEntry, int64) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	// Filter entries by namespace
+	// Filter entries by executionID
 	filtered := make([]LogEntry, 0)
 	for _, entry := range m.entries {
-		if entry.Namespace == namespace {
+		if entry.ExecutionID == executionID {
 			filtered = append(filtered, entry)
 		}
 	}
@@ -143,14 +143,14 @@ func (m *MemoryLogger) EntriesPaginated(namespace string, limit, offset int) ([]
 	return filtered[offset:end], total
 }
 
-// EntriesByLevel returns all log entries with the specified namespace and level
-func (m *MemoryLogger) EntriesByLevel(namespace string, level LogLevel) []LogEntry {
+// EntriesByLevel returns all log entries with the specified executionID and level
+func (m *MemoryLogger) EntriesByLevel(executionID string, level LogLevel) []LogEntry {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	entries := make([]LogEntry, 0)
 	for _, entry := range m.entries {
-		if entry.Namespace == namespace && entry.Level == level {
+		if entry.ExecutionID == executionID && entry.Level == level {
 			entries = append(entries, entry)
 		}
 	}
@@ -181,7 +181,7 @@ func (m *MemoryLogger) String() string {
 	result := ""
 	for _, entry := range m.entries {
 		timestamp := time.Unix(entry.Timestamp, 0).Format("2006-01-02 15:04:05")
-		result += fmt.Sprintf("[%s] [%s] %s: %s\n", timestamp, entry.Namespace, entry.Level, entry.Message)
+		result += fmt.Sprintf("[%s] [%s] %s: %s\n", timestamp, entry.ExecutionID, entry.Level, entry.Message)
 	}
 	return result
 }
@@ -201,12 +201,12 @@ func Migrate(db *sql.DB) error {
 	schema := `
 	CREATE TABLE IF NOT EXISTS logs (
 		id TEXT PRIMARY KEY,
-		namespace TEXT NOT NULL,
+		execution_id TEXT NOT NULL,
 		level INTEGER NOT NULL,
 		message TEXT NOT NULL,
 		timestamp INTEGER NOT NULL
 	);
-	CREATE INDEX IF NOT EXISTS idx_logs_namespace ON logs(namespace);
+	CREATE INDEX IF NOT EXISTS idx_logs_execution_id ON logs(execution_id);
 	CREATE INDEX IF NOT EXISTS idx_logs_level ON logs(level);
 	CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON logs(timestamp);
 	`
@@ -218,12 +218,12 @@ func Migrate(db *sql.DB) error {
 	return nil
 }
 
-// Log records a log entry with the specified namespace, level and message
-func (s *SQLiteLogger) Log(namespace string, level LogLevel, message string) {
+// Log records a log entry with the specified executionID, level and message
+func (s *SQLiteLogger) Log(executionID string, level LogLevel, message string) {
 	id := xid.New().String()
 	_, err := s.db.Exec(
-		"INSERT INTO logs (id, namespace, level, message, timestamp) VALUES (?, ?, ?, ?, ?)",
-		id, namespace, int(level), message, time.Now().Unix(),
+		"INSERT INTO logs (id, execution_id, level, message, timestamp) VALUES (?, ?, ?, ?, ?)",
+		id, executionID, int(level), message, time.Now().Unix(),
 	)
 	if err != nil {
 		// For now, we silently ignore errors to match the Logger interface
@@ -232,30 +232,30 @@ func (s *SQLiteLogger) Log(namespace string, level LogLevel, message string) {
 }
 
 // Info logs an informational message
-func (s *SQLiteLogger) Info(namespace string, message string) {
-	s.Log(namespace, Info, message)
+func (s *SQLiteLogger) Info(executionID string, message string) {
+	s.Log(executionID, Info, message)
 }
 
 // Debug logs a debug message
-func (s *SQLiteLogger) Debug(namespace string, message string) {
-	s.Log(namespace, Debug, message)
+func (s *SQLiteLogger) Debug(executionID string, message string) {
+	s.Log(executionID, Debug, message)
 }
 
 // Warn logs a warning message
-func (s *SQLiteLogger) Warn(namespace string, message string) {
-	s.Log(namespace, Warn, message)
+func (s *SQLiteLogger) Warn(executionID string, message string) {
+	s.Log(executionID, Warn, message)
 }
 
 // Error logs an error message
-func (s *SQLiteLogger) Error(namespace string, message string) {
-	s.Log(namespace, Error, message)
+func (s *SQLiteLogger) Error(executionID string, message string) {
+	s.Log(executionID, Error, message)
 }
 
-// Entries returns all log entries for the specified namespace
-func (s *SQLiteLogger) Entries(namespace string) []LogEntry {
+// Entries returns all log entries for the specified executionID
+func (s *SQLiteLogger) Entries(executionID string) []LogEntry {
 	rows, err := s.db.Query(
-		"SELECT namespace, level, message, timestamp FROM logs WHERE namespace = ? ORDER BY timestamp",
-		namespace,
+		"SELECT execution_id, level, message, timestamp FROM logs WHERE execution_id = ? ORDER BY timestamp",
+		executionID,
 	)
 	if err != nil {
 		return []LogEntry{}
@@ -265,19 +265,19 @@ func (s *SQLiteLogger) Entries(namespace string) []LogEntry {
 	return s.scanEntries(rows)
 }
 
-// EntriesPaginated returns paginated log entries for the specified namespace
-func (s *SQLiteLogger) EntriesPaginated(namespace string, limit, offset int) ([]LogEntry, int64) {
+// EntriesPaginated returns paginated log entries for the specified executionID
+func (s *SQLiteLogger) EntriesPaginated(executionID string, limit, offset int) ([]LogEntry, int64) {
 	// Get total count
 	var total int64
-	err := s.db.QueryRow("SELECT COUNT(*) FROM logs WHERE namespace = ?", namespace).Scan(&total)
+	err := s.db.QueryRow("SELECT COUNT(*) FROM logs WHERE execution_id = ?", executionID).Scan(&total)
 	if err != nil {
 		return []LogEntry{}, 0
 	}
 
 	// Get paginated entries
 	rows, err := s.db.Query(
-		"SELECT namespace, level, message, timestamp FROM logs WHERE namespace = ? ORDER BY timestamp LIMIT ? OFFSET ?",
-		namespace, limit, offset,
+		"SELECT execution_id, level, message, timestamp FROM logs WHERE execution_id = ? ORDER BY timestamp LIMIT ? OFFSET ?",
+		executionID, limit, offset,
 	)
 	if err != nil {
 		return []LogEntry{}, total
@@ -287,11 +287,11 @@ func (s *SQLiteLogger) EntriesPaginated(namespace string, limit, offset int) ([]
 	return s.scanEntries(rows), total
 }
 
-// EntriesByLevel returns all log entries with the specified namespace and level
-func (s *SQLiteLogger) EntriesByLevel(namespace string, level LogLevel) []LogEntry {
+// EntriesByLevel returns all log entries with the specified executionID and level
+func (s *SQLiteLogger) EntriesByLevel(executionID string, level LogLevel) []LogEntry {
 	rows, err := s.db.Query(
-		"SELECT namespace, level, message, timestamp FROM logs WHERE namespace = ? AND level = ? ORDER BY timestamp",
-		namespace, int(level),
+		"SELECT execution_id, level, message, timestamp FROM logs WHERE execution_id = ? AND level = ? ORDER BY timestamp",
+		executionID, int(level),
 	)
 	if err != nil {
 		return []LogEntry{}
@@ -301,9 +301,9 @@ func (s *SQLiteLogger) EntriesByLevel(namespace string, level LogLevel) []LogEnt
 	return s.scanEntries(rows)
 }
 
-// EntriesByNamespace returns all log entries for the specified namespace
-func (s *SQLiteLogger) EntriesByNamespace(namespace string) []LogEntry {
-	return s.Entries(namespace)
+// EntriesByExecutionID returns all log entries for the specified executionID
+func (s *SQLiteLogger) EntriesByExecutionID(executionID string) []LogEntry {
+	return s.Entries(executionID)
 }
 
 // scanEntries is a helper to scan rows into LogEntry slice
@@ -312,7 +312,7 @@ func (s *SQLiteLogger) scanEntries(rows *sql.Rows) []LogEntry {
 	for rows.Next() {
 		var entry LogEntry
 		var level int
-		if err := rows.Scan(&entry.Namespace, &level, &entry.Message, &entry.Timestamp); err != nil {
+		if err := rows.Scan(&entry.ExecutionID, &level, &entry.Message, &entry.Timestamp); err != nil {
 			continue
 		}
 		entry.Level = LogLevel(level)

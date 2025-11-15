@@ -54,8 +54,8 @@ func TestSQLiteLogger_Log(t *testing.T) {
 		t.Errorf("Expected level Info, got %v", entries[0].Level)
 	}
 
-	if entries[0].Namespace != "func-123" {
-		t.Errorf("Expected namespace 'func-123', got '%s'", entries[0].Namespace)
+	if entries[0].ExecutionID != "func-123" {
+		t.Errorf("Expected executionID 'func-123', got '%s'", entries[0].ExecutionID)
 	}
 }
 
@@ -81,7 +81,7 @@ func TestSQLiteLogger_LogLevels(t *testing.T) {
 	}
 }
 
-func TestSQLiteLogger_NamespaceIsolation(t *testing.T) {
+func TestSQLiteLogger_ExecutionIsolation(t *testing.T) {
 	db := setupTestDB(t)
 	logger := NewSQLiteLogger(db)
 
@@ -130,7 +130,7 @@ func TestSQLiteLogger_EntriesByLevel(t *testing.T) {
 	}
 }
 
-func TestSQLiteLogger_EntriesByNamespace(t *testing.T) {
+func TestSQLiteLogger_EntriesByExecutionID(t *testing.T) {
 	db := setupTestDB(t)
 	logger := NewSQLiteLogger(db)
 
@@ -138,14 +138,14 @@ func TestSQLiteLogger_EntriesByNamespace(t *testing.T) {
 	logger.Error("func-123", "Message 2")
 	logger.Warn("func-456", "Message 3")
 
-	entries := logger.EntriesByNamespace("func-123")
+	entries := logger.EntriesByExecutionID("func-123")
 	if len(entries) != 2 {
 		t.Fatalf("Expected 2 entries, got %d", len(entries))
 	}
 
 	for _, entry := range entries {
-		if entry.Namespace != "func-123" {
-			t.Errorf("Expected namespace 'func-123', got '%s'", entry.Namespace)
+		if entry.ExecutionID != "func-123" {
+			t.Errorf("Expected executionID 'func-123', got '%s'", entry.ExecutionID)
 		}
 	}
 }
