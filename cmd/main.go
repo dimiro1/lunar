@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"log/slog"
 	"os"
+	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/dimiro1/faas-go/frontend"
@@ -15,13 +17,48 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+type Config struct {
+	Port             string
+	DataDir          string
+	ExecutionTimeout time.Duration
+}
+
+func loadConfig(getenv func(string) string) Config {
+	port := getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+
+	dataDir := getenv("DATA_DIR")
+	if dataDir == "" {
+		dataDir = "./data"
+	}
+
+	timeoutStr := getenv("EXECUTION_TIMEOUT")
+	timeout := 5 * time.Minute
+	if timeoutStr != "" {
+		if seconds, err := strconv.Atoi(timeoutStr); err == nil {
+			timeout = time.Duration(seconds) * time.Second
+		}
+	}
+
+	return Config{
+		Port:             port,
+		DataDir:          dataDir,
+		ExecutionTimeout: timeout,
+	}
+}
+
 func main() {
-	if err := os.MkdirAll("./data", 0o755); err != nil {
+	config := loadConfig(os.Getenv)
+
+	if err := os.MkdirAll(config.DataDir, 0o755); err != nil {
 		slog.Error("Failed to create data directory", "error", err)
 		os.Exit(1)
 	}
 
-	db, err := sql.Open("sqlite", "./data/faas.db")
+	dbPath := filepath.Join(config.DataDir, "faas.db")
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		slog.Error("Failed to open database", "error", err)
 		os.Exit(1)
@@ -68,14 +105,17 @@ func main() {
 		KVStore:          kvStore,
 		EnvStore:         envStore,
 		HTTPClient:       httpClient,
-		ExecutionTimeout: 30 * time.Second,
+		ExecutionTimeout: config.ExecutionTimeout,
 		FrontendHandler:  frontend.Handler(),
 	})
 
-	addr := ":3000"
-	slog.Info("Starting FaaS-Go server", "addr", addr)
-	slog.Info("Frontend available", "url", "http://localhost"+addr)
-	slog.Info("API available", "url", "http://localhost"+addr+"/api")
+	addr := ":" + config.Port
+	slog.Info("Starting FaaS-Go server",
+		"port", config.Port,
+		"data_dir", config.DataDir,
+		"execution_timeout", config.ExecutionTimeout)
+	slog.Info("Frontend available", "url", "http://localhost:"+config.Port)
+	slog.Info("API available", "url", "http://localhost:"+config.Port+"/api")
 	if err := server.ListenAndServe(addr); err != nil {
 		slog.Error("Server failed", "error", err)
 		os.Exit(1)
