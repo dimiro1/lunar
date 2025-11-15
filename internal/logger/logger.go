@@ -233,7 +233,7 @@ func (s *SQLiteLogger) Entries(namespace string) []LogEntry {
 	if err != nil {
 		return []LogEntry{}
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	return s.scanEntries(rows)
 }
@@ -247,7 +247,7 @@ func (s *SQLiteLogger) EntriesByLevel(namespace string, level LogLevel) []LogEnt
 	if err != nil {
 		return []LogEntry{}
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	return s.scanEntries(rows)
 }

@@ -13,23 +13,22 @@ func setupTestDB(t *testing.T) *sql.DB {
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
-	tmpfile.Close()
+	_ = tmpfile.Close()
 
 	db, err := sql.Open("sqlite", tmpfile.Name())
 	if err != nil {
-		os.Remove(tmpfile.Name())
+		_ = os.Remove(tmpfile.Name())
 		t.Fatalf("Failed to open database: %v", err)
 	}
 
 	if err := Migrate(db); err != nil {
-		db.Close()
-		os.Remove(tmpfile.Name())
+		_ = db.Close()
 		t.Fatalf("Failed to run migrations: %v", err)
 	}
 
 	t.Cleanup(func() {
-		db.Close()
-		os.Remove(tmpfile.Name())
+		_ = db.Close()
+		_ = os.Remove(tmpfile.Name())
 	})
 
 	return db
@@ -250,8 +249,8 @@ func TestMemoryStore_SetAndGet(t *testing.T) {
 func TestMemoryStore_NamespaceIsolation(t *testing.T) {
 	store := NewMemoryStore()
 
-	store.Set("func-123", "API_KEY", "key-123")
-	store.Set("func-456", "API_KEY", "key-456")
+	_ = store.Set("func-123", "API_KEY", "key-123")
+	_ = store.Set("func-456", "API_KEY", "key-456")
 
 	value1, _ := store.Get("func-123", "API_KEY")
 	value2, _ := store.Get("func-456", "API_KEY")
@@ -268,8 +267,8 @@ func TestMemoryStore_NamespaceIsolation(t *testing.T) {
 func TestMemoryStore_All(t *testing.T) {
 	store := NewMemoryStore()
 
-	store.Set("func-123", "VAR1", "value1")
-	store.Set("func-123", "VAR2", "value2")
+	_ = store.Set("func-123", "VAR1", "value1")
+	_ = store.Set("func-123", "VAR2", "value2")
 
 	all, err := store.All("func-123")
 	if err != nil {

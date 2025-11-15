@@ -138,7 +138,7 @@ func (c *DefaultClient) doRequest(req *http.Request) (Response, error) {
 	if err != nil {
 		return Response{}, fmt.Errorf("HTTP request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Read response body
 	bodyBytes, err := io.ReadAll(resp.Body)

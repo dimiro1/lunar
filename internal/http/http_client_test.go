@@ -13,7 +13,7 @@ func TestDefaultClient_Get(t *testing.T) {
 			t.Errorf("Expected GET request, got %s", r.Method)
 		}
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Hello, World!"))
+		_, _ = w.Write([]byte("Hello, World!"))
 	}))
 	defer server.Close()
 
@@ -48,13 +48,13 @@ func TestDefaultClient_Post(t *testing.T) {
 
 		// Read and verify request body
 		buf := make([]byte, len(expectedBody))
-		r.Body.Read(buf)
+		_, _ = r.Body.Read(buf)
 		if string(buf) != expectedBody {
 			t.Errorf("Expected body '%s', got '%s'", expectedBody, string(buf))
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte("Created"))
+		_, _ = w.Write([]byte("Created"))
 	}))
 	defer server.Close()
 

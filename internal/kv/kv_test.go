@@ -14,24 +14,24 @@ func setupTestDB(t *testing.T) *sql.DB {
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
-	tmpfile.Close()
+	_ = tmpfile.Close()
 
 	db, err := sql.Open("sqlite", tmpfile.Name())
 	if err != nil {
-		os.Remove(tmpfile.Name())
+		_ = os.Remove(tmpfile.Name())
 		t.Fatalf("Failed to open database: %v", err)
 	}
 
 	// Run migrations
 	if err := Migrate(db); err != nil {
-		db.Close()
-		os.Remove(tmpfile.Name())
+		_ = db.Close()
+		_ = os.Remove(tmpfile.Name())
 		t.Fatalf("Failed to run migrations: %v", err)
 	}
 
 	t.Cleanup(func() {
-		db.Close()
-		os.Remove(tmpfile.Name())
+		_ = db.Close()
+		_ = os.Remove(tmpfile.Name())
 	})
 
 	return db

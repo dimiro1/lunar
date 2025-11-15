@@ -295,7 +295,7 @@ func TestRun_Env(t *testing.T) {
 	}
 
 	// Pre-populate env variable
-	envStore.Set("test-function", "API_KEY", "secret-123")
+	_ = envStore.Set("test-function", "API_KEY", "secret-123")
 
 	execCtx := &events.ExecutionContext{
 		ExecutionID: "exec-123",

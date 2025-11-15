@@ -1,9 +1,9 @@
 package env
 
 import (
-	"maps"
 	"database/sql"
 	"fmt"
+	"maps"
 
 	_ "modernc.org/sqlite"
 )
@@ -162,7 +162,7 @@ func (s *SQLiteStore) All(namespace string) (map[string]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to query env vars: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	result := make(map[string]string)
 	for rows.Next() {
