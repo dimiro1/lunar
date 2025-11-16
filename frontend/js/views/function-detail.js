@@ -163,6 +163,24 @@ export const FunctionDetail = {
     }
   },
 
+  deleteFunction: async () => {
+    if (
+      !confirm(
+        `Are you sure you want to delete "${FunctionDetail.func.name}"? This action cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await API.functions.delete(FunctionDetail.func.id);
+      Toast.show("Function deleted successfully", "success");
+      m.route.set("/functions");
+    } catch (e) {
+      Toast.show("Failed to delete function: " + e.message, "error");
+    }
+  },
+
   view: (vnode) => {
     if (FunctionDetail.loading) {
       return m(".loading", "Loading...");
@@ -183,6 +201,14 @@ export const FunctionDetail = {
           ]),
           m(".actions", [
             m("a.btn", { href: "#!/functions" }, [Icons.arrowLeft(), "  Back"]),
+            m(
+              "button.btn",
+              {
+                onclick: FunctionDetail.deleteFunction,
+                style: "color: #f48771;",
+              },
+              [Icons.trash(), "  Delete"],
+            ),
             m("a.btn.btn-primary", { href: `#!/functions/${func.id}/edit` }, [
               Icons.pencil(),
               "  Edit",
