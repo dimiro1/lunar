@@ -126,6 +126,35 @@ curl -X POST http://localhost:3000/fn/{function-id} -d '{"key":"value"}'
 curl -X GET http://localhost:3000/fn/{function-id}?name=John
 ```
 
+## Deployment
+
+### Docker
+
+```bash
+# Build and run with Docker
+docker build -t faas-go .
+docker run -p 3000:3000 -v faas-data:/app/data faas-go
+
+# Or use Docker Compose
+docker compose up -d
+```
+
+### Railway
+
+FaaS-Go is ready to deploy on [Railway](https://railway.app):
+
+1. **Connect Repository** - Link your GitHub repository to Railway
+2. **Add Volume** - Create a volume and mount it to `/data`
+3. **Set Environment Variables**:
+   - `BASE_URL` - Your Railway public URL (e.g., `https://yourapp.up.railway.app`)
+   - `API_KEY` - (Optional) Set a custom API key, or let it auto-generate
+4. **Deploy** - Railway will automatically detect the Dockerfile and deploy
+
+The Dockerfile is Railway-compatible and will:
+- Use Railway's automatic `PORT` environment variable
+- Bind to `0.0.0.0:$PORT` for public networking
+- Persist data to the mounted volume at `/data`
+
 ## Configuration
 
 FaaS-Go can be configured via environment variables:
@@ -135,6 +164,7 @@ PORT=3000                 # HTTP server port (default: 3000)
 DATA_DIR=./data           # Data directory for SQLite database (default: ./data)
 EXECUTION_TIMEOUT=300     # Function execution timeout in seconds (default: 300)
 API_KEY=your-key-here     # API key for authentication (auto-generated if not set)
+BASE_URL=http://localhost:3000  # Base URL for the deployment (auto-detected if not set)
 ```
 
 ### Authentication

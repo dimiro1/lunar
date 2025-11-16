@@ -1,0 +1,35 @@
+# Git
+.git
+.gitignore
+
+# Build artifacts
+faas-go
+build/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test data
+data/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Documentation
+*.md
+ROADMAP.md
+LICENSE
+shots/
+
+# OpenAPI
+openapi.yaml
+
+# Other
+.DS_Store
+Dockerfile
+.dockerignore

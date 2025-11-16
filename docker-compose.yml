@@ -1,0 +1,20 @@
+services:
+  faas-go:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - DATA_DIR=/app/data
+      - EXECUTION_TIMEOUT=300
+      - BASE_URL=http://localhost:3000
+      - API_KEY=0ff5b4f692337f19430863fefecf3bfa274a66bea3884a426ec2f92165299377
+    volumes:
+      # Persist data directory (named volume managed by Docker)
+      - faas-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  faas-data:
