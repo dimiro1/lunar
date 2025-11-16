@@ -26,7 +26,7 @@ func HandleLogin(apiKey string) http.HandlerFunc {
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(LoginResponse{
+			_ = json.NewEncoder(w).Encode(LoginResponse{
 				Success: false,
 				Error:   "Invalid request body",
 			})
@@ -37,7 +37,7 @@ func HandleLogin(apiKey string) http.HandlerFunc {
 		if !isValidAPIKey(req.APIKey, apiKey) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(LoginResponse{
+			_ = json.NewEncoder(w).Encode(LoginResponse{
 				Success: false,
 				Error:   "Invalid API key",
 			})
@@ -62,7 +62,7 @@ func HandleLogin(apiKey string) http.HandlerFunc {
 		http.SetCookie(w, cookie)
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(LoginResponse{
+		_ = json.NewEncoder(w).Encode(LoginResponse{
 			Success: true,
 		})
 	}
@@ -88,7 +88,7 @@ func HandleLogout() http.HandlerFunc {
 		http.SetCookie(w, cookie)
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(LoginResponse{
+		_ = json.NewEncoder(w).Encode(LoginResponse{
 			Success: true,
 		})
 	}
