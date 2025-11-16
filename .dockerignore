@@ -26,9 +26,6 @@ ROADMAP.md
 LICENSE
 shots/
 
-# OpenAPI
-internal/api/docs/openapi.yaml
-
 # Other
 .DS_Store
 Dockerfile
