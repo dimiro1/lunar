@@ -2,6 +2,9 @@
 
 Here some ideas that I want to implement, the order is not important:
 
+- Separed apis types from database types
+- Introduce a services package to remove the logic from the API
+- Option to disable functions
 - Blob storage (filesytem os.OpenInRoot)
 - Email with resend
 - AI integration

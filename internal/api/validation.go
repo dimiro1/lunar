@@ -3,6 +3,8 @@ package api
 import (
 	"fmt"
 	"strings"
+
+	"github.com/dimiro1/faas-go/internal/store"
 )
 
 const (
@@ -59,7 +61,7 @@ func ValidateCreateFunctionRequest(req *CreateFunctionRequest) error {
 }
 
 // ValidateUpdateFunctionRequest validates an UpdateFunctionRequest
-func ValidateUpdateFunctionRequest(req *UpdateFunctionRequest) error {
+func ValidateUpdateFunctionRequest(req *store.UpdateFunctionRequest) error {
 	if req == nil {
 		return &ValidationError{Field: "request", Message: "request cannot be nil"}
 	}

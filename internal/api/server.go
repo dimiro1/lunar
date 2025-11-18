@@ -9,12 +9,13 @@ import (
 	internalhttp "github.com/dimiro1/faas-go/internal/http"
 	"github.com/dimiro1/faas-go/internal/kv"
 	"github.com/dimiro1/faas-go/internal/logger"
+	"github.com/dimiro1/faas-go/internal/store"
 )
 
 // Server represents the API server
 type Server struct {
 	mux             *http.ServeMux
-	db              DB
+	db              store.DB
 	execDeps        *ExecuteFunctionDeps
 	logger          logger.Logger
 	frontendHandler http.Handler
@@ -24,7 +25,7 @@ type Server struct {
 
 // ServerConfig holds configuration for creating a Server
 type ServerConfig struct {
-	DB               DB
+	DB               store.DB
 	Logger           logger.Logger
 	KVStore          kv.Store
 	EnvStore         env.Store

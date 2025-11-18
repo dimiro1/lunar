@@ -1,4 +1,7 @@
-package api
+// Package store provides database interfaces and types for the FaaS application.
+// It defines the DB interface for function, version, and execution operations,
+// along with core data types used throughout the application.
+package store
 
 import "context"
 
@@ -7,7 +10,7 @@ type DB interface {
 	// Function operations
 	CreateFunction(ctx context.Context, fn Function) (Function, error)
 	GetFunction(ctx context.Context, id string) (Function, error)
-	ListFunctions(ctx context.Context, params PaginationParams) ([]Function, int64, error)
+	ListFunctions(ctx context.Context, params PaginationParams) ([]FunctionWithActiveVersion, int64, error)
 	UpdateFunction(ctx context.Context, id string, updates UpdateFunctionRequest) error
 	DeleteFunction(ctx context.Context, id string) error
 

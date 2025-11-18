@@ -1,4 +1,4 @@
-package api
+package store
 
 import (
 	"context"
@@ -51,17 +51,31 @@ func (db *MemoryDB) GetFunction(ctx context.Context, id string) (Function, error
 	return fn, nil
 }
 
-func (db *MemoryDB) ListFunctions(ctx context.Context, params PaginationParams) ([]Function, int64, error) {
+func (db *MemoryDB) ListFunctions(ctx context.Context, params PaginationParams) ([]FunctionWithActiveVersion, int64, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
 	// Normalize pagination parameters
 	params = params.Normalize()
 
-	// Get all functions first
-	allFunctions := make([]Function, 0, len(db.functions))
+	// Get all functions with their active versions
+	allFunctions := make([]FunctionWithActiveVersion, 0, len(db.functions))
 	for _, fn := range db.functions {
-		allFunctions = append(allFunctions, fn)
+		fnWithVersion := FunctionWithActiveVersion{
+			Function: fn,
+		}
+
+		// Find active version
+		if versions, ok := db.versions[fn.ID]; ok {
+			for _, v := range versions {
+				if v.IsActive {
+					fnWithVersion.ActiveVersion = v
+					break
+				}
+			}
+		}
+
+		allFunctions = append(allFunctions, fnWithVersion)
 	}
 
 	total := int64(len(allFunctions))
@@ -69,7 +83,7 @@ func (db *MemoryDB) ListFunctions(ctx context.Context, params PaginationParams) 
 	// Apply pagination
 	start := params.Offset
 	if start > len(allFunctions) {
-		return []Function{}, total, nil
+		return []FunctionWithActiveVersion{}, total, nil
 	}
 
 	end := start + params.Limit

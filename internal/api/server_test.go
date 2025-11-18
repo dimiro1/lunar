@@ -12,25 +12,26 @@ import (
 	internalhttp "github.com/dimiro1/faas-go/internal/http"
 	"github.com/dimiro1/faas-go/internal/kv"
 	"github.com/dimiro1/faas-go/internal/logger"
+	"github.com/dimiro1/faas-go/internal/store"
 )
 
 // Helper function to create a test function in the database with an initial version
-func createTestFunction(t *testing.T, db DB) Function {
+func createTestFunction(t *testing.T, database store.DB) store.Function {
 	t.Helper()
 	desc := "Test function"
-	fn := Function{
+	fn := store.Function{
 		ID:          "func_test_123",
 		Name:        "test-function",
 		Description: &desc,
 		EnvVars:     map[string]string{"KEY": "value"},
 	}
-	created, err := db.CreateFunction(context.Background(), fn)
+	created, err := database.CreateFunction(context.Background(), fn)
 	if err != nil {
 		t.Fatalf("failed to create test function: %v", err)
 	}
 
 	// Create an initial version for the function
-	_, err = db.CreateVersion(context.Background(), created.ID, "function handler(ctx, event)\n  return {statusCode = 200}\nend", nil)
+	_, err = database.CreateVersion(context.Background(), created.ID, "function handler(ctx, event)\n  return {statusCode = 200}\nend", nil)
 	if err != nil {
 		t.Fatalf("failed to create initial version: %v", err)
 	}
@@ -39,9 +40,9 @@ func createTestFunction(t *testing.T, db DB) Function {
 }
 
 // Helper function to create a test version
-func createTestVersion(t *testing.T, db DB, functionID string, code string) FunctionVersion {
+func createTestVersion(t *testing.T, database store.DB, functionID string, code string) store.FunctionVersion {
 	t.Helper()
-	version, err := db.CreateVersion(context.Background(), functionID, code, nil)
+	version, err := database.CreateVersion(context.Background(), functionID, code, nil)
 	if err != nil {
 		t.Fatalf("failed to create test version: %v", err)
 	}
@@ -49,15 +50,15 @@ func createTestVersion(t *testing.T, db DB, functionID string, code string) Func
 }
 
 // Helper function to create a test execution
-func createTestExecution(t *testing.T, db DB, functionID, versionID string) Execution {
+func createTestExecution(t *testing.T, database store.DB, functionID, versionID string) store.Execution {
 	t.Helper()
-	exec := Execution{
+	exec := store.Execution{
 		ID:                "exec_test_123",
 		FunctionID:        functionID,
 		FunctionVersionID: versionID,
-		Status:            ExecutionStatusSuccess,
+		Status:            store.ExecutionStatusSuccess,
 	}
-	created, err := db.CreateExecution(context.Background(), exec)
+	created, err := database.CreateExecution(context.Background(), exec)
 	if err != nil {
 		t.Fatalf("failed to create test execution: %v", err)
 	}
@@ -65,9 +66,9 @@ func createTestExecution(t *testing.T, db DB, functionID, versionID string) Exec
 }
 
 // Helper function to create a test server with full configuration
-func createTestServer(db DB) *Server {
+func createTestServer(database store.DB) *Server {
 	return NewServer(ServerConfig{
-		DB:         db,
+		DB:         database,
 		Logger:     logger.NewMemoryLogger(),
 		KVStore:    kv.NewMemoryStore(),
 		EnvStore:   env.NewMemoryStore(),
@@ -91,7 +92,7 @@ func makeAuthRequest(method, path string, body []byte) *http.Request {
 }
 
 func TestDocsPage(t *testing.T) {
-	server := createTestServer(NewMemoryDB())
+	server := createTestServer(store.NewMemoryDB())
 
 	req := httptest.NewRequest(http.MethodGet, "/docs", nil)
 	w := httptest.NewRecorder()
@@ -112,7 +113,7 @@ func TestDocsPage(t *testing.T) {
 }
 
 func TestOpenAPISpecEndpoint(t *testing.T) {
-	server := createTestServer(NewMemoryDB())
+	server := createTestServer(store.NewMemoryDB())
 
 	req := httptest.NewRequest(http.MethodGet, "/docs/openapi.yaml", nil)
 	w := httptest.NewRecorder()
@@ -133,7 +134,7 @@ func TestOpenAPISpecEndpoint(t *testing.T) {
 }
 
 func TestCreateFunction(t *testing.T) {
-	server := createTestServer(NewMemoryDB())
+	server := createTestServer(store.NewMemoryDB())
 
 	reqBody := CreateFunctionRequest{
 		Name: "test-function",
@@ -150,7 +151,7 @@ func TestCreateFunction(t *testing.T) {
 		t.Errorf("expected status 200, got %d", w.Code)
 	}
 
-	var resp FunctionWithActiveVersion
+	var resp store.FunctionWithActiveVersion
 	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
 		t.Fatalf("failed to decode response: %v", err)
 	}
@@ -165,11 +166,11 @@ func TestCreateFunction(t *testing.T) {
 }
 
 func TestListFunctions(t *testing.T) {
-	db := NewMemoryDB()
-	server := createTestServer(db)
+	database := store.NewMemoryDB()
+	server := createTestServer(database)
 
 	// Create a test function first
-	createTestFunction(t, db)
+	createTestFunction(t, database)
 
 	req := makeAuthRequest(http.MethodGet, "/api/functions", nil)
 	w := httptest.NewRecorder()
@@ -191,11 +192,11 @@ func TestListFunctions(t *testing.T) {
 }
 
 func TestGetFunction(t *testing.T) {
-	db := NewMemoryDB()
-	server := createTestServer(db)
+	database := store.NewMemoryDB()
+	server := createTestServer(database)
 
 	// Create a test function first
-	fn := createTestFunction(t, db)
+	fn := createTestFunction(t, database)
 
 	req := makeAuthRequest(http.MethodGet, "/api/functions/"+fn.ID, nil)
 	w := httptest.NewRecorder()
@@ -206,7 +207,7 @@ func TestGetFunction(t *testing.T) {
 		t.Errorf("expected status 200, got %d", w.Code)
 	}
 
-	var resp FunctionWithActiveVersion
+	var resp store.FunctionWithActiveVersion
 	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
 		t.Fatalf("failed to decode response: %v", err)
 	}
@@ -217,14 +218,14 @@ func TestGetFunction(t *testing.T) {
 }
 
 func TestUpdateFunction(t *testing.T) {
-	db := NewMemoryDB()
-	server := createTestServer(db)
+	database := store.NewMemoryDB()
+	server := createTestServer(database)
 
 	// Create a test function first
-	fn := createTestFunction(t, db)
+	fn := createTestFunction(t, database)
 
 	name := "updated-name"
-	reqBody := UpdateFunctionRequest{
+	reqBody := store.UpdateFunctionRequest{
 		Name: &name,
 	}
 
@@ -240,11 +241,11 @@ func TestUpdateFunction(t *testing.T) {
 }
 
 func TestDeleteFunction(t *testing.T) {
-	db := NewMemoryDB()
-	server := createTestServer(db)
+	database := store.NewMemoryDB()
+	server := createTestServer(database)
 
 	// Create a test function first
-	fn := createTestFunction(t, db)
+	fn := createTestFunction(t, database)
 
 	req := makeAuthRequest(http.MethodDelete, "/api/functions/"+fn.ID, nil)
 	w := httptest.NewRecorder()
@@ -257,12 +258,12 @@ func TestDeleteFunction(t *testing.T) {
 }
 
 func TestListVersions(t *testing.T) {
-	db := NewMemoryDB()
-	server := createTestServer(db)
+	database := store.NewMemoryDB()
+	server := createTestServer(database)
 
 	// Create a test function and version
-	fn := createTestFunction(t, db)
-	createTestVersion(t, db, fn.ID, "function handler(ctx, event)\n  return {statusCode = 200}\nend")
+	fn := createTestFunction(t, database)
+	createTestVersion(t, database, fn.ID, "function handler(ctx, event)\n  return {statusCode = 200}\nend")
 
 	req := makeAuthRequest(http.MethodGet, "/api/functions/"+fn.ID+"/versions", nil)
 	w := httptest.NewRecorder()
@@ -284,12 +285,12 @@ func TestListVersions(t *testing.T) {
 }
 
 func TestGetVersion(t *testing.T) {
-	db := NewMemoryDB()
-	server := createTestServer(db)
+	database := store.NewMemoryDB()
+	server := createTestServer(database)
 
 	// Create a test function (which creates version 1) and another version (version 2)
-	fn := createTestFunction(t, db)
-	ver := createTestVersion(t, db, fn.ID, "function handler(ctx, event)\n  return {statusCode = 201}\nend")
+	fn := createTestFunction(t, database)
+	ver := createTestVersion(t, database, fn.ID, "function handler(ctx, event)\n  return {statusCode = 201}\nend")
 
 	// Request version 2 which we just created
 	req := makeAuthRequest(http.MethodGet, "/api/functions/"+fn.ID+"/versions/2", nil)
@@ -301,7 +302,7 @@ func TestGetVersion(t *testing.T) {
 		t.Errorf("expected status 200, got %d", w.Code)
 	}
 
-	var resp FunctionVersion
+	var resp store.FunctionVersion
 	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
 		t.Fatalf("failed to decode response: %v", err)
 	}
@@ -316,13 +317,13 @@ func TestGetVersion(t *testing.T) {
 }
 
 func TestActivateVersion(t *testing.T) {
-	db := NewMemoryDB()
-	server := createTestServer(db)
+	database := store.NewMemoryDB()
+	server := createTestServer(database)
 
 	// Create a test function and two versions
-	fn := createTestFunction(t, db)
-	createTestVersion(t, db, fn.ID, "function handler(ctx, event)\n  return {statusCode = 200}\nend")
-	createTestVersion(t, db, fn.ID, "function handler(ctx, event)\n  return {statusCode = 201}\nend")
+	fn := createTestFunction(t, database)
+	createTestVersion(t, database, fn.ID, "function handler(ctx, event)\n  return {statusCode = 200}\nend")
+	createTestVersion(t, database, fn.ID, "function handler(ctx, event)\n  return {statusCode = 201}\nend")
 
 	req := makeAuthRequest(http.MethodPost, "/api/functions/"+fn.ID+"/versions/1/activate", nil)
 	w := httptest.NewRecorder()
@@ -335,13 +336,13 @@ func TestActivateVersion(t *testing.T) {
 }
 
 func TestGetVersionDiff(t *testing.T) {
-	db := NewMemoryDB()
-	server := createTestServer(db)
+	database := store.NewMemoryDB()
+	server := createTestServer(database)
 
 	// Create a test function and two versions with different code
-	fn := createTestFunction(t, db)
-	createTestVersion(t, db, fn.ID, "function handler(ctx, event)\n  return {statusCode = 200}\nend")
-	createTestVersion(t, db, fn.ID, "function handler(ctx, event)\n  return {statusCode = 201}\nend")
+	fn := createTestFunction(t, database)
+	createTestVersion(t, database, fn.ID, "function handler(ctx, event)\n  return {statusCode = 200}\nend")
+	createTestVersion(t, database, fn.ID, "function handler(ctx, event)\n  return {statusCode = 201}\nend")
 
 	req := makeAuthRequest(http.MethodGet, "/api/functions/"+fn.ID+"/diff/1/2", nil)
 	w := httptest.NewRecorder()
@@ -363,11 +364,11 @@ func TestGetVersionDiff(t *testing.T) {
 }
 
 func TestUpdateEnvVars(t *testing.T) {
-	db := NewMemoryDB()
-	server := createTestServer(db)
+	database := store.NewMemoryDB()
+	server := createTestServer(database)
 
 	// Create a test function first
-	fn := createTestFunction(t, db)
+	fn := createTestFunction(t, database)
 
 	reqBody := UpdateEnvVarsRequest{
 		EnvVars: map[string]string{
@@ -388,13 +389,13 @@ func TestUpdateEnvVars(t *testing.T) {
 }
 
 func TestListExecutions(t *testing.T) {
-	db := NewMemoryDB()
-	server := createTestServer(db)
+	database := store.NewMemoryDB()
+	server := createTestServer(database)
 
 	// Create a test function and execution
-	fn := createTestFunction(t, db)
-	ver := createTestVersion(t, db, fn.ID, "function handler(ctx, event)\n  return {statusCode = 200}\nend")
-	createTestExecution(t, db, fn.ID, ver.ID)
+	fn := createTestFunction(t, database)
+	ver := createTestVersion(t, database, fn.ID, "function handler(ctx, event)\n  return {statusCode = 200}\nend")
+	createTestExecution(t, database, fn.ID, ver.ID)
 
 	req := makeAuthRequest(http.MethodGet, "/api/functions/"+fn.ID+"/executions", nil)
 	w := httptest.NewRecorder()
@@ -412,13 +413,13 @@ func TestListExecutions(t *testing.T) {
 }
 
 func TestGetExecution(t *testing.T) {
-	db := NewMemoryDB()
-	server := createTestServer(db)
+	database := store.NewMemoryDB()
+	server := createTestServer(database)
 
 	// Create a test function, version and execution
-	fn := createTestFunction(t, db)
-	ver := createTestVersion(t, db, fn.ID, "function handler(ctx, event)\n  return {statusCode = 200}\nend")
-	exec := createTestExecution(t, db, fn.ID, ver.ID)
+	fn := createTestFunction(t, database)
+	ver := createTestVersion(t, database, fn.ID, "function handler(ctx, event)\n  return {statusCode = 200}\nend")
+	exec := createTestExecution(t, database, fn.ID, ver.ID)
 
 	req := makeAuthRequest(http.MethodGet, "/api/executions/"+exec.ID, nil)
 	w := httptest.NewRecorder()
@@ -429,18 +430,18 @@ func TestGetExecution(t *testing.T) {
 		t.Errorf("expected status 200, got %d", w.Code)
 	}
 
-	var resp Execution
+	var resp store.Execution
 	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
 		t.Fatalf("failed to decode response: %v", err)
 	}
 }
 
 func TestGetExecutionLogs(t *testing.T) {
-	db := NewMemoryDB()
+	database := store.NewMemoryDB()
 	memLogger := logger.NewMemoryLogger()
 
 	server := NewServer(ServerConfig{
-		DB:         db,
+		DB:         database,
 		Logger:     memLogger,
 		KVStore:    kv.NewMemoryStore(),
 		EnvStore:   env.NewMemoryStore(),
@@ -449,9 +450,9 @@ func TestGetExecutionLogs(t *testing.T) {
 	})
 
 	// Create a test function, version, execution
-	fn := createTestFunction(t, db)
-	ver := createTestVersion(t, db, fn.ID, "function handler(ctx, event)\n  return {statusCode = 200}\nend")
-	exec := createTestExecution(t, db, fn.ID, ver.ID)
+	fn := createTestFunction(t, database)
+	ver := createTestVersion(t, database, fn.ID, "function handler(ctx, event)\n  return {statusCode = 200}\nend")
+	exec := createTestExecution(t, database, fn.ID, ver.ID)
 
 	// Create a log entry for the execution using the logger
 	memLogger.Info(exec.ID, "Test log message")
@@ -477,9 +478,9 @@ func TestGetExecutionLogs(t *testing.T) {
 
 func TestExecuteFunction(t *testing.T) {
 	t.Run("success with simple response", func(t *testing.T) {
-		db := NewMemoryDB()
+		database := store.NewMemoryDB()
 		server := NewServer(ServerConfig{
-			DB:         db,
+			DB:         database,
 			Logger:     logger.NewMemoryLogger(),
 			KVStore:    kv.NewMemoryStore(),
 			EnvStore:   env.NewMemoryStore(),
@@ -487,8 +488,8 @@ func TestExecuteFunction(t *testing.T) {
 			APIKey:     "test-api-key",
 		})
 
-		fn := createTestFunction(t, db)
-		_, err := db.CreateVersion(context.Background(), fn.ID, `
+		fn := createTestFunction(t, database)
+		_, err := database.CreateVersion(context.Background(), fn.ID, `
 function handler(ctx, event)
   return {
     statusCode = 200,
@@ -521,9 +522,9 @@ end
 	})
 
 	t.Run("success with request body", func(t *testing.T) {
-		db := NewMemoryDB()
+		database := store.NewMemoryDB()
 		server := NewServer(ServerConfig{
-			DB:         db,
+			DB:         database,
 			Logger:     logger.NewMemoryLogger(),
 			KVStore:    kv.NewMemoryStore(),
 			EnvStore:   env.NewMemoryStore(),
@@ -531,8 +532,8 @@ end
 			APIKey:     "test-api-key",
 		})
 
-		fn := createTestFunction(t, db)
-		_, err := db.CreateVersion(context.Background(), fn.ID, `
+		fn := createTestFunction(t, database)
+		_, err := database.CreateVersion(context.Background(), fn.ID, `
 function handler(ctx, event)
   return {
     statusCode = 200,
@@ -560,9 +561,9 @@ end
 	})
 
 	t.Run("success with custom status code", func(t *testing.T) {
-		db := NewMemoryDB()
+		database := store.NewMemoryDB()
 		server := NewServer(ServerConfig{
-			DB:         db,
+			DB:         database,
 			Logger:     logger.NewMemoryLogger(),
 			KVStore:    kv.NewMemoryStore(),
 			EnvStore:   env.NewMemoryStore(),
@@ -570,8 +571,8 @@ end
 			APIKey:     "test-api-key",
 		})
 
-		fn := createTestFunction(t, db)
-		_, err := db.CreateVersion(context.Background(), fn.ID, `
+		fn := createTestFunction(t, database)
+		_, err := database.CreateVersion(context.Background(), fn.ID, `
 function handler(ctx, event)
   return {
     statusCode = 201,
@@ -594,9 +595,9 @@ end
 	})
 
 	t.Run("success with custom headers", func(t *testing.T) {
-		db := NewMemoryDB()
+		database := store.NewMemoryDB()
 		server := NewServer(ServerConfig{
-			DB:         db,
+			DB:         database,
 			Logger:     logger.NewMemoryLogger(),
 			KVStore:    kv.NewMemoryStore(),
 			EnvStore:   env.NewMemoryStore(),
@@ -604,8 +605,8 @@ end
 			APIKey:     "test-api-key",
 		})
 
-		fn := createTestFunction(t, db)
-		_, err := db.CreateVersion(context.Background(), fn.ID, `
+		fn := createTestFunction(t, database)
+		_, err := database.CreateVersion(context.Background(), fn.ID, `
 function handler(ctx, event)
   return {
     statusCode = 200,
@@ -636,9 +637,9 @@ end
 	})
 
 	t.Run("error with syntax error in lua code", func(t *testing.T) {
-		db := NewMemoryDB()
+		database := store.NewMemoryDB()
 		server := NewServer(ServerConfig{
-			DB:         db,
+			DB:         database,
 			Logger:     logger.NewMemoryLogger(),
 			KVStore:    kv.NewMemoryStore(),
 			EnvStore:   env.NewMemoryStore(),
@@ -646,8 +647,8 @@ end
 			APIKey:     "test-api-key",
 		})
 
-		fn := createTestFunction(t, db)
-		_, err := db.CreateVersion(context.Background(), fn.ID, `
+		fn := createTestFunction(t, database)
+		_, err := database.CreateVersion(context.Background(), fn.ID, `
 function handler(ctx, event)
   return {
     statusCode = 200
@@ -671,9 +672,9 @@ end
 	})
 
 	t.Run("error with runtime error in lua code", func(t *testing.T) {
-		db := NewMemoryDB()
+		database := store.NewMemoryDB()
 		server := NewServer(ServerConfig{
-			DB:         db,
+			DB:         database,
 			Logger:     logger.NewMemoryLogger(),
 			KVStore:    kv.NewMemoryStore(),
 			EnvStore:   env.NewMemoryStore(),
@@ -681,8 +682,8 @@ end
 			APIKey:     "test-api-key",
 		})
 
-		fn := createTestFunction(t, db)
-		_, err := db.CreateVersion(context.Background(), fn.ID, `
+		fn := createTestFunction(t, database)
+		_, err := database.CreateVersion(context.Background(), fn.ID, `
 function handler(ctx, event)
   error("Something went wrong!")
 end
@@ -715,9 +716,9 @@ end
 	})
 
 	t.Run("error with function not found", func(t *testing.T) {
-		db := NewMemoryDB()
+		database := store.NewMemoryDB()
 		server := NewServer(ServerConfig{
-			DB:         db,
+			DB:         database,
 			Logger:     logger.NewMemoryLogger(),
 			KVStore:    kv.NewMemoryStore(),
 			EnvStore:   env.NewMemoryStore(),
@@ -736,9 +737,9 @@ end
 	})
 
 	t.Run("error with no active version", func(t *testing.T) {
-		db := NewMemoryDB()
+		database := store.NewMemoryDB()
 		server := NewServer(ServerConfig{
-			DB:         db,
+			DB:         database,
 			Logger:     logger.NewMemoryLogger(),
 			KVStore:    kv.NewMemoryStore(),
 			EnvStore:   env.NewMemoryStore(),
@@ -746,13 +747,13 @@ end
 			APIKey:     "test-api-key",
 		})
 
-		fn := Function{
+		fn := store.Function{
 			ID:          "test-no-version",
 			Name:        "test",
 			Description: nil,
 			EnvVars:     map[string]string{},
 		}
-		_, err := db.CreateFunction(context.Background(), fn)
+		_, err := database.CreateFunction(context.Background(), fn)
 		if err != nil {
 			t.Fatalf("Failed to create function: %v", err)
 		}
@@ -768,9 +769,9 @@ end
 	})
 
 	t.Run("different HTTP methods", func(t *testing.T) {
-		db := NewMemoryDB()
+		database := store.NewMemoryDB()
 		server := NewServer(ServerConfig{
-			DB:         db,
+			DB:         database,
 			Logger:     logger.NewMemoryLogger(),
 			KVStore:    kv.NewMemoryStore(),
 			EnvStore:   env.NewMemoryStore(),
@@ -778,8 +779,8 @@ end
 			APIKey:     "test-api-key",
 		})
 
-		fn := createTestFunction(t, db)
-		_, err := db.CreateVersion(context.Background(), fn.ID, `
+		fn := createTestFunction(t, database)
+		_, err := database.CreateVersion(context.Background(), fn.ID, `
 function handler(ctx, event)
   return {
     statusCode = 200,
@@ -808,7 +809,7 @@ end
 }
 
 func TestCORSMiddleware(t *testing.T) {
-	server := createTestServer(NewMemoryDB())
+	server := createTestServer(store.NewMemoryDB())
 
 	req := makeAuthRequest(http.MethodOptions, "/api/functions", nil)
 	w := httptest.NewRecorder()

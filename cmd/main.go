@@ -17,6 +17,7 @@ import (
 	"github.com/dimiro1/faas-go/internal/kv"
 	"github.com/dimiro1/faas-go/internal/logger"
 	"github.com/dimiro1/faas-go/internal/migrate"
+	store "github.com/dimiro1/faas-go/internal/store"
 	_ "modernc.org/sqlite"
 )
 
@@ -56,7 +57,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	apiDB := api.NewSQLiteDB(db)
+	apiDB := store.NewSQLiteDB(db)
 	kvStore := kv.NewSQLiteStore(db)
 	envStore := env.NewSQLiteStore(db)
 	appLogger := logger.NewSQLiteLogger(db)

@@ -15,12 +15,13 @@ import (
 	"github.com/dimiro1/faas-go/internal/kv"
 	"github.com/dimiro1/faas-go/internal/logger"
 	"github.com/dimiro1/faas-go/internal/runner"
+	"github.com/dimiro1/faas-go/internal/store"
 	"github.com/rs/xid"
 )
 
 // ExecuteFunctionDeps holds dependencies for executing functions
 type ExecuteFunctionDeps struct {
-	DB               DB
+	DB               store.DB
 	Logger           logger.Logger
 	KVStore          kv.Store
 	EnvStore         env.Store
@@ -43,8 +44,8 @@ func writeError(w http.ResponseWriter, status int, message string) {
 	writeJSON(w, status, map[string]string{"error": message})
 }
 
-func parsePaginationParams(r *http.Request) PaginationParams {
-	params := PaginationParams{
+func parsePaginationParams(r *http.Request) store.PaginationParams {
+	params := store.PaginationParams{
 		Limit:  20, // Default
 		Offset: 0,  // Default
 	}
@@ -94,7 +95,7 @@ func generateDiff(oldCode, newCode string, oldVersion, newVersion int) VersionDi
 // Functional handler factories - each handler explicitly declares its dependencies
 
 // CreateFunctionHandler returns a handler for creating functions
-func CreateFunctionHandler(db DB) http.HandlerFunc {
+func CreateFunctionHandler(database store.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req CreateFunctionRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -112,28 +113,28 @@ func CreateFunctionHandler(db DB) http.HandlerFunc {
 		functionID := generateID()
 
 		// Create the function
-		fn := Function{
+		fn := store.Function{
 			ID:          functionID,
 			Name:        req.Name,
 			Description: req.Description,
 			EnvVars:     make(map[string]string),
 		}
 
-		createdFn, err := db.CreateFunction(r.Context(), fn)
+		createdFn, err := database.CreateFunction(r.Context(), fn)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "Failed to create function")
 			return
 		}
 
 		// Create the first version
-		version, err := db.CreateVersion(r.Context(), createdFn.ID, req.Code, nil)
+		version, err := database.CreateVersion(r.Context(), createdFn.ID, req.Code, nil)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "Failed to create initial version")
 			return
 		}
 
 		// Return function with active version
-		resp := FunctionWithActiveVersion{
+		resp := store.FunctionWithActiveVersion{
 			Function:      createdFn,
 			ActiveVersion: version,
 		}
@@ -143,34 +144,20 @@ func CreateFunctionHandler(db DB) http.HandlerFunc {
 }
 
 // ListFunctionsHandler returns a handler for listing functions
-func ListFunctionsHandler(db DB) http.HandlerFunc {
+func ListFunctionsHandler(database store.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := parsePaginationParams(r)
 
-		functions, total, err := db.ListFunctions(r.Context(), params)
+		functions, total, err := database.ListFunctions(r.Context(), params)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "Failed to list functions")
 			return
 		}
 
-		// Get active versions for each function
-		functionsWithVersions := make([]FunctionWithActiveVersion, 0, len(functions))
-		for _, fn := range functions {
-			activeVersion, err := db.GetActiveVersion(r.Context(), fn.ID)
-			if err != nil {
-				// Skip functions without active versions
-				continue
-			}
-			functionsWithVersions = append(functionsWithVersions, FunctionWithActiveVersion{
-				Function:      fn,
-				ActiveVersion: activeVersion,
-			})
-		}
-
 		params = params.Normalize()
 		resp := PaginatedFunctionsResponse{
-			Functions: functionsWithVersions,
-			Pagination: PaginationInfo{
+			Functions: functions,
+			Pagination: store.PaginationInfo{
 				Total:  total,
 				Limit:  params.Limit,
 				Offset: params.Offset,
@@ -182,17 +169,17 @@ func ListFunctionsHandler(db DB) http.HandlerFunc {
 }
 
 // GetFunctionHandler returns a handler for getting a specific function
-func GetFunctionHandler(db DB, envStore env.Store) http.HandlerFunc {
+func GetFunctionHandler(database store.DB, envStore env.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 
-		fn, err := db.GetFunction(r.Context(), id)
+		fn, err := database.GetFunction(r.Context(), id)
 		if err != nil {
 			writeError(w, http.StatusNotFound, "Function not found")
 			return
 		}
 
-		activeVersion, err := db.GetActiveVersion(r.Context(), id)
+		activeVersion, err := database.GetActiveVersion(r.Context(), id)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "No active version found")
 			return
@@ -206,7 +193,7 @@ func GetFunctionHandler(db DB, envStore env.Store) http.HandlerFunc {
 		}
 		fn.EnvVars = envVars
 
-		resp := FunctionWithActiveVersion{
+		resp := store.FunctionWithActiveVersion{
 			Function:      fn,
 			ActiveVersion: activeVersion,
 		}
@@ -216,11 +203,11 @@ func GetFunctionHandler(db DB, envStore env.Store) http.HandlerFunc {
 }
 
 // UpdateFunctionHandler returns a handler for updating functions
-func UpdateFunctionHandler(db DB) http.HandlerFunc {
+func UpdateFunctionHandler(database store.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 
-		var req UpdateFunctionRequest
+		var req store.UpdateFunctionRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeError(w, http.StatusBadRequest, "Invalid request body")
 			return
@@ -234,7 +221,7 @@ func UpdateFunctionHandler(db DB) http.HandlerFunc {
 
 		// If code is provided, create a new version
 		if req.Code != nil {
-			_, err := db.CreateVersion(r.Context(), id, *req.Code, nil)
+			_, err := database.CreateVersion(r.Context(), id, *req.Code, nil)
 			if err != nil {
 				writeError(w, http.StatusInternalServerError, "Failed to create new version")
 				return
@@ -243,7 +230,7 @@ func UpdateFunctionHandler(db DB) http.HandlerFunc {
 
 		// If metadata is provided, update the function
 		if req.Name != nil || req.Description != nil {
-			err := db.UpdateFunction(r.Context(), id, req)
+			err := database.UpdateFunction(r.Context(), id, req)
 			if err != nil {
 				writeError(w, http.StatusNotFound, "Function not found")
 				return
@@ -255,11 +242,11 @@ func UpdateFunctionHandler(db DB) http.HandlerFunc {
 }
 
 // DeleteFunctionHandler returns a handler for deleting functions
-func DeleteFunctionHandler(db DB) http.HandlerFunc {
+func DeleteFunctionHandler(database store.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 
-		if err := db.DeleteFunction(r.Context(), id); err != nil {
+		if err := database.DeleteFunction(r.Context(), id); err != nil {
 			writeError(w, http.StatusInternalServerError, "Failed to delete function")
 			return
 		}
@@ -269,7 +256,7 @@ func DeleteFunctionHandler(db DB) http.HandlerFunc {
 }
 
 // UpdateEnvVarsHandler returns a handler for updating environment variables
-func UpdateEnvVarsHandler(db DB, envStore env.Store) http.HandlerFunc {
+func UpdateEnvVarsHandler(database store.DB, envStore env.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 
@@ -286,7 +273,7 @@ func UpdateEnvVarsHandler(db DB, envStore env.Store) http.HandlerFunc {
 		}
 
 		// Verify function exists
-		_, err := db.GetFunction(r.Context(), id)
+		_, err := database.GetFunction(r.Context(), id)
 		if err != nil {
 			writeError(w, http.StatusNotFound, "Function not found")
 			return
@@ -318,7 +305,7 @@ func UpdateEnvVarsHandler(db DB, envStore env.Store) http.HandlerFunc {
 		}
 
 		// Get the active version to return
-		activeVersion, err := db.GetActiveVersion(r.Context(), id)
+		activeVersion, err := database.GetActiveVersion(r.Context(), id)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "Failed to get active version")
 			return
@@ -329,18 +316,18 @@ func UpdateEnvVarsHandler(db DB, envStore env.Store) http.HandlerFunc {
 }
 
 // ListVersionsHandler returns a handler for listing function versions
-func ListVersionsHandler(db DB) http.HandlerFunc {
+func ListVersionsHandler(database store.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 		params := parsePaginationParams(r)
 
 		// Verify function exists
-		if _, err := db.GetFunction(r.Context(), id); err != nil {
+		if _, err := database.GetFunction(r.Context(), id); err != nil {
 			writeError(w, http.StatusNotFound, "Function not found")
 			return
 		}
 
-		versions, total, err := db.ListVersions(r.Context(), id, params)
+		versions, total, err := database.ListVersions(r.Context(), id, params)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "Failed to list versions")
 			return
@@ -349,7 +336,7 @@ func ListVersionsHandler(db DB) http.HandlerFunc {
 		params = params.Normalize()
 		resp := PaginatedVersionsResponse{
 			Versions: versions,
-			Pagination: PaginationInfo{
+			Pagination: store.PaginationInfo{
 				Total:  total,
 				Limit:  params.Limit,
 				Offset: params.Offset,
@@ -361,7 +348,7 @@ func ListVersionsHandler(db DB) http.HandlerFunc {
 }
 
 // GetVersionHandler returns a handler for getting a specific version
-func GetVersionHandler(db DB) http.HandlerFunc {
+func GetVersionHandler(database store.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 		versionStr := r.PathValue("version")
@@ -373,7 +360,7 @@ func GetVersionHandler(db DB) http.HandlerFunc {
 			return
 		}
 
-		version, err := db.GetVersion(r.Context(), id, versionNum)
+		version, err := database.GetVersion(r.Context(), id, versionNum)
 		if err != nil {
 			writeError(w, http.StatusNotFound, "Version not found")
 			return
@@ -384,7 +371,7 @@ func GetVersionHandler(db DB) http.HandlerFunc {
 }
 
 // ActivateVersionHandler returns a handler for activating a version
-func ActivateVersionHandler(db DB) http.HandlerFunc {
+func ActivateVersionHandler(database store.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 		versionStr := r.PathValue("version")
@@ -397,7 +384,7 @@ func ActivateVersionHandler(db DB) http.HandlerFunc {
 		}
 
 		// Activate the version
-		if err := db.ActivateVersion(r.Context(), id, versionNum); err != nil {
+		if err := database.ActivateVersion(r.Context(), id, versionNum); err != nil {
 			writeError(w, http.StatusNotFound, "Version not found")
 			return
 		}
@@ -407,7 +394,7 @@ func ActivateVersionHandler(db DB) http.HandlerFunc {
 }
 
 // GetVersionDiffHandler returns a handler for getting diff between versions
-func GetVersionDiffHandler(db DB) http.HandlerFunc {
+func GetVersionDiffHandler(database store.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 		v1Str := r.PathValue("v1")
@@ -427,13 +414,13 @@ func GetVersionDiffHandler(db DB) http.HandlerFunc {
 		}
 
 		// Get both versions from the database
-		version1, err := db.GetVersion(r.Context(), id, v1)
+		version1, err := database.GetVersion(r.Context(), id, v1)
 		if err != nil {
 			writeError(w, http.StatusNotFound, "Version v1 not found")
 			return
 		}
 
-		version2, err := db.GetVersion(r.Context(), id, v2)
+		version2, err := database.GetVersion(r.Context(), id, v2)
 		if err != nil {
 			writeError(w, http.StatusNotFound, "Version v2 not found")
 			return
@@ -447,18 +434,18 @@ func GetVersionDiffHandler(db DB) http.HandlerFunc {
 }
 
 // ListExecutionsHandler returns a handler for listing executions
-func ListExecutionsHandler(db DB) http.HandlerFunc {
+func ListExecutionsHandler(database store.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 		params := parsePaginationParams(r)
 
 		// Verify function exists
-		if _, err := db.GetFunction(r.Context(), id); err != nil {
+		if _, err := database.GetFunction(r.Context(), id); err != nil {
 			writeError(w, http.StatusNotFound, "Function not found")
 			return
 		}
 
-		executions, total, err := db.ListExecutions(r.Context(), id, params)
+		executions, total, err := database.ListExecutions(r.Context(), id, params)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "Failed to list executions")
 			return
@@ -467,7 +454,7 @@ func ListExecutionsHandler(db DB) http.HandlerFunc {
 		params = params.Normalize()
 		resp := PaginatedExecutionsResponse{
 			Executions: executions,
-			Pagination: PaginationInfo{
+			Pagination: store.PaginationInfo{
 				Total:  total,
 				Limit:  params.Limit,
 				Offset: params.Offset,
@@ -479,11 +466,11 @@ func ListExecutionsHandler(db DB) http.HandlerFunc {
 }
 
 // GetExecutionHandler returns a handler for getting a specific execution
-func GetExecutionHandler(db DB) http.HandlerFunc {
+func GetExecutionHandler(database store.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 
-		execution, err := db.GetExecution(r.Context(), id)
+		execution, err := database.GetExecution(r.Context(), id)
 		if err != nil {
 			writeError(w, http.StatusNotFound, "Execution not found")
 			return
@@ -494,13 +481,13 @@ func GetExecutionHandler(db DB) http.HandlerFunc {
 }
 
 // GetExecutionLogsHandler returns a handler for getting execution logs
-func GetExecutionLogsHandler(db DB, appLogger logger.Logger) http.HandlerFunc {
+func GetExecutionLogsHandler(database store.DB, appLogger logger.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 		params := parsePaginationParams(r)
 
 		// Get the execution
-		execution, err := db.GetExecution(r.Context(), id)
+		execution, err := database.GetExecution(r.Context(), id)
 		if err != nil {
 			writeError(w, http.StatusNotFound, "Execution not found")
 			return
@@ -538,7 +525,7 @@ func GetExecutionLogsHandler(db DB, appLogger logger.Logger) http.HandlerFunc {
 		resp := PaginatedExecutionWithLogs{
 			Execution: execution,
 			Logs:      apiLogs,
-			Pagination: PaginationInfo{
+			Pagination: store.PaginationInfo{
 				Total:  total,
 				Limit:  params.Limit,
 				Offset: params.Offset,
@@ -610,11 +597,11 @@ func ExecuteFunctionHandler(deps ExecuteFunctionDeps) http.HandlerFunc {
 		}
 
 		// Create execution record
-		execution := Execution{
+		execution := store.Execution{
 			ID:                executionID,
 			FunctionID:        functionID,
 			FunctionVersionID: version.ID,
-			Status:            ExecutionStatusPending,
+			Status:            store.ExecutionStatusPending,
 		}
 
 		_, err = deps.DB.CreateExecution(r.Context(), execution)
@@ -646,9 +633,9 @@ func ExecuteFunctionHandler(deps ExecuteFunctionDeps) http.HandlerFunc {
 
 		// Update execution status
 		var errorMsg *string
-		status := ExecutionStatusSuccess
+		status := store.ExecutionStatusSuccess
 		if runErr != nil {
-			status = ExecutionStatusError
+			status = store.ExecutionStatusError
 			errStr := runErr.Error()
 			errorMsg = &errStr
 		}

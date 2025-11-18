@@ -3,6 +3,8 @@ package api
 import (
 	"strings"
 	"testing"
+
+	"github.com/dimiro1/faas-go/internal/store"
 )
 
 func TestValidateCreateFunctionRequest(t *testing.T) {
@@ -118,27 +120,27 @@ func TestValidateCreateFunctionRequest(t *testing.T) {
 func TestValidateUpdateFunctionRequest(t *testing.T) {
 	tests := []struct {
 		name    string
-		req     *UpdateFunctionRequest
+		req     *store.UpdateFunctionRequest
 		wantErr bool
 		errMsg  string
 	}{
 		{
 			name: "valid request with name",
-			req: &UpdateFunctionRequest{
+			req: &store.UpdateFunctionRequest{
 				Name: strPtr("new-name"),
 			},
 			wantErr: false,
 		},
 		{
 			name: "valid request with code",
-			req: &UpdateFunctionRequest{
+			req: &store.UpdateFunctionRequest{
 				Code: strPtr("function handler() end"),
 			},
 			wantErr: false,
 		},
 		{
 			name: "valid request with all fields",
-			req: &UpdateFunctionRequest{
+			req: &store.UpdateFunctionRequest{
 				Name:        strPtr("new-name"),
 				Description: strPtr("new description"),
 				Code:        strPtr("function handler() end"),
@@ -153,13 +155,13 @@ func TestValidateUpdateFunctionRequest(t *testing.T) {
 		},
 		{
 			name:    "empty request",
-			req:     &UpdateFunctionRequest{},
+			req:     &store.UpdateFunctionRequest{},
 			wantErr: true,
 			errMsg:  "at least one field must be provided",
 		},
 		{
 			name: "invalid name",
-			req: &UpdateFunctionRequest{
+			req: &store.UpdateFunctionRequest{
 				Name: strPtr(""),
 			},
 			wantErr: true,
@@ -167,7 +169,7 @@ func TestValidateUpdateFunctionRequest(t *testing.T) {
 		},
 		{
 			name: "invalid code",
-			req: &UpdateFunctionRequest{
+			req: &store.UpdateFunctionRequest{
 				Code: strPtr(""),
 			},
 			wantErr: true,

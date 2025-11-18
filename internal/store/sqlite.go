@@ -1,4 +1,4 @@
-package api
+package store
 
 import (
 	"context"
@@ -66,7 +66,7 @@ func (db *SQLiteDB) GetFunction(ctx context.Context, id string) (Function, error
 	return fn, nil
 }
 
-func (db *SQLiteDB) ListFunctions(ctx context.Context, params PaginationParams) ([]Function, int64, error) {
+func (db *SQLiteDB) ListFunctions(ctx context.Context, params PaginationParams) ([]FunctionWithActiveVersion, int64, error) {
 	// Get total count
 	var total int64
 	err := db.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM functions`).Scan(&total)
@@ -77,10 +77,13 @@ func (db *SQLiteDB) ListFunctions(ctx context.Context, params PaginationParams) 
 	// Normalize pagination parameters
 	params = params.Normalize()
 
-	query := `SELECT id, name, description, created_at, updated_at
-	          FROM functions
-	          ORDER BY created_at DESC
-	          LIMIT ? OFFSET ?`
+	query := `SELECT
+		f.id, f.name, f.description, f.created_at, f.updated_at,
+		fv.id, fv.version, fv.code, fv.created_at, fv.created_by
+	FROM functions f
+	LEFT JOIN function_versions fv ON f.id = fv.function_id AND fv.is_active = 1
+	ORDER BY f.created_at DESC
+	LIMIT ? OFFSET ?`
 
 	rows, err := db.db.QueryContext(ctx, query, params.Limit, params.Offset)
 	if err != nil {
@@ -88,12 +91,19 @@ func (db *SQLiteDB) ListFunctions(ctx context.Context, params PaginationParams) 
 	}
 	defer func() { _ = rows.Close() }()
 
-	var functions []Function
+	var functions []FunctionWithActiveVersion
 	for rows.Next() {
-		var fn Function
+		var fn FunctionWithActiveVersion
 		var description sql.NullString
+		var versionID, versionCode sql.NullString
+		var versionNum sql.NullInt64
+		var versionCreatedAt sql.NullInt64
+		var versionCreatedBy sql.NullString
 
-		if err := rows.Scan(&fn.ID, &fn.Name, &description, &fn.CreatedAt, &fn.UpdatedAt); err != nil {
+		if err := rows.Scan(
+			&fn.ID, &fn.Name, &description, &fn.CreatedAt, &fn.UpdatedAt,
+			&versionID, &versionNum, &versionCode, &versionCreatedAt, &versionCreatedBy,
+		); err != nil {
 			return nil, 0, fmt.Errorf("failed to scan function: %w", err)
 		}
 
@@ -102,6 +112,21 @@ func (db *SQLiteDB) ListFunctions(ctx context.Context, params PaginationParams) 
 		}
 
 		fn.EnvVars = make(map[string]string)
+
+		// Set active version if it exists
+		if versionID.Valid {
+			fn.ActiveVersion = FunctionVersion{
+				ID:         versionID.String,
+				FunctionID: fn.ID,
+				Version:    int(versionNum.Int64),
+				Code:       versionCode.String,
+				CreatedAt:  versionCreatedAt.Int64,
+				IsActive:   true,
+			}
+			if versionCreatedBy.Valid {
+				fn.ActiveVersion.CreatedBy = &versionCreatedBy.String
+			}
+		}
 
 		functions = append(functions, fn)
 	}
