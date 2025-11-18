@@ -196,28 +196,6 @@ func NewSQLiteLogger(db *sql.DB) *SQLiteLogger {
 	return &SQLiteLogger{db: db}
 }
 
-// Migrate runs the database migration for the logger
-func Migrate(db *sql.DB) error {
-	schema := `
-	CREATE TABLE IF NOT EXISTS logs (
-		id TEXT PRIMARY KEY,
-		execution_id TEXT NOT NULL,
-		level INTEGER NOT NULL,
-		message TEXT NOT NULL,
-		timestamp INTEGER NOT NULL
-	);
-	CREATE INDEX IF NOT EXISTS idx_logs_execution_id ON logs(execution_id);
-	CREATE INDEX IF NOT EXISTS idx_logs_level ON logs(level);
-	CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON logs(timestamp);
-	`
-
-	if _, err := db.Exec(schema); err != nil {
-		return fmt.Errorf("failed to create schema: %w", err)
-	}
-
-	return nil
-}
-
 // Log records a log entry with the specified executionID, level and message
 func (s *SQLiteLogger) Log(executionID string, level LogLevel, message string) {
 	id := xid.New().String()

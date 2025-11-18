@@ -16,6 +16,7 @@ import (
 	internalhttp "github.com/dimiro1/faas-go/internal/http"
 	"github.com/dimiro1/faas-go/internal/kv"
 	"github.com/dimiro1/faas-go/internal/logger"
+	"github.com/dimiro1/faas-go/internal/migrate"
 	_ "modernc.org/sqlite"
 )
 
@@ -49,24 +50,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	slog.Info("Running database migrations")
-	if err := kv.Migrate(db); err != nil {
-		slog.Error("Failed to run KV migrations", "error", err)
+	// Run database migrations
+	if err := migrate.Run(db, migrate.FS); err != nil {
+		slog.Error("Failed to run database migrations", "error", err)
 		os.Exit(1)
 	}
-	if err := env.Migrate(db); err != nil {
-		slog.Error("Failed to run env migrations", "error", err)
-		os.Exit(1)
-	}
-	if err := logger.Migrate(db); err != nil {
-		slog.Error("Failed to run logger migrations", "error", err)
-		os.Exit(1)
-	}
-	if err := api.Migrate(db); err != nil {
-		slog.Error("Failed to run API migrations", "error", err)
-		os.Exit(1)
-	}
-	slog.Info("Migrations completed successfully")
 
 	apiDB := api.NewSQLiteDB(db)
 	kvStore := kv.NewSQLiteStore(db)

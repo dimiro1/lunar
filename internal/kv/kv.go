@@ -75,25 +75,6 @@ func NewSQLiteStore(db *sql.DB) *SQLiteStore {
 	return &SQLiteStore{db: db}
 }
 
-// Migrate runs the database migration for the KV store
-func Migrate(db *sql.DB) error {
-	schema := `
-	CREATE TABLE IF NOT EXISTS kv_store (
-		function_id TEXT NOT NULL,
-		key TEXT NOT NULL,
-		value TEXT NOT NULL,
-		PRIMARY KEY (function_id, key)
-	);
-	CREATE INDEX IF NOT EXISTS idx_function_id ON kv_store(function_id);
-	`
-
-	if _, err := db.Exec(schema); err != nil {
-		return fmt.Errorf("failed to create schema: %w", err)
-	}
-
-	return nil
-}
-
 // Get retrieves a value by functionID and key
 func (s *SQLiteStore) Get(functionID, key string) (string, error) {
 	var value string

@@ -19,54 +19,6 @@ func NewSQLiteDB(db *sql.DB) *SQLiteDB {
 	return &SQLiteDB{db: db}
 }
 
-// Migrate runs the database migration for the API
-func Migrate(db *sql.DB) error {
-	schema := `
-	CREATE TABLE IF NOT EXISTS functions (
-		id TEXT PRIMARY KEY,
-		name TEXT NOT NULL,
-		description TEXT,
-		created_at INTEGER NOT NULL,
-		updated_at INTEGER NOT NULL
-	);
-
-	CREATE TABLE IF NOT EXISTS function_versions (
-		id TEXT PRIMARY KEY,
-		function_id TEXT NOT NULL,
-		version INTEGER NOT NULL,
-		code TEXT NOT NULL,
-		created_at INTEGER NOT NULL,
-		created_by TEXT,
-		is_active INTEGER NOT NULL DEFAULT 0,
-		FOREIGN KEY (function_id) REFERENCES functions(id) ON DELETE CASCADE,
-		UNIQUE(function_id, version)
-	);
-
-	CREATE INDEX IF NOT EXISTS idx_function_versions_function_id ON function_versions(function_id);
-	CREATE INDEX IF NOT EXISTS idx_function_versions_active ON function_versions(function_id, is_active);
-
-	CREATE TABLE IF NOT EXISTS executions (
-		id TEXT PRIMARY KEY,
-		function_id TEXT NOT NULL,
-		function_version_id TEXT NOT NULL,
-		status TEXT NOT NULL,
-		duration_ms INTEGER,
-		error_message TEXT,
-		created_at INTEGER NOT NULL,
-		FOREIGN KEY (function_id) REFERENCES functions(id) ON DELETE CASCADE,
-		FOREIGN KEY (function_version_id) REFERENCES function_versions(id) ON DELETE CASCADE
-	);
-
-	CREATE INDEX IF NOT EXISTS idx_executions_function_id ON executions(function_id);
-	`
-
-	if _, err := db.Exec(schema); err != nil {
-		return fmt.Errorf("failed to create schema: %w", err)
-	}
-
-	return nil
-}
-
 // Function operations
 
 func (db *SQLiteDB) CreateFunction(ctx context.Context, fn Function) (Function, error) {

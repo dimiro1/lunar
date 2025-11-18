@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/dimiro1/faas-go/internal/migrate"
 	_ "modernc.org/sqlite"
 )
 
@@ -21,10 +22,7 @@ func setupTestDB(t *testing.T) *sql.DB {
 		t.Fatalf("Failed to open database: %v", err)
 	}
 
-	if err := Migrate(db); err != nil {
-		_ = db.Close()
-		t.Fatalf("Failed to run migrations: %v", err)
-	}
+	migrate.RunTest(t, db)
 
 	t.Cleanup(func() {
 		_ = db.Close()

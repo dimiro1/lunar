@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dimiro1/faas-go/internal/migrate"
 	_ "modernc.org/sqlite"
 )
 
@@ -21,9 +22,7 @@ func setupTestDB(t *testing.T) (*sql.DB, *SQLiteDB) {
 		t.Fatalf("Failed to enable foreign keys: %v", err)
 	}
 
-	if err := Migrate(db); err != nil {
-		t.Fatalf("Failed to migrate database: %v", err)
-	}
+	migrate.RunTest(t, db)
 
 	return db, NewSQLiteDB(db)
 }
