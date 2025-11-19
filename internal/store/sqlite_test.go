@@ -950,6 +950,252 @@ func TestSQLiteDB_ListFunctions_IncludesDisabledStatus(t *testing.T) {
 	}
 }
 
+// Event JSON tests
+
+func TestSQLiteDB_CreateExecution_WithEventJSON(t *testing.T) {
+	db, sqliteDB := setupTestDB(t)
+	defer func() { _ = db.Close() }()
+
+	ctx := context.Background()
+
+	// Create function and version
+	fn := Function{
+		ID:      "func_event_json",
+		Name:    "event-json-test",
+		EnvVars: make(map[string]string),
+	}
+
+	if _, err := sqliteDB.CreateFunction(ctx, fn); err != nil {
+		t.Fatalf("CreateFunction failed: %v", err)
+	}
+
+	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	if err != nil {
+		t.Fatalf("CreateVersion failed: %v", err)
+	}
+
+	// Create execution with event JSON
+	eventJSON := `{"method":"POST","path":"/api/test","headers":{"Content-Type":"application/json"},"body":"test data","query":{}}`
+	exec := Execution{
+		ID:                "exec_with_event",
+		FunctionID:        fn.ID,
+		FunctionVersionID: ver.ID,
+		Status:            ExecutionStatusPending,
+		EventJSON:         &eventJSON,
+	}
+
+	created, err := sqliteDB.CreateExecution(ctx, exec)
+	if err != nil {
+		t.Fatalf("CreateExecution failed: %v", err)
+	}
+
+	if created.ID != exec.ID {
+		t.Errorf("Expected ID %s, got %s", exec.ID, created.ID)
+	}
+	if created.EventJSON == nil {
+		t.Fatal("Expected EventJSON to be set")
+	}
+	if *created.EventJSON != eventJSON {
+		t.Errorf("Expected EventJSON %s, got %s", eventJSON, *created.EventJSON)
+	}
+}
+
+func TestSQLiteDB_GetExecution_WithEventJSON(t *testing.T) {
+	db, sqliteDB := setupTestDB(t)
+	defer func() { _ = db.Close() }()
+
+	ctx := context.Background()
+
+	// Create function, version, and execution
+	fn := Function{
+		ID:      "func_get_event_json",
+		Name:    "get-event-json-test",
+		EnvVars: make(map[string]string),
+	}
+
+	if _, err := sqliteDB.CreateFunction(ctx, fn); err != nil {
+		t.Fatalf("CreateFunction failed: %v", err)
+	}
+
+	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	if err != nil {
+		t.Fatalf("CreateVersion failed: %v", err)
+	}
+
+	eventJSON := `{"method":"GET","path":"/api/users","headers":{"Authorization":"Bearer token"},"body":"","query":{"limit":"10"}}`
+	exec := Execution{
+		ID:                "exec_get_event",
+		FunctionID:        fn.ID,
+		FunctionVersionID: ver.ID,
+		Status:            ExecutionStatusSuccess,
+		EventJSON:         &eventJSON,
+	}
+
+	if _, err := sqliteDB.CreateExecution(ctx, exec); err != nil {
+		t.Fatalf("CreateExecution failed: %v", err)
+	}
+
+	// Get execution
+	retrieved, err := sqliteDB.GetExecution(ctx, exec.ID)
+	if err != nil {
+		t.Fatalf("GetExecution failed: %v", err)
+	}
+
+	if retrieved.EventJSON == nil {
+		t.Fatal("Expected EventJSON to be set")
+	}
+	if *retrieved.EventJSON != eventJSON {
+		t.Errorf("Expected EventJSON %s, got %s", eventJSON, *retrieved.EventJSON)
+	}
+}
+
+func TestSQLiteDB_GetExecution_WithoutEventJSON(t *testing.T) {
+	db, sqliteDB := setupTestDB(t)
+	defer func() { _ = db.Close() }()
+
+	ctx := context.Background()
+
+	// Create function, version, and execution without event JSON
+	fn := Function{
+		ID:      "func_no_event_json",
+		Name:    "no-event-json-test",
+		EnvVars: make(map[string]string),
+	}
+
+	if _, err := sqliteDB.CreateFunction(ctx, fn); err != nil {
+		t.Fatalf("CreateFunction failed: %v", err)
+	}
+
+	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	if err != nil {
+		t.Fatalf("CreateVersion failed: %v", err)
+	}
+
+	exec := Execution{
+		ID:                "exec_no_event",
+		FunctionID:        fn.ID,
+		FunctionVersionID: ver.ID,
+		Status:            ExecutionStatusSuccess,
+		EventJSON:         nil, // No event JSON
+	}
+
+	if _, err := sqliteDB.CreateExecution(ctx, exec); err != nil {
+		t.Fatalf("CreateExecution failed: %v", err)
+	}
+
+	// Get execution
+	retrieved, err := sqliteDB.GetExecution(ctx, exec.ID)
+	if err != nil {
+		t.Fatalf("GetExecution failed: %v", err)
+	}
+
+	if retrieved.EventJSON != nil {
+		t.Errorf("Expected EventJSON to be nil, got %v", *retrieved.EventJSON)
+	}
+}
+
+func TestSQLiteDB_ListExecutions_WithEventJSON(t *testing.T) {
+	db, sqliteDB := setupTestDB(t)
+	defer func() { _ = db.Close() }()
+
+	ctx := context.Background()
+
+	// Create function and version
+	fn := Function{
+		ID:      "func_list_event_json",
+		Name:    "list-event-json-test",
+		EnvVars: make(map[string]string),
+	}
+
+	if _, err := sqliteDB.CreateFunction(ctx, fn); err != nil {
+		t.Fatalf("CreateFunction failed: %v", err)
+	}
+
+	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	if err != nil {
+		t.Fatalf("CreateVersion failed: %v", err)
+	}
+
+	// Create multiple executions with event JSON
+	eventJSON1 := `{"method":"POST","path":"/api/v1","headers":{},"body":"data1","query":{}}`
+	eventJSON2 := `{"method":"GET","path":"/api/v2","headers":{},"body":"","query":{"id":"123"}}`
+
+	exec1 := Execution{
+		ID:                "exec_list_1",
+		FunctionID:        fn.ID,
+		FunctionVersionID: ver.ID,
+		Status:            ExecutionStatusSuccess,
+		EventJSON:         &eventJSON1,
+	}
+
+	exec2 := Execution{
+		ID:                "exec_list_2",
+		FunctionID:        fn.ID,
+		FunctionVersionID: ver.ID,
+		Status:            ExecutionStatusSuccess,
+		EventJSON:         &eventJSON2,
+	}
+
+	// Create execution without event JSON
+	exec3 := Execution{
+		ID:                "exec_list_3",
+		FunctionID:        fn.ID,
+		FunctionVersionID: ver.ID,
+		Status:            ExecutionStatusSuccess,
+		EventJSON:         nil,
+	}
+
+	if _, err := sqliteDB.CreateExecution(ctx, exec1); err != nil {
+		t.Fatalf("CreateExecution 1 failed: %v", err)
+	}
+	if _, err := sqliteDB.CreateExecution(ctx, exec2); err != nil {
+		t.Fatalf("CreateExecution 2 failed: %v", err)
+	}
+	if _, err := sqliteDB.CreateExecution(ctx, exec3); err != nil {
+		t.Fatalf("CreateExecution 3 failed: %v", err)
+	}
+
+	// List executions
+	params := PaginationParams{Limit: 10, Offset: 0}
+	executions, total, err := sqliteDB.ListExecutions(ctx, fn.ID, params)
+	if err != nil {
+		t.Fatalf("ListExecutions failed: %v", err)
+	}
+
+	if total != 3 {
+		t.Errorf("Expected total 3, got %d", total)
+	}
+	if len(executions) != 3 {
+		t.Fatalf("Expected 3 executions, got %d", len(executions))
+	}
+
+	// Verify event JSON is included in results
+	foundWithEvent := 0
+	foundWithoutEvent := 0
+
+	for _, exec := range executions {
+		if exec.EventJSON != nil {
+			foundWithEvent++
+			// Verify the content matches
+			if exec.ID == "exec_list_1" && *exec.EventJSON != eventJSON1 {
+				t.Errorf("Expected EventJSON %s, got %s", eventJSON1, *exec.EventJSON)
+			}
+			if exec.ID == "exec_list_2" && *exec.EventJSON != eventJSON2 {
+				t.Errorf("Expected EventJSON %s, got %s", eventJSON2, *exec.EventJSON)
+			}
+		} else {
+			foundWithoutEvent++
+		}
+	}
+
+	if foundWithEvent != 2 {
+		t.Errorf("Expected 2 executions with EventJSON, got %d", foundWithEvent)
+	}
+	if foundWithoutEvent != 1 {
+		t.Errorf("Expected 1 execution without EventJSON, got %d", foundWithoutEvent)
+	}
+}
+
 // Health check test
 
 func TestSQLiteDB_Ping(t *testing.T) {

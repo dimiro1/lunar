@@ -939,3 +939,174 @@ func TestCORSMiddleware(t *testing.T) {
 		t.Error("expected CORS headers")
 	}
 }
+
+func TestExecuteFunction_EventJSONStorage(t *testing.T) {
+	database := store.NewMemoryDB()
+	server := NewServer(ServerConfig{
+		DB:         database,
+		Logger:     logger.NewMemoryLogger(),
+		KVStore:    kv.NewMemoryStore(),
+		EnvStore:   env.NewMemoryStore(),
+		HTTPClient: internalhttp.NewDefaultClient(),
+		APIKey:     "test-api-key",
+	})
+
+	fn := createTestFunction(t, database)
+	_, err := database.CreateVersion(context.Background(), fn.ID, `
+function handler(ctx, event)
+  return {
+    statusCode = 200,
+    body = '{"message": "success"}'
+  }
+end
+`, nil)
+	if err != nil {
+		t.Fatalf("Failed to create version: %v", err)
+	}
+
+	// Create a request with specific headers, query params, and body
+	requestBody := `{"test": "data", "number": 42}`
+	req := httptest.NewRequest(http.MethodPost, "/fn/"+fn.ID+"?param1=value1&param2=value2", bytes.NewReader([]byte(requestBody)))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Custom-Header", "custom-value")
+	req.Header.Set("Authorization", "Bearer test-token")
+
+	w := httptest.NewRecorder()
+	server.Handler().ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	// Get the execution ID from the response header
+	executionID := w.Header().Get("X-Execution-Id")
+	if executionID == "" {
+		t.Fatal("expected X-Execution-Id header")
+	}
+
+	// Retrieve the execution from the database
+	execution, err := database.GetExecution(context.Background(), executionID)
+	if err != nil {
+		t.Fatalf("Failed to get execution: %v", err)
+	}
+
+	// Verify event JSON was stored
+	if execution.EventJSON == nil {
+		t.Fatal("Expected EventJSON to be stored")
+	}
+
+	// Parse and verify the event JSON content
+	var eventData map[string]interface{}
+	if err := json.Unmarshal([]byte(*execution.EventJSON), &eventData); err != nil {
+		t.Fatalf("Failed to parse event JSON: %v", err)
+	}
+
+	// Verify method
+	if method, ok := eventData["method"].(string); !ok || method != "POST" {
+		t.Errorf("Expected method POST, got %v", eventData["method"])
+	}
+
+	// Verify path
+	if path, ok := eventData["path"].(string); !ok || path != "/fn/"+fn.ID {
+		t.Errorf("Expected path /fn/%s, got %v", fn.ID, eventData["path"])
+	}
+
+	// Verify body
+	if body, ok := eventData["body"].(string); !ok || body != requestBody {
+		t.Errorf("Expected body %s, got %v", requestBody, eventData["body"])
+	}
+
+	// Verify headers are present
+	headers, ok := eventData["headers"].(map[string]interface{})
+	if !ok {
+		t.Fatal("Expected headers to be present")
+	}
+
+	if contentType, ok := headers["Content-Type"].(string); !ok || contentType != "application/json" {
+		t.Errorf("Expected Content-Type header, got %v", headers["Content-Type"])
+	}
+
+	if customHeader, ok := headers["X-Custom-Header"].(string); !ok || customHeader != "custom-value" {
+		t.Errorf("Expected X-Custom-Header, got %v", headers["X-Custom-Header"])
+	}
+
+	if authHeader, ok := headers["Authorization"].(string); !ok || authHeader != "Bearer test-token" {
+		t.Errorf("Expected Authorization header, got %v", headers["Authorization"])
+	}
+
+	// Verify query parameters
+	query, ok := eventData["query"].(map[string]interface{})
+	if !ok {
+		t.Fatal("Expected query to be present")
+	}
+
+	if param1, ok := query["param1"].(string); !ok || param1 != "value1" {
+		t.Errorf("Expected param1=value1, got %v", query["param1"])
+	}
+
+	if param2, ok := query["param2"].(string); !ok || param2 != "value2" {
+		t.Errorf("Expected param2=value2, got %v", query["param2"])
+	}
+}
+
+func TestExecuteFunction_EventJSONWithDifferentMethods(t *testing.T) {
+	methods := []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete}
+
+	for _, method := range methods {
+		t.Run(method, func(t *testing.T) {
+			database := store.NewMemoryDB()
+			server := NewServer(ServerConfig{
+				DB:         database,
+				Logger:     logger.NewMemoryLogger(),
+				KVStore:    kv.NewMemoryStore(),
+				EnvStore:   env.NewMemoryStore(),
+				HTTPClient: internalhttp.NewDefaultClient(),
+				APIKey:     "test-api-key",
+			})
+
+			fn := createTestFunction(t, database)
+			_, err := database.CreateVersion(context.Background(), fn.ID, `
+function handler(ctx, event)
+  return {
+    statusCode = 200,
+    body = '{"ok": true}'
+  }
+end
+`, nil)
+			if err != nil {
+				t.Fatalf("Failed to create version: %v", err)
+			}
+
+			req := httptest.NewRequest(method, "/fn/"+fn.ID, nil)
+			w := httptest.NewRecorder()
+			server.Handler().ServeHTTP(w, req)
+
+			if w.Code != http.StatusOK {
+				t.Fatalf("expected status 200, got %d", w.Code)
+			}
+
+			executionID := w.Header().Get("X-Execution-Id")
+			if executionID == "" {
+				t.Fatal("expected X-Execution-Id header")
+			}
+
+			execution, err := database.GetExecution(context.Background(), executionID)
+			if err != nil {
+				t.Fatalf("Failed to get execution: %v", err)
+			}
+
+			if execution.EventJSON == nil {
+				t.Fatal("Expected EventJSON to be stored")
+			}
+
+			var eventData map[string]interface{}
+			if err := json.Unmarshal([]byte(*execution.EventJSON), &eventData); err != nil {
+				t.Fatalf("Failed to parse event JSON: %v", err)
+			}
+
+			if eventMethod, ok := eventData["method"].(string); !ok || eventMethod != method {
+				t.Errorf("Expected method %s, got %v", method, eventData["method"])
+			}
+		})
+	}
+}

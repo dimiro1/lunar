@@ -140,6 +140,23 @@ export const ExecutionDetail = {
         ]),
       ]),
 
+      exec.event_json &&
+        m(".card.mb-24", [
+          m(".card-header", m(".card-title", "Event Data")),
+          m(
+            "pre",
+            m(
+              "code.language-json",
+              {
+                oncreate: (vnode) => {
+                  hljs.highlightElement(vnode.dom);
+                },
+              },
+              JSON.stringify(JSON.parse(exec.event_json), null, 2),
+            ),
+          ),
+        ]),
+
       ExecutionDetail.logsTotal > 0 &&
         m(".card.mb-24", [
           m(

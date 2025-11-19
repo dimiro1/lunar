@@ -602,12 +602,21 @@ func ExecuteFunctionHandler(deps ExecuteFunctionDeps) http.HandlerFunc {
 			BaseURL:     deps.BaseURL,
 		}
 
+		// Serialize the event to JSON for storage
+		eventJSONBytes, err := json.Marshal(httpEvent)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "Failed to serialize event")
+			return
+		}
+		eventJSONStr := string(eventJSONBytes)
+
 		// Create execution record
 		execution := store.Execution{
 			ID:                executionID,
 			FunctionID:        functionID,
 			FunctionVersionID: version.ID,
 			Status:            store.ExecutionStatusPending,
+			EventJSON:         &eventJSONStr,
 		}
 
 		_, err = deps.DB.CreateExecution(r.Context(), execution)

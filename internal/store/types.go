@@ -49,6 +49,7 @@ type Execution struct {
 	Status            ExecutionStatus `json:"status"`
 	DurationMs        *int64          `json:"duration_ms,omitempty"`
 	ErrorMessage      *string         `json:"error_message,omitempty"`
+	EventJSON         *string         `json:"event_json,omitempty"`
 	CreatedAt         int64           `json:"created_at"`
 }
 

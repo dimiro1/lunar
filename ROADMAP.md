@@ -18,7 +18,6 @@ Here some ideas that I want to implement, the order is not important:
 - Cron/scheduling events
 - Improve the way the state is handled in the UI
 - Re-evalute mithriljs
-- Consider store events in the execution
 - Dashboard with calls metrics
 - Consider functions implemented in webassemply (wazero)
 - Consider an api to update the function and env

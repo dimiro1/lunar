@@ -410,11 +410,11 @@ func (db *SQLiteDB) ActivateVersion(ctx context.Context, functionID string, vers
 func (db *SQLiteDB) CreateExecution(ctx context.Context, exec Execution) (Execution, error) {
 	exec.CreatedAt = time.Now().Unix()
 
-	query := `INSERT INTO executions (id, function_id, function_version_id, status, duration_ms, error_message, created_at)
-	          VALUES (?, ?, ?, ?, ?, ?, ?)`
+	query := `INSERT INTO executions (id, function_id, function_version_id, status, duration_ms, error_message, event_json, created_at)
+	          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 
 	_, err := db.db.ExecContext(ctx, query, exec.ID, exec.FunctionID, exec.FunctionVersionID,
-		exec.Status, exec.DurationMs, exec.ErrorMessage, exec.CreatedAt)
+		exec.Status, exec.DurationMs, exec.ErrorMessage, exec.EventJSON, exec.CreatedAt)
 	if err != nil {
 		return Execution{}, fmt.Errorf("failed to insert execution: %w", err)
 	}
@@ -423,16 +423,17 @@ func (db *SQLiteDB) CreateExecution(ctx context.Context, exec Execution) (Execut
 }
 
 func (db *SQLiteDB) GetExecution(ctx context.Context, executionID string) (Execution, error) {
-	query := `SELECT id, function_id, function_version_id, status, duration_ms, error_message, created_at
+	query := `SELECT id, function_id, function_version_id, status, duration_ms, error_message, event_json, created_at
 	          FROM executions WHERE id = ?`
 
 	var exec Execution
 	var durationMs sql.NullInt64
 	var errorMessage sql.NullString
+	var eventJSON sql.NullString
 
 	err := db.db.QueryRowContext(ctx, query, executionID).Scan(
 		&exec.ID, &exec.FunctionID, &exec.FunctionVersionID,
-		&exec.Status, &durationMs, &errorMessage, &exec.CreatedAt,
+		&exec.Status, &durationMs, &errorMessage, &eventJSON, &exec.CreatedAt,
 	)
 	if err == sql.ErrNoRows {
 		return Execution{}, fmt.Errorf("execution not found")
@@ -446,6 +447,9 @@ func (db *SQLiteDB) GetExecution(ctx context.Context, executionID string) (Execu
 	}
 	if errorMessage.Valid {
 		exec.ErrorMessage = &errorMessage.String
+	}
+	if eventJSON.Valid {
+		exec.EventJSON = &eventJSON.String
 	}
 
 	return exec, nil
@@ -484,7 +488,7 @@ func (db *SQLiteDB) ListExecutions(ctx context.Context, functionID string, param
 
 	query := `
 		SELECT e.id, e.function_id, e.function_version_id, e.status,
-		       e.duration_ms, e.error_message, e.created_at
+		       e.duration_ms, e.error_message, e.event_json, e.created_at
 		FROM executions e
 		WHERE e.function_id = ?
 		ORDER BY e.created_at DESC
@@ -502,9 +506,10 @@ func (db *SQLiteDB) ListExecutions(ctx context.Context, functionID string, param
 		var exec Execution
 		var durationMs sql.NullInt64
 		var errorMessage sql.NullString
+		var eventJSON sql.NullString
 
 		if err := rows.Scan(&exec.ID, &exec.FunctionID, &exec.FunctionVersionID,
-			&exec.Status, &durationMs, &errorMessage, &exec.CreatedAt); err != nil {
+			&exec.Status, &durationMs, &errorMessage, &eventJSON, &exec.CreatedAt); err != nil {
 			return nil, 0, fmt.Errorf("failed to scan execution: %w", err)
 		}
 
@@ -513,6 +518,9 @@ func (db *SQLiteDB) ListExecutions(ctx context.Context, functionID string, param
 		}
 		if errorMessage.Valid {
 			exec.ErrorMessage = &errorMessage.String
+		}
+		if eventJSON.Valid {
+			exec.EventJSON = &eventJSON.String
 		}
 
 		executions = append(executions, exec)
