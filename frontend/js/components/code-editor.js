@@ -432,41 +432,39 @@ const registerLuaCompletions = () => {
         documentation: "Hello world with query parameters",
       });
 
-      // Add HTTP request example
+      // Add health check example
       suggestions.push({
-        label: "example-http",
+        label: "example-health",
         kind: monaco.languages.CompletionItemKind.Snippet,
         insertText: [
           "function handler(ctx, event)",
-          "\t-- Make external HTTP request",
-          '\tlocal apiKey = env.get("API_KEY")',
-          '\tlocal url = "https://api.example.com/data"',
+          "\t-- Check if a website is up",
+          '\tlocal url = "https://www.google.com/"',
           "\t",
           "\tlocal response = http.get(url)",
           "\t",
-          "\tif response.status == 200 then",
-          "\t\tlocal data = json.decode(response.body)",
-          '\t\tlog.info("API request successful")',
+          "\tif response.statusCode == 200 then",
+          '\t\tlog.info("Site is up")',
           "\t\t",
           "\t\treturn {",
           "\t\t\tstatusCode = 200,",
           '\t\t\theaders = { ["Content-Type"] = "application/json" },',
-          "\t\t\tbody = json.encode(data)",
+          '\t\t\tbody = json.encode({ status = "UP" })',
           "\t\t}",
           "\telse",
-          '\t\tlog.error("API request failed: " .. response.status)',
+          '\t\tlog.error("Site is down: " .. response.statusCode)',
           "\t\t",
           "\t\treturn {",
           "\t\t\tstatusCode = 502,",
           '\t\t\theaders = { ["Content-Type"] = "application/json" },',
-          '\t\t\tbody = json.encode({ error = "API request failed" })',
+          '\t\t\tbody = json.encode({ status = "DOWN" })',
           "\t\t}",
           "\tend",
           "end",
         ].join("\n"),
         insertTextRules:
           monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-        documentation: "Example HTTP request with error handling",
+        documentation: "Health check example",
       });
 
       return { suggestions };
