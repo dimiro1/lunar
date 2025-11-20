@@ -51,6 +51,7 @@ func paginationInfoHighlight() templ.CSSClass {
 	templ_7745c5c3_CSSBuilder := templruntime.GetBuilder()
 	templ_7745c5c3_CSSBuilder.WriteString(`font-weight:500;`)
 	templ_7745c5c3_CSSBuilder.WriteString(`color:white;`)
+	templ_7745c5c3_CSSBuilder.WriteString(`font-family:var(--font-mono);`)
 	templ_7745c5c3_CSSID := templ.CSSID(`paginationInfoHighlight`, templ_7745c5c3_CSSBuilder.String())
 	return templ.ComponentCSSClass{
 		ID:    templ_7745c5c3_CSSID,
@@ -210,7 +211,7 @@ func Pagination(info PaginationInfo) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", info.CurrentStart))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/pagination.templ`, Line: 71, Col: 91}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/pagination.templ`, Line: 72, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -245,7 +246,7 @@ func Pagination(info PaginationInfo) templ.Component {
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", info.CurrentEnd))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/pagination.templ`, Line: 72, Col: 81}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/pagination.templ`, Line: 73, Col: 81}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -280,7 +281,7 @@ func Pagination(info PaginationInfo) templ.Component {
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", info.Total))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/pagination.templ`, Line: 73, Col: 76}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/pagination.templ`, Line: 74, Col: 76}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {

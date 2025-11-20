@@ -15,6 +15,9 @@ func statusBadge() templ.CSSClass {
 	templ_7745c5c3_CSSBuilder.WriteString(`gap:0.5rem;`)
 	templ_7745c5c3_CSSBuilder.WriteString(`font-size:var(--text-xs);`)
 	templ_7745c5c3_CSSBuilder.WriteString(`font-weight:500;`)
+	templ_7745c5c3_CSSBuilder.WriteString(`font-family:var(--font-mono);`)
+	templ_7745c5c3_CSSBuilder.WriteString(`text-transform:uppercase;`)
+	templ_7745c5c3_CSSBuilder.WriteString(`letter-spacing:0.05em;`)
 	templ_7745c5c3_CSSID := templ.CSSID(`statusBadge`, templ_7745c5c3_CSSBuilder.String())
 	return templ.ComponentCSSClass{
 		ID:    templ_7745c5c3_CSSID,
@@ -109,6 +112,9 @@ func statusBadgeGlowText() templ.CSSClass {
 	templ_7745c5c3_CSSBuilder.WriteString(`font-size:var(--text-xs);`)
 	templ_7745c5c3_CSSBuilder.WriteString(`font-weight:500;`)
 	templ_7745c5c3_CSSBuilder.WriteString(`color:var(--color-subtle);`)
+	templ_7745c5c3_CSSBuilder.WriteString(`font-family:var(--font-mono);`)
+	templ_7745c5c3_CSSBuilder.WriteString(`text-transform:uppercase;`)
+	templ_7745c5c3_CSSBuilder.WriteString(`letter-spacing:0.05em;`)
 	templ_7745c5c3_CSSID := templ.CSSID(`statusBadgeGlowText`, templ_7745c5c3_CSSBuilder.String())
 	return templ.ComponentCSSClass{
 		ID:    templ_7745c5c3_CSSID,

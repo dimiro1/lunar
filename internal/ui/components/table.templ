@@ -34,6 +34,10 @@ css tableTd() {
 	padding: 0.75rem 1rem;
 }
 
+css tableTdMono() {
+	font-family: var(--font-mono);
+}
+
 css tableTr() {
 	border-bottom: 1px solid var(--color-border);
 }
@@ -74,6 +78,12 @@ templ TableRow() {
 
 templ TableCell() {
 	<td class={ tableTd() }>
+		{ children... }
+	</td>
+}
+
+templ TableCellMono() {
+	<td class={ tableTd(), tableTdMono() }>
 		{ children... }
 	</td>
 }

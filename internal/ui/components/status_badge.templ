@@ -6,6 +6,9 @@ css statusBadge() {
 	gap: 0.5rem;
 	font-size: var(--text-xs);
 	font-weight: 500;
+	font-family: var(--font-mono);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
 }
 
 css statusBadgeDot() {
@@ -52,6 +55,9 @@ css statusBadgeGlowText() {
 	font-size: var(--text-xs);
 	font-weight: 500;
 	color: var(--color-subtle);
+	font-family: var(--font-mono);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
 }
 
 templ StatusBadge(enabled bool) {
