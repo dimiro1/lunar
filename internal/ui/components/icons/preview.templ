@@ -1,0 +1,110 @@
+package icons
+
+import "github.com/dimiro1/faas-go/internal/ui/components/preview"
+
+templ Preview() {
+	@preview.Page(preview.PreviewPageProps{
+		Title:       "Icons",
+		Description: "SVG icons from Heroicons. All icons use currentColor for stroke.",
+	}) {
+		@preview.Section("Navigation") {
+			@preview.Card() {
+				@preview.Grid() {
+					@preview.Item("Home") {
+						@Home()
+					}
+					@preview.Item("ChevronLeft") {
+						@ChevronLeft()
+					}
+					@preview.Item("ChevronRight") {
+						@ChevronRight()
+					}
+					@preview.Item("ChevronUp") {
+						@ChevronUp()
+					}
+					@preview.Item("ChevronDown") {
+						@ChevronDown()
+					}
+					@preview.Item("ExternalLink") {
+						@ExternalLink()
+					}
+				}
+			}
+		}
+
+		@preview.Section("Actions") {
+			@preview.Card() {
+				@preview.Grid() {
+					@preview.Item("Plus") {
+						@Plus()
+					}
+					@preview.Item("Search") {
+						@Search()
+					}
+					@preview.Item("Save") {
+						@Save()
+					}
+					@preview.Item("Download") {
+						@Download()
+					}
+					@preview.Item("Copy") {
+						@Copy()
+					}
+					@preview.Item("Trash") {
+						@Trash()
+					}
+					@preview.Item("Refresh") {
+						@Refresh()
+					}
+					@preview.Item("PaperAirplane") {
+						@PaperAirplane()
+					}
+				}
+			}
+		}
+
+		@preview.Section("Symbols") {
+			@preview.Card() {
+				@preview.Grid() {
+					@preview.Item("Cog") {
+						@Cog()
+					}
+					@preview.Item("Code") {
+						@Code()
+					}
+					@preview.Item("Bolt") {
+						@Bolt()
+					}
+					@preview.Item("Hashtag") {
+						@Hashtag()
+					}
+					@preview.Item("Spinner") {
+						@Spinner()
+					}
+				}
+			}
+		}
+
+		@preview.Section("Sizes") {
+			@preview.Card() {
+				@preview.Grid() {
+					@preview.Item("Small (1rem)") {
+						<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class={ iconSm() }>
+							<path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"></path>
+						</svg>
+					}
+					@preview.Item("Base (1.25rem)") {
+						<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class={ iconBase() }>
+							<path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"></path>
+						</svg>
+					}
+					@preview.Item("Large (1.5rem)") {
+						<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class={ iconLg() }>
+							<path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"></path>
+						</svg>
+					}
+				}
+			}
+		}
+	}
+}
