@@ -8,7 +8,10 @@ package pages
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/dimiro1/faas-go/internal/ui/components"
+import (
+	"github.com/dimiro1/faas-go/internal/ui/components"
+	"github.com/dimiro1/faas-go/internal/ui/components/tabs"
+)
 
 // Preview page that renders all components for visual inspection
 func PreviewDashboard() templ.Component {
@@ -226,7 +229,7 @@ func PreviewFunctionDetails() templ.Component {
 					}
 					return nil
 				})
-				templ_7745c5c3_Err = components.TabContent("metrics", true).Render(templ.WithChildren(ctx, templ_7745c5c3_Var8), templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = tabs.TabContent(tabs.TabContentProps{ID: "metrics", Active: true}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var8), templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -234,15 +237,13 @@ func PreviewFunctionDetails() templ.Component {
 			})
 			templ_7745c5c3_Err = components.FunctionDetailsView(
 				components.FunctionDetails{ID: "fn_8s7d6f87", Name: "hello", Description: "This is just a hello function", Enabled: true},
-				[]components.Tab{
-					{ID: "metrics", Name: "Metrics", Active: true},
-					{ID: "code", Name: "Code", Active: false},
-					{ID: "settings", Name: "Settings", Active: false},
-					{ID: "executions", Name: "Executions", Active: false},
-					{ID: "test", Name: "Test", Active: false},
+				[]tabs.Tab{
+					{ID: "metrics", Name: "Metrics", Href: "/functions/hello", Active: true},
+					{ID: "code", Name: "Code", Href: "/functions/hello/code", Active: false},
+					{ID: "settings", Name: "Settings", Href: "/functions/hello/settings", Active: false},
+					{ID: "executions", Name: "Executions", Href: "/functions/hello/executions", Active: false},
+					{ID: "test", Name: "Test", Href: "/functions/hello/test", Active: false},
 				},
-				"metrics",
-				"/functions/hello",
 				false,
 			).Render(templ.WithChildren(ctx, templ_7745c5c3_Var7), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
@@ -386,7 +387,7 @@ func PreviewCodeTab() templ.Component {
 					}
 					return nil
 				})
-				templ_7745c5c3_Err = components.TabContent("code", true).Render(templ.WithChildren(ctx, templ_7745c5c3_Var12), templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = tabs.TabContent(tabs.TabContentProps{ID: "code", Active: true}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var12), templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -394,15 +395,13 @@ func PreviewCodeTab() templ.Component {
 			})
 			templ_7745c5c3_Err = components.FunctionDetailsView(
 				components.FunctionDetails{ID: "fn_8s7d6f87", Name: "hello", Description: "This is just a hello function", Enabled: true},
-				[]components.Tab{
-					{ID: "metrics", Name: "Metrics", Active: false},
-					{ID: "code", Name: "Code", Active: true},
-					{ID: "settings", Name: "Settings", Active: false},
-					{ID: "executions", Name: "Executions", Active: false},
-					{ID: "test", Name: "Test", Active: false},
+				[]tabs.Tab{
+					{ID: "metrics", Name: "Metrics", Href: "/functions/hello", Active: false},
+					{ID: "code", Name: "Code", Href: "/functions/hello/code", Active: true},
+					{ID: "settings", Name: "Settings", Href: "/functions/hello/settings", Active: false},
+					{ID: "executions", Name: "Executions", Href: "/functions/hello/executions", Active: false},
+					{ID: "test", Name: "Test", Href: "/functions/hello/test", Active: false},
 				},
-				"code",
-				"/functions/hello",
 				true,
 			).Render(templ.WithChildren(ctx, templ_7745c5c3_Var11), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
@@ -498,7 +497,7 @@ func PreviewSettingsTab() templ.Component {
 					}
 					return nil
 				})
-				templ_7745c5c3_Err = components.TabContent("settings", true).Render(templ.WithChildren(ctx, templ_7745c5c3_Var16), templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = tabs.TabContent(tabs.TabContentProps{ID: "settings", Active: true}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var16), templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -506,15 +505,13 @@ func PreviewSettingsTab() templ.Component {
 			})
 			templ_7745c5c3_Err = components.FunctionDetailsView(
 				components.FunctionDetails{ID: "fn_8s7d6f87", Name: "hello", Description: "This is just a hello function", Enabled: true},
-				[]components.Tab{
-					{ID: "metrics", Name: "Metrics", Active: false},
-					{ID: "code", Name: "Code", Active: false},
-					{ID: "settings", Name: "Settings", Active: true},
-					{ID: "executions", Name: "Executions", Active: false},
-					{ID: "test", Name: "Test", Active: false},
+				[]tabs.Tab{
+					{ID: "metrics", Name: "Metrics", Href: "/functions/hello", Active: false},
+					{ID: "code", Name: "Code", Href: "/functions/hello/code", Active: false},
+					{ID: "settings", Name: "Settings", Href: "/functions/hello/settings", Active: true},
+					{ID: "executions", Name: "Executions", Href: "/functions/hello/executions", Active: false},
+					{ID: "test", Name: "Test", Href: "/functions/hello/test", Active: false},
 				},
-				"settings",
-				"/functions/hello",
 				false,
 			).Render(templ.WithChildren(ctx, templ_7745c5c3_Var15), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
@@ -607,7 +604,7 @@ func PreviewExecutionsTab() templ.Component {
 					}
 					return nil
 				})
-				templ_7745c5c3_Err = components.TabContent("executions", true).Render(templ.WithChildren(ctx, templ_7745c5c3_Var20), templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = tabs.TabContent(tabs.TabContentProps{ID: "executions", Active: true}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var20), templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -615,15 +612,13 @@ func PreviewExecutionsTab() templ.Component {
 			})
 			templ_7745c5c3_Err = components.FunctionDetailsView(
 				components.FunctionDetails{ID: "fn_8s7d6f87", Name: "hello", Description: "This is just a hello function", Enabled: true},
-				[]components.Tab{
-					{ID: "metrics", Name: "Metrics", Active: false},
-					{ID: "code", Name: "Code", Active: false},
-					{ID: "settings", Name: "Settings", Active: false},
-					{ID: "executions", Name: "Executions", Active: true},
-					{ID: "test", Name: "Test", Active: false},
+				[]tabs.Tab{
+					{ID: "metrics", Name: "Metrics", Href: "/functions/hello", Active: false},
+					{ID: "code", Name: "Code", Href: "/functions/hello/code", Active: false},
+					{ID: "settings", Name: "Settings", Href: "/functions/hello/settings", Active: false},
+					{ID: "executions", Name: "Executions", Href: "/functions/hello/executions", Active: true},
+					{ID: "test", Name: "Test", Href: "/functions/hello/test", Active: false},
 				},
-				"executions",
-				"/functions/hello",
 				false,
 			).Render(templ.WithChildren(ctx, templ_7745c5c3_Var19), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
@@ -718,7 +713,7 @@ func PreviewTestTab() templ.Component {
 					}
 					return nil
 				})
-				templ_7745c5c3_Err = components.TabContent("test", true).Render(templ.WithChildren(ctx, templ_7745c5c3_Var24), templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = tabs.TabContent(tabs.TabContentProps{ID: "test", Active: true}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var24), templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -726,15 +721,13 @@ func PreviewTestTab() templ.Component {
 			})
 			templ_7745c5c3_Err = components.FunctionDetailsView(
 				components.FunctionDetails{ID: "fn_8s7d6f87", Name: "hello", Description: "This is just a hello function", Enabled: true},
-				[]components.Tab{
-					{ID: "metrics", Name: "Metrics", Active: false},
-					{ID: "code", Name: "Code", Active: false},
-					{ID: "settings", Name: "Settings", Active: false},
-					{ID: "executions", Name: "Executions", Active: false},
-					{ID: "test", Name: "Test", Active: true},
+				[]tabs.Tab{
+					{ID: "metrics", Name: "Metrics", Href: "/functions/hello", Active: false},
+					{ID: "code", Name: "Code", Href: "/functions/hello/code", Active: false},
+					{ID: "settings", Name: "Settings", Href: "/functions/hello/settings", Active: false},
+					{ID: "executions", Name: "Executions", Href: "/functions/hello/executions", Active: false},
+					{ID: "test", Name: "Test", Href: "/functions/hello/test", Active: true},
 				},
-				"test",
-				"/functions/hello",
 				false,
 			).Render(templ.WithChildren(ctx, templ_7745c5c3_Var23), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {

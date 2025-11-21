@@ -3,6 +3,7 @@ package components
 import (
 	"github.com/dimiro1/faas-go/internal/ui/components/button"
 	"github.com/dimiro1/faas-go/internal/ui/components/icons"
+	"github.com/dimiro1/faas-go/internal/ui/components/tabs"
 )
 
 type FunctionDetails struct {
@@ -65,7 +66,7 @@ css functionDetailsActions() {
 	gap: 0.75rem;
 }
 
-templ FunctionDetailsView(fn FunctionDetails, tabs []Tab, activeTab string, baseURL string, showSaveButton bool) {
+templ FunctionDetailsView(fn FunctionDetails, tabsList []tabs.Tab, showSaveButton bool) {
 	<main class={ functionDetailsMain() }>
 		<!-- Header -->
 		<div class={ functionDetailsHeader() }>
@@ -94,9 +95,9 @@ templ FunctionDetailsView(fn FunctionDetails, tabs []Tab, activeTab string, base
 			</div>
 		</div>
 		<!-- Tabs -->
-		@Tabs(tabs, baseURL)
+		@tabs.Tabs(tabs.TabsProps{Tabs: tabsList})
 		<!-- Tab Content -->
-		@TabContainer() {
+		@tabs.TabContainer() {
 			{ children... }
 		}
 	</main>

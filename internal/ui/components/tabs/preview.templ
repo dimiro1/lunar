@@ -1,0 +1,96 @@
+package tabs
+
+import (
+	"github.com/dimiro1/faas-go/internal/ui/components/icons"
+	"github.com/dimiro1/faas-go/internal/ui/components/preview"
+)
+
+templ Preview() {
+	@preview.Page(preview.PreviewPageProps{
+		Title:       "Tabs Component",
+		Description: "Navigation tabs for switching between different views or sections.",
+	}) {
+		@preview.Section("Default Tabs") {
+			@preview.Card() {
+				@Tabs(TabsProps{
+					Tabs: []Tab{
+						{ID: "metrics", Name: "Metrics", Href: "#metrics", Active: true},
+						{ID: "code", Name: "Code", Href: "#code", Active: false},
+						{ID: "settings", Name: "Settings", Href: "#settings", Active: false},
+					},
+				})
+			}
+		}
+
+		@preview.Section("With Icons") {
+			@preview.Card() {
+				@Tabs(TabsProps{
+					Tabs: []Tab{
+						{ID: "dashboard", Name: "Dashboard", Href: "#dashboard", Icon: icons.Home(), Active: true},
+						{ID: "analytics", Name: "Analytics", Href: "#analytics", Icon: icons.Bolt(), Active: false},
+						{ID: "settings", Name: "Settings", Href: "#settings", Icon: icons.Cog(), Active: false},
+					},
+				})
+			}
+		}
+
+		@preview.Section("With Badges") {
+			@preview.Card() {
+				@Tabs(TabsProps{
+					Tabs: []Tab{
+						{ID: "inbox", Name: "Inbox", Href: "#inbox", Badge: "12", Active: true},
+						{ID: "sent", Name: "Sent", Href: "#sent", Badge: "5", Active: false},
+						{ID: "drafts", Name: "Drafts", Href: "#drafts", Badge: "3", Active: false},
+					},
+				})
+			}
+		}
+
+		@preview.Section("With Icons and Badges") {
+			@preview.Card() {
+				@Tabs(TabsProps{
+					Tabs: []Tab{
+						{ID: "executions", Name: "Executions", Href: "#executions", Icon: icons.Refresh(), Badge: "1,203", Active: true},
+						{ID: "errors", Name: "Errors", Href: "#errors", Icon: icons.Trash(), Badge: "23", Active: false},
+						{ID: "logs", Name: "Logs", Href: "#logs", Icon: icons.Code(), Active: false},
+					},
+				})
+			}
+		}
+
+		@preview.Section("With Disabled Tab") {
+			@preview.Card() {
+				@Tabs(TabsProps{
+					Tabs: []Tab{
+						{ID: "overview", Name: "Overview", Href: "#overview", Active: true},
+						{ID: "details", Name: "Details", Href: "#details", Active: false},
+						{ID: "admin", Name: "Admin", Href: "#admin", Disabled: true},
+					},
+				})
+			}
+		}
+
+		@preview.Section("Tab Content Example") {
+			@preview.Card() {
+				@Tabs(TabsProps{
+					Tabs: []Tab{
+						{ID: "first", Name: "First", Href: "#first", Active: true},
+						{ID: "second", Name: "Second", Href: "#second", Active: false},
+					},
+				})
+				@TabContainer() {
+					@TabContent(TabContentProps{ID: "first", Active: true}) {
+						<p style="color: var(--color-text-muted); padding: 1rem 0;">
+							This is the content for the first tab.
+						</p>
+					}
+					@TabContent(TabContentProps{ID: "second", Active: false}) {
+						<p style="color: var(--color-text-muted); padding: 1rem 0;">
+							This is the content for the second tab.
+						</p>
+					}
+				}
+			}
+		}
+	}
+}

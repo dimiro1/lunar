@@ -8,7 +8,10 @@ package pages
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/dimiro1/faas-go/internal/ui/components"
+import (
+	"github.com/dimiro1/faas-go/internal/ui/components"
+	"github.com/dimiro1/faas-go/internal/ui/components/tabs"
+)
 
 func PreviewExecutionDetails() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -94,7 +97,7 @@ func PreviewExecutionDetails() templ.Component {
 					}
 					return nil
 				})
-				templ_7745c5c3_Err = components.TabContent("executions", true).Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = tabs.TabContent(tabs.TabContentProps{ID: "executions", Active: true}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -102,15 +105,13 @@ func PreviewExecutionDetails() templ.Component {
 			})
 			templ_7745c5c3_Err = components.FunctionDetailsView(
 				components.FunctionDetails{ID: "fn_8s7d6f87", Name: "hello", Description: "This is just a hello function", Enabled: true},
-				[]components.Tab{
-					{ID: "metrics", Name: "Metrics", Active: false},
-					{ID: "code", Name: "Code", Active: false},
-					{ID: "settings", Name: "Settings", Active: false},
-					{ID: "executions", Name: "Executions", Active: true},
-					{ID: "test", Name: "Test", Active: false},
+				[]tabs.Tab{
+					{ID: "metrics", Name: "Metrics", Href: "/functions/hello", Active: false},
+					{ID: "code", Name: "Code", Href: "/functions/hello/code", Active: false},
+					{ID: "settings", Name: "Settings", Href: "/functions/hello/settings", Active: false},
+					{ID: "executions", Name: "Executions", Href: "/functions/hello/executions", Active: true},
+					{ID: "test", Name: "Test", Href: "/functions/hello/test", Active: false},
 				},
-				"executions",
-				"/functions/hello",
 				false,
 			).Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {

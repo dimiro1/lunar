@@ -219,6 +219,47 @@ templ buttonContent(props Props) {
 
 // Button renders a button or anchor element based on props
 templ Button(props Props) {
+	<style>
+		[data-btn]:focus-visible {
+			outline: 2px solid var(--color-accent);
+			outline-offset: 2px;
+		}
+		[data-btn-variant="default"]:hover {
+			background-color: rgba(255, 255, 255, 0.9);
+		}
+		[data-btn-variant="default"]:active {
+			transform: scale(0.98);
+		}
+		[data-btn-variant="destructive"]:hover {
+			background-color: #b91c1c;
+		}
+		[data-btn-variant="destructive"]:active {
+			transform: scale(0.98);
+			background-color: #991b1b;
+		}
+		[data-btn-variant="outline"]:hover {
+			background-color: var(--color-surface);
+		}
+		[data-btn-variant="outline"]:active {
+			transform: scale(0.98);
+		}
+		[data-btn-variant="secondary"]:hover {
+			background-color: rgba(255, 255, 255, 0.1);
+		}
+		[data-btn-variant="secondary"]:active {
+			transform: scale(0.98);
+		}
+		[data-btn-variant="ghost"]:hover {
+			background-color: var(--color-surface);
+			color: var(--color-text);
+		}
+		[data-btn-variant="ghost"]:active {
+			transform: scale(0.98);
+		}
+		[data-btn-variant="link"]:hover {
+			opacity: 0.8;
+		}
+	</style>
 	if props.Href != "" {
 		<a
 			if props.ID != "" {
@@ -229,6 +270,8 @@ templ Button(props Props) {
 				target={ props.Target }
 			}
 			class={ buttonClasses(props) }
+			data-btn="true"
+			data-btn-variant={ string(props.Variant) }
 			if props.Disabled || props.Loading {
 				aria-disabled="true"
 			}
@@ -264,6 +307,8 @@ templ Button(props Props) {
 			type={ string(getButtonType(props.Type)) }
 			disabled?={ props.Disabled || props.Loading }
 			class={ buttonClasses(props) }
+			data-btn="true"
+			data-btn-variant={ string(props.Variant) }
 			if props.Loading {
 				aria-busy="true"
 			}
@@ -319,7 +364,12 @@ css backBtn() {
 }
 
 templ BackButton(href string) {
-	<a href={ templ.SafeURL(href) } class={ backBtn() }>
+	<style>
+		[data-back-btn]:hover {
+			color: var(--color-text);
+		}
+	</style>
+	<a href={ templ.SafeURL(href) } class={ backBtn() } data-back-btn="true">
 		@icons.ChevronLeft()
 		Back
 	</a>

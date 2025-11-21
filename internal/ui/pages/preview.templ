@@ -1,6 +1,9 @@
 package pages
 
-import "github.com/dimiro1/faas-go/internal/ui/components"
+import (
+	"github.com/dimiro1/faas-go/internal/ui/components"
+	"github.com/dimiro1/faas-go/internal/ui/components/tabs"
+)
 
 // Preview page that renders all components for visual inspection
 templ PreviewDashboard() {
@@ -32,18 +35,16 @@ templ PreviewFunctionDetails() {
 		@components.Header("details", "hello")
 		@components.FunctionDetailsView(
 			components.FunctionDetails{ID: "fn_8s7d6f87", Name: "hello", Description: "This is just a hello function", Enabled: true},
-			[]components.Tab{
-				{ID: "metrics", Name: "Metrics", Active: true},
-				{ID: "code", Name: "Code", Active: false},
-				{ID: "settings", Name: "Settings", Active: false},
-				{ID: "executions", Name: "Executions", Active: false},
-				{ID: "test", Name: "Test", Active: false},
+			[]tabs.Tab{
+				{ID: "metrics", Name: "Metrics", Href: "/functions/hello", Active: true},
+				{ID: "code", Name: "Code", Href: "/functions/hello/code", Active: false},
+				{ID: "settings", Name: "Settings", Href: "/functions/hello/settings", Active: false},
+				{ID: "executions", Name: "Executions", Href: "/functions/hello/executions", Active: false},
+				{ID: "test", Name: "Test", Href: "/functions/hello/test", Active: false},
 			},
-			"metrics",
-			"/functions/hello",
 			false,
 		) {
-			@components.TabContent("metrics", true) {
+			@tabs.TabContent(tabs.TabContentProps{ID: "metrics", Active: true}) {
 				@components.MetricsTab(
 					[]components.StatCard{
 						{Label: "Total Calls (24h)", Value: "14,230", Change: "12% vs yesterday", IsPositive: true},
@@ -79,18 +80,16 @@ templ PreviewCodeTab() {
 		@components.Header("details", "hello")
 		@components.FunctionDetailsView(
 			components.FunctionDetails{ID: "fn_8s7d6f87", Name: "hello", Description: "This is just a hello function", Enabled: true},
-			[]components.Tab{
-				{ID: "metrics", Name: "Metrics", Active: false},
-				{ID: "code", Name: "Code", Active: true},
-				{ID: "settings", Name: "Settings", Active: false},
-				{ID: "executions", Name: "Executions", Active: false},
-				{ID: "test", Name: "Test", Active: false},
+			[]tabs.Tab{
+				{ID: "metrics", Name: "Metrics", Href: "/functions/hello", Active: false},
+				{ID: "code", Name: "Code", Href: "/functions/hello/code", Active: true},
+				{ID: "settings", Name: "Settings", Href: "/functions/hello/settings", Active: false},
+				{ID: "executions", Name: "Executions", Href: "/functions/hello/executions", Active: false},
+				{ID: "test", Name: "Test", Href: "/functions/hello/test", Active: false},
 			},
-			"code",
-			"/functions/hello",
 			true,
 		) {
-			@components.TabContent("code", true) {
+			@tabs.TabContent(tabs.TabContentProps{ID: "code", Active: true}) {
 				@components.CodeTab(
 					components.CodeFile{
 						Filename: "handler.lua",
@@ -159,18 +158,16 @@ templ PreviewSettingsTab() {
 		@components.Header("details", "hello")
 		@components.FunctionDetailsView(
 			components.FunctionDetails{ID: "fn_8s7d6f87", Name: "hello", Description: "This is just a hello function", Enabled: true},
-			[]components.Tab{
-				{ID: "metrics", Name: "Metrics", Active: false},
-				{ID: "code", Name: "Code", Active: false},
-				{ID: "settings", Name: "Settings", Active: true},
-				{ID: "executions", Name: "Executions", Active: false},
-				{ID: "test", Name: "Test", Active: false},
+			[]tabs.Tab{
+				{ID: "metrics", Name: "Metrics", Href: "/functions/hello", Active: false},
+				{ID: "code", Name: "Code", Href: "/functions/hello/code", Active: false},
+				{ID: "settings", Name: "Settings", Href: "/functions/hello/settings", Active: true},
+				{ID: "executions", Name: "Executions", Href: "/functions/hello/executions", Active: false},
+				{ID: "test", Name: "Test", Href: "/functions/hello/test", Active: false},
 			},
-			"settings",
-			"/functions/hello",
 			false,
 		) {
-			@components.TabContent("settings", true) {
+			@tabs.TabContent(tabs.TabContentProps{ID: "settings", Active: true}) {
 				@components.SettingsTab(components.SettingsData{
 					FunctionName:  "hello",
 					Description:   "This is just a hello function",
@@ -191,18 +188,16 @@ templ PreviewExecutionsTab() {
 		@components.Header("details", "hello")
 		@components.FunctionDetailsView(
 			components.FunctionDetails{ID: "fn_8s7d6f87", Name: "hello", Description: "This is just a hello function", Enabled: true},
-			[]components.Tab{
-				{ID: "metrics", Name: "Metrics", Active: false},
-				{ID: "code", Name: "Code", Active: false},
-				{ID: "settings", Name: "Settings", Active: false},
-				{ID: "executions", Name: "Executions", Active: true},
-				{ID: "test", Name: "Test", Active: false},
+			[]tabs.Tab{
+				{ID: "metrics", Name: "Metrics", Href: "/functions/hello", Active: false},
+				{ID: "code", Name: "Code", Href: "/functions/hello/code", Active: false},
+				{ID: "settings", Name: "Settings", Href: "/functions/hello/settings", Active: false},
+				{ID: "executions", Name: "Executions", Href: "/functions/hello/executions", Active: true},
+				{ID: "test", Name: "Test", Href: "/functions/hello/test", Active: false},
 			},
-			"executions",
-			"/functions/hello",
 			false,
 		) {
-			@components.TabContent("executions", true) {
+			@tabs.TabContent(tabs.TabContentProps{ID: "executions", Active: true}) {
 				@components.ExecutionsTab(components.ExecutionsData{
 					Executions: []components.Execution{
 						{ID: "exec_12345abcde", Status: "SUCCESS", Duration: "12ms", Time: "10:42:05 PM"},
@@ -220,18 +215,16 @@ templ PreviewTestTab() {
 		@components.Header("details", "hello")
 		@components.FunctionDetailsView(
 			components.FunctionDetails{ID: "fn_8s7d6f87", Name: "hello", Description: "This is just a hello function", Enabled: true},
-			[]components.Tab{
-				{ID: "metrics", Name: "Metrics", Active: false},
-				{ID: "code", Name: "Code", Active: false},
-				{ID: "settings", Name: "Settings", Active: false},
-				{ID: "executions", Name: "Executions", Active: false},
-				{ID: "test", Name: "Test", Active: true},
+			[]tabs.Tab{
+				{ID: "metrics", Name: "Metrics", Href: "/functions/hello", Active: false},
+				{ID: "code", Name: "Code", Href: "/functions/hello/code", Active: false},
+				{ID: "settings", Name: "Settings", Href: "/functions/hello/settings", Active: false},
+				{ID: "executions", Name: "Executions", Href: "/functions/hello/executions", Active: false},
+				{ID: "test", Name: "Test", Href: "/functions/hello/test", Active: true},
 			},
-			"test",
-			"/functions/hello",
 			false,
 		) {
-			@components.TabContent("test", true) {
+			@tabs.TabContent(tabs.TabContentProps{ID: "test", Active: true}) {
 				@components.TestTab(components.TestTabData{
 					Examples: []components.CodeExample{
 						{ID: "curl", Label: "cURL", Code: `curl -X POST https://api.faas.com/v1/fn_8s7d6f87 \<br/>-H "Content-Type: application/json" \<br/>-d '{"key":"value"}'`, Active: true},

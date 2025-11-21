@@ -1,0 +1,179 @@
+package tabs
+
+// Tab represents a single tab item
+type Tab struct {
+	ID       string
+	Name     string
+	Href     string
+	Active   bool
+	Disabled bool
+	Icon     templ.Component
+	Badge    string
+}
+
+// TabsProps contains configuration for the tabs component
+type TabsProps struct {
+	Tabs  []Tab
+	Class string
+}
+
+// TabContentProps contains configuration for tab content
+type TabContentProps struct {
+	ID     string
+	Active bool
+	Class  string
+}
+
+// CSS styles
+
+css tabsContainer() {
+	border-bottom: 1px solid var(--color-border);
+	margin-bottom: 1.5rem;
+	display: flex;
+	gap: 1.5rem;
+	font-size: 14px;
+	font-weight: 500;
+	overflow-x: auto;
+}
+
+css tab() {
+	padding-bottom: 0.75rem;
+	border-bottom: 2px solid transparent;
+	color: var(--color-subtle);
+	background: none;
+	cursor: pointer;
+	white-space: nowrap;
+	transition: color 0.15s ease, border-color 0.15s ease;
+	text-decoration: none;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+css tabActive() {
+	border-bottom-color: var(--color-primary);
+	color: var(--color-text);
+}
+
+css tabDisabled() {
+	opacity: 0.5;
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
+css tabIcon() {
+	width: 0.875rem;
+	height: 0.875rem;
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+css tabBadge() {
+	font-size: var(--text-xs);
+	background: var(--color-surface);
+	color: var(--color-text-muted);
+	padding: 0.125rem 0.375rem;
+	border-radius: 9999px;
+	font-weight: 500;
+}
+
+css tabBadgeActive() {
+	background: var(--color-text);
+	color: var(--color-background);
+}
+
+css tabContainer() {
+	display: block;
+}
+
+css tabContent() {
+	display: none;
+}
+
+css tabContentActive() {
+	display: block;
+}
+
+// Tabs component renders a tabbed navigation
+templ Tabs(props TabsProps) {
+	<style>
+		[data-tab]:hover:not([data-tab-active]):not([data-tab-disabled]) {
+			color: var(--color-text);
+		}
+		[data-tab]:focus-visible {
+			outline: 2px solid var(--color-primary);
+			outline-offset: 2px;
+		}
+	</style>
+	<div
+		class={ tabsContainer(), templ.KV(props.Class, props.Class != "") }
+		role="tablist"
+	>
+		for _, t := range props.Tabs {
+			<a
+				href={ templ.SafeURL(t.Href) }
+				class={
+					tab(),
+					templ.KV(tabActive(), t.Active),
+					templ.KV(tabDisabled(), t.Disabled),
+				}
+				role="tab"
+				aria-selected={ boolToString(t.Active) }
+				aria-controls={ "tab-" + t.ID }
+				data-tab="true"
+				if t.Active {
+					data-tab-active="true"
+				}
+				if t.Disabled {
+					data-tab-disabled="true"
+					aria-disabled="true"
+					tabindex="-1"
+				}
+			>
+				if t.Icon != nil {
+					<span class={ tabIcon() }>
+						@t.Icon
+					</span>
+				}
+				{ t.Name }
+				if t.Badge != "" {
+					<span class={ tabBadge(), templ.KV(tabBadgeActive(), t.Active) }>
+						{ t.Badge }
+					</span>
+				}
+			</a>
+		}
+	</div>
+}
+
+// TabContent wraps content for a specific tab
+templ TabContent(props TabContentProps) {
+	<div
+		class={ tabContent(), templ.KV(tabContentActive(), props.Active), templ.KV(props.Class, props.Class != "") }
+		id={ "tab-" + props.ID }
+		role="tabpanel"
+		aria-labelledby={ "tab-" + props.ID }
+		if !props.Active {
+			hidden
+		}
+	>
+		{ children... }
+	</div>
+}
+
+// TabContainer wraps all tab content sections
+templ TabContainer() {
+	<div class={ tabContainer() }>
+		{ children... }
+	</div>
+}
+
+// Helper function to convert bool to string for aria attributes
+func boolToString(b bool) string {
+	if b {
+		return "true"
+	}
+	return "false"
+}

@@ -10,6 +10,7 @@ import (
 	"github.com/dimiro1/faas-go/internal/ui/components/card"
 	"github.com/dimiro1/faas-go/internal/ui/components/form"
 	"github.com/dimiro1/faas-go/internal/ui/components/preview"
+	"github.com/dimiro1/faas-go/internal/ui/components/tabs"
 	"github.com/dimiro1/faas-go/internal/ui/pages"
 )
 
@@ -67,6 +68,10 @@ func main() {
 
 	mux.HandleFunc("/preview/component/form", func(w http.ResponseWriter, r *http.Request) {
 		_ = form.Preview().Render(r.Context(), w)
+	})
+
+	mux.HandleFunc("/preview/component/tabs", func(w http.ResponseWriter, r *http.Request) {
+		_ = tabs.Preview().Render(r.Context(), w)
 	})
 
 	mux.HandleFunc("/preview", func(w http.ResponseWriter, r *http.Request) {

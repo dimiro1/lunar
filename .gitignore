@@ -21,3 +21,4 @@ go.work
 /bin/
 /dist/
 /build/
+tmp/
