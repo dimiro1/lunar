@@ -1,4 +1,4 @@
-.PHONY: build test lint clean run help
+.PHONY: build test lint clean run help templ dev install-tools
 
 BINARY_NAME=faas-go
 BUILD_DIR=build
@@ -35,3 +35,16 @@ run:
 
 all: lint test build
 	@echo "All checks passed!"
+
+templ:
+	@echo "Generating templ files..."
+	@templ generate
+
+dev:
+	@echo "Starting development mode with air..."
+	@air
+
+install-tools:
+	@echo "Installing development tools..."
+	@go install github.com/a-h/templ/cmd/templ@latest
+	@go install github.com/air-verse/air@latest

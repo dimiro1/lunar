@@ -8,7 +8,10 @@ package pages
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/dimiro1/faas-go/internal/ui/components"
+import (
+	"github.com/dimiro1/faas-go/internal/ui/components"
+	"github.com/dimiro1/faas-go/internal/ui/components/button"
+)
 
 func createFunctionMain() templ.CSSClass {
 	templ_7745c5c3_CSSBuilder := templruntime.GetBuilder()
@@ -234,7 +237,7 @@ func CreateFunction(templates []components.Template) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.BackButton("/").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = button.BackButton("/").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -490,7 +493,10 @@ func CreateFunction(templates []components.Template) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = components.ButtonLink("/", components.ButtonGhost, "").Render(templ.WithChildren(ctx, templ_7745c5c3_Var28), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = button.Button(button.Props{
+			Href:    "/",
+			Variant: button.Ghost,
+		}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var28), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -512,7 +518,10 @@ func CreateFunction(templates []components.Template) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = components.Button(components.ButtonPrimary, "").Render(templ.WithChildren(ctx, templ_7745c5c3_Var29), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = button.Button(button.Props{
+			Variant: button.Default,
+			Type:    button.TypeSubmit,
+		}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var29), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

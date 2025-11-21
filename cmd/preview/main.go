@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/a-h/templ"
+	"github.com/dimiro1/faas-go/internal/ui/components/button"
 	"github.com/dimiro1/faas-go/internal/ui/pages"
 )
 
@@ -53,6 +54,10 @@ func main() {
 		pages.PreviewExecutionDetails().Render(r.Context(), w)
 	})
 
+	mux.HandleFunc("/preview/component/button", func(w http.ResponseWriter, r *http.Request) {
+		button.Preview().Render(r.Context(), w)
+	})
+
 	// Wrap with CSS middleware - this serves /styles/templ.css automatically
 	handler := templ.NewCSSMiddleware(mux)
 
@@ -66,6 +71,7 @@ func main() {
 	fmt.Println("  - http://localhost:8080/functions/hello/executions (Executions Tab)")
 	fmt.Println("  - http://localhost:8080/functions/hello/test    (Test Tab)")
 	fmt.Println("  - http://localhost:8080/functions/hello/executions/exec_12345abcde (Execution Details)")
+	fmt.Println("  - http://localhost:8080/preview/component/button (Button Component)")
 
 	log.Fatal(http.ListenAndServe(":8080", handler))
 }

@@ -8,7 +8,11 @@ package pages
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/dimiro1/faas-go/internal/ui/components"
+import (
+	"github.com/dimiro1/faas-go/internal/ui/components"
+	"github.com/dimiro1/faas-go/internal/ui/components/button"
+	"github.com/dimiro1/faas-go/internal/ui/components/icons"
+)
 
 func dashboardMain() templ.CSSClass {
 	templ_7745c5c3_CSSBuilder := templruntime.GetBuilder()
@@ -197,7 +201,11 @@ func Dashboard(functions []components.Function, pagination components.Pagination
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = components.ButtonLink("/functions/new", components.ButtonPrimary, "fa-plus").Render(templ.WithChildren(ctx, templ_7745c5c3_Var10), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = button.Button(button.Props{
+			Href:    "/functions/new",
+			Variant: button.Default,
+			Icon:    icons.Plus(),
+		}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var10), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

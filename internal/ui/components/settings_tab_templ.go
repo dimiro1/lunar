@@ -8,6 +8,8 @@ package components
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
+import "github.com/dimiro1/faas-go/internal/ui/components/button"
+
 type SettingsData struct {
 	FunctionName  string
 	Description   string
@@ -336,7 +338,9 @@ func SettingsTab(data SettingsData) templ.Component {
 					}
 					return nil
 				})
-				templ_7745c5c3_Err = Button(ButtonPrimary, "").Render(templ.WithChildren(ctx, templ_7745c5c3_Var15), templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = button.Button(button.Props{
+					Variant: button.Default,
+				}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var15), templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -426,7 +430,9 @@ func SettingsTab(data SettingsData) templ.Component {
 					}
 					return nil
 				})
-				templ_7745c5c3_Err = Button(ButtonPrimary, "").Render(templ.WithChildren(ctx, templ_7745c5c3_Var19), templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = button.Button(button.Props{
+					Variant: button.Default,
+				}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var19), templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

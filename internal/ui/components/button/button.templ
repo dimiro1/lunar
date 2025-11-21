@@ -1,0 +1,326 @@
+package button
+
+import "github.com/dimiro1/faas-go/internal/ui/components/icons"
+
+// ButtonVariant defines the visual style of the button
+type ButtonVariant string
+
+const (
+	Default     ButtonVariant = "default"
+	Destructive ButtonVariant = "destructive"
+	Outline     ButtonVariant = "outline"
+	Secondary   ButtonVariant = "secondary"
+	Ghost       ButtonVariant = "ghost"
+	Link        ButtonVariant = "link"
+)
+
+// ButtonSize defines the size of the button
+type ButtonSize string
+
+const (
+	SizeDefault ButtonSize = "default"
+	SizeSm      ButtonSize = "sm"
+	SizeLg      ButtonSize = "lg"
+	SizeIcon    ButtonSize = "icon"
+)
+
+// ButtonType defines the HTML button type
+type ButtonType string
+
+const (
+	TypeButton ButtonType = "button"
+	TypeSubmit ButtonType = "submit"
+	TypeReset  ButtonType = "reset"
+)
+
+// IconPosition defines where the icon appears
+type IconPosition string
+
+const (
+	IconLeft  IconPosition = "left"
+	IconRight IconPosition = "right"
+)
+
+// Props contains all configuration options for a button
+type Props struct {
+	ID           string
+	Class        string
+	Attributes   templ.Attributes
+	Variant      ButtonVariant
+	Size         ButtonSize
+	FullWidth    bool
+	Href         string
+	Target       string
+	Disabled     bool
+	Type         ButtonType
+	Icon         templ.Component
+	IconPosition IconPosition
+	Loading      bool
+	// Accessibility
+	AriaLabel       string
+	AriaDescribedBy string
+	AriaControls    string
+	AriaExpanded    *bool
+	AriaPressed     *bool
+}
+
+// Base button styles
+
+css btnBase() {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	border-radius: 6px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s;
+	text-decoration: none;
+	border: none;
+	white-space: nowrap;
+	font-family: var(--font-mono);
+}
+
+// Size variants
+
+css btnSizeDefault() {
+	padding: 0.5rem 1rem;
+	font-size: var(--text-sm);
+	height: 2.5rem;
+}
+
+css btnSizeSm() {
+	padding: 0.25rem 0.75rem;
+	font-size: var(--text-xs);
+	height: 2rem;
+}
+
+css btnSizeLg() {
+	padding: 0.75rem 1.5rem;
+	font-size: var(--text-base);
+	height: 3rem;
+}
+
+css btnSizeIcon() {
+	padding: 0.5rem;
+	height: 2.5rem;
+	width: 2.5rem;
+}
+
+// Style variants
+
+css btnDefault() {
+	background-color: white;
+	color: black;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+css btnDestructive() {
+	background-color: #dc2626;
+	color: white;
+}
+
+css btnOutline() {
+	background-color: transparent;
+	color: var(--color-text);
+	border: 1px solid var(--color-border);
+}
+
+css btnSecondary() {
+	background-color: var(--color-surface);
+	color: var(--color-text);
+	border: 1px solid var(--color-border);
+}
+
+css btnGhost() {
+	background: transparent;
+	color: var(--color-subtle);
+}
+
+css btnLinkStyle() {
+	background: transparent;
+	color: var(--color-primary);
+	padding: 0;
+	height: auto;
+	text-decoration: underline;
+	text-underline-offset: 4px;
+}
+
+css btnFullWidth() {
+	width: 100%;
+}
+
+css btnDisabled() {
+	opacity: 0.5;
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
+css btnIcon() {
+	font-size: inherit;
+}
+
+// Helper function to get size class
+func getSizeClass(size ButtonSize) templ.CSSClass {
+	switch size {
+	case SizeSm:
+		return btnSizeSm()
+	case SizeLg:
+		return btnSizeLg()
+	case SizeIcon:
+		return btnSizeIcon()
+	default:
+		return btnSizeDefault()
+	}
+}
+
+// Helper function to get variant class
+func getVariantClass(variant ButtonVariant) templ.CSSClass {
+	switch variant {
+	case Destructive:
+		return btnDestructive()
+	case Outline:
+		return btnOutline()
+	case Secondary:
+		return btnSecondary()
+	case Ghost:
+		return btnGhost()
+	case Link:
+		return btnLinkStyle()
+	default:
+		return btnDefault()
+	}
+}
+
+// buttonClasses returns the common classes for a button
+func buttonClasses(props Props) templ.CSSClasses {
+	return templ.CSSClasses{
+		btnBase(),
+		getSizeClass(props.Size),
+		getVariantClass(props.Variant),
+		templ.KV(btnFullWidth(), props.FullWidth),
+		templ.KV(btnDisabled(), props.Disabled),
+		templ.KV(props.Class, props.Class != ""),
+	}
+}
+
+// buttonContent renders the icon and children
+templ buttonContent(props Props) {
+	if props.Loading {
+		@icons.Spinner()
+	} else if props.Icon != nil && props.IconPosition != IconRight {
+		@props.Icon
+	}
+	{ children... }
+	if !props.Loading && props.Icon != nil && props.IconPosition == IconRight {
+		@props.Icon
+	}
+}
+
+// Button renders a button or anchor element based on props
+templ Button(props Props) {
+	if props.Href != "" {
+		<a
+			if props.ID != "" {
+				id={ props.ID }
+			}
+			href={ templ.SafeURL(props.Href) }
+			if props.Target != "" {
+				target={ props.Target }
+			}
+			class={ buttonClasses(props) }
+			if props.Disabled || props.Loading {
+				aria-disabled="true"
+			}
+			if props.Loading {
+				aria-busy="true"
+			}
+			if props.AriaLabel != "" {
+				aria-label={ props.AriaLabel }
+			}
+			if props.AriaDescribedBy != "" {
+				aria-describedby={ props.AriaDescribedBy }
+			}
+			if props.AriaControls != "" {
+				aria-controls={ props.AriaControls }
+			}
+			if props.AriaExpanded != nil {
+				aria-expanded={ boolToString(*props.AriaExpanded) }
+			}
+			if props.Target == "_blank" {
+				rel="noopener noreferrer"
+			}
+			{ props.Attributes... }
+		>
+			@buttonContent(props) {
+				{ children... }
+			}
+		</a>
+	} else {
+		<button
+			if props.ID != "" {
+				id={ props.ID }
+			}
+			type={ string(getButtonType(props.Type)) }
+			disabled?={ props.Disabled || props.Loading }
+			class={ buttonClasses(props) }
+			if props.Loading {
+				aria-busy="true"
+			}
+			if props.AriaLabel != "" {
+				aria-label={ props.AriaLabel }
+			}
+			if props.AriaDescribedBy != "" {
+				aria-describedby={ props.AriaDescribedBy }
+			}
+			if props.AriaControls != "" {
+				aria-controls={ props.AriaControls }
+			}
+			if props.AriaExpanded != nil {
+				aria-expanded={ boolToString(*props.AriaExpanded) }
+			}
+			if props.AriaPressed != nil {
+				aria-pressed={ boolToString(*props.AriaPressed) }
+			}
+			{ props.Attributes... }
+		>
+			@buttonContent(props) {
+				{ children... }
+			}
+		</button>
+	}
+}
+
+func boolToString(b bool) string {
+	if b {
+		return "true"
+	}
+	return "false"
+}
+
+func getButtonType(t ButtonType) ButtonType {
+	if t == "" {
+		return TypeButton
+	}
+	return t
+}
+
+// BackButton is a convenience component for navigation
+
+css backBtn() {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	color: var(--color-subtle);
+	font-size: var(--text-sm);
+	font-weight: 500;
+	text-decoration: none;
+	transition: color 0.2s;
+}
+
+templ BackButton(href string) {
+	<a href={ templ.SafeURL(href) } class={ backBtn() }>
+		@icons.ChevronLeft()
+		Back
+	</a>
+}

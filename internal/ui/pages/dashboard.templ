@@ -1,6 +1,10 @@
 package pages
 
-import "github.com/dimiro1/faas-go/internal/ui/components"
+import (
+	"github.com/dimiro1/faas-go/internal/ui/components"
+	"github.com/dimiro1/faas-go/internal/ui/components/button"
+	"github.com/dimiro1/faas-go/internal/ui/components/icons"
+)
 
 css dashboardMain() {
 	padding: 2rem;
@@ -39,7 +43,11 @@ templ Dashboard(functions []components.Function, pagination components.Paginatio
 				<h1 class={ dashboardTitle() }>Functions</h1>
 				<p class={ dashboardSubtitle() }>Manage your Lua serverless functions.</p>
 			</div>
-			@components.ButtonLink("/functions/new", components.ButtonPrimary, "fa-plus") {
+			@button.Button(button.Props{
+				Href:    "/functions/new",
+				Variant: button.Default,
+				Icon:    icons.Plus(),
+			}) {
 				New Function
 			}
 		</div>

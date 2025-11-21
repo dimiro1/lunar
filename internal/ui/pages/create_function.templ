@@ -1,6 +1,9 @@
 package pages
 
-import "github.com/dimiro1/faas-go/internal/ui/components"
+import (
+	"github.com/dimiro1/faas-go/internal/ui/components"
+	"github.com/dimiro1/faas-go/internal/ui/components/button"
+)
 
 css createFunctionMain() {
 	padding: 2rem;
@@ -77,7 +80,7 @@ templ CreateFunction(templates []components.Template) {
 	<main class={ createFunctionMain() }>
 		<div class={ createFunctionHeader() }>
 			<div class={ createFunctionBack() }>
-				@components.BackButton("/")
+				@button.BackButton("/")
 			</div>
 			<h1 class={ createFunctionTitle() }>Create New Function</h1>
 			<p class={ createFunctionSubtitle() }>Initialize a new serverless function using Lua.</p>
@@ -96,10 +99,16 @@ templ CreateFunction(templates []components.Template) {
 				</div>
 			</div>
 			<div class={ formActions() }>
-				@components.ButtonLink("/", components.ButtonGhost, "") {
+				@button.Button(button.Props{
+					Href:    "/",
+					Variant: button.Ghost,
+				}) {
 					Cancel
 				}
-				@components.Button(components.ButtonPrimary, "") {
+				@button.Button(button.Props{
+					Variant: button.Default,
+					Type:    button.TypeSubmit,
+				}) {
 					Create Function
 				}
 			</div>

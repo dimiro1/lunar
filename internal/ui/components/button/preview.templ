@@ -1,0 +1,239 @@
+package button
+
+import (
+	"github.com/dimiro1/faas-go/internal/ui/components/icons"
+	"github.com/dimiro1/faas-go/internal/ui/components/preview"
+)
+
+templ Preview() {
+	@preview.Page(preview.PreviewPageProps{
+		Title:       "Button Component",
+		Description: "All button variants, sizes, and states.",
+	}) {
+		<!-- Variants -->
+		@preview.Section("Variants") {
+			@preview.Card() {
+				@preview.Grid() {
+					@preview.Item("Default") {
+						@Button(Props{
+							Variant: Default,
+						}) {
+							Default
+						}
+					}
+					@preview.Item("Secondary") {
+						@Button(Props{
+							Variant: Secondary,
+						}) {
+							Secondary
+						}
+					}
+					@preview.Item("Destructive") {
+						@Button(Props{
+							Variant: Destructive,
+						}) {
+							Destructive
+						}
+					}
+					@preview.Item("Outline") {
+						@Button(Props{
+							Variant: Outline,
+						}) {
+							Outline
+						}
+					}
+					@preview.Item("Ghost") {
+						@Button(Props{
+							Variant: Ghost,
+						}) {
+							Ghost
+						}
+					}
+					@preview.Item("Link") {
+						@Button(Props{
+							Variant: Link,
+						}) {
+							Link
+						}
+					}
+				}
+			}
+		}
+		<!-- Sizes -->
+		@preview.Section("Sizes") {
+			@preview.Card() {
+				@preview.Grid() {
+					@preview.Item("Small") {
+						@Button(Props{
+							Variant: Default,
+							Size:    SizeSm,
+						}) {
+							Small
+						}
+					}
+					@preview.Item("Default") {
+						@Button(Props{
+							Variant: Default,
+							Size:    SizeDefault,
+						}) {
+							Default
+						}
+					}
+					@preview.Item("Large") {
+						@Button(Props{
+							Variant: Default,
+							Size:    SizeLg,
+						}) {
+							Large
+						}
+					}
+					@preview.Item("Icon") {
+						@Button(Props{
+							Variant: Default,
+							Size:    SizeIcon,
+							Icon:    icons.Plus(),
+						}) {
+						}
+					}
+				}
+			}
+		}
+		<!-- With Icons -->
+		@preview.Section("With Icons") {
+			@preview.Card() {
+				@preview.Grid() {
+					@preview.Item("Leading Icon") {
+						@Button(Props{
+							Variant: Default,
+							Icon:    icons.Plus(),
+						}) {
+							Create
+						}
+					}
+					@preview.Item("Download") {
+						@Button(Props{
+							Variant: Secondary,
+							Icon:    icons.Download(),
+						}) {
+							Download
+						}
+					}
+					@preview.Item("Delete") {
+						@Button(Props{
+							Variant: Destructive,
+							Icon:    icons.Trash(),
+						}) {
+							Delete
+						}
+					}
+					@preview.Item("Settings") {
+						@Button(Props{
+							Variant: Outline,
+							Icon:    icons.Cog(),
+						}) {
+							Settings
+						}
+					}
+				}
+			}
+		}
+		<!-- States -->
+		@preview.Section("States") {
+			@preview.Card() {
+				@preview.Grid() {
+					@preview.Item("Normal") {
+						@Button(Props{
+							Variant: Default,
+						}) {
+							Normal
+						}
+					}
+					@preview.Item("Disabled") {
+						@Button(Props{
+							Variant:  Default,
+							Disabled: true,
+						}) {
+							Disabled
+						}
+					}
+					@preview.Item("Loading") {
+						@Button(Props{
+							Variant: Default,
+							Loading: true,
+						}) {
+							Loading
+						}
+					}
+					@preview.Item("Full Width") {
+					}
+				}
+				<div style="margin-top: 1rem;">
+					@Button(Props{
+						Variant:   Default,
+						FullWidth: true,
+					}) {
+						Full Width Button
+					}
+				</div>
+			}
+		}
+		<!-- Icon Position -->
+		@preview.Section("Icon Position") {
+			@preview.Card() {
+				@preview.Grid() {
+					@preview.Item("Left (default)") {
+						@Button(Props{
+							Variant: Default,
+							Icon:    icons.Plus(),
+						}) {
+							Create
+						}
+					}
+					@preview.Item("Right") {
+						@Button(Props{
+							Variant:      Default,
+							Icon:         icons.ExternalLink(),
+							IconPosition: IconRight,
+						}) {
+							Open
+						}
+					}
+				}
+			}
+		}
+		<!-- As Links -->
+		@preview.Section("As Links") {
+			@preview.Card() {
+				@preview.Grid() {
+					@preview.Item("Internal Link") {
+						@Button(Props{
+							Variant: Default,
+							Href:    "/",
+							Icon:    icons.Home(),
+						}) {
+							Home
+						}
+					}
+					@preview.Item("External Link") {
+						@Button(Props{
+							Variant: Secondary,
+							Href:    "https://github.com",
+							Target:  "_blank",
+							Icon:    icons.ExternalLink(),
+						}) {
+							GitHub
+						}
+					}
+				}
+			}
+		}
+		<!-- Back Button -->
+		@preview.Section("Back Button") {
+			@preview.Card() {
+				@preview.Grid() {
+					@BackButton("/")
+				}
+			}
+		}
+	}
+}

@@ -8,6 +8,8 @@ package components
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
+import "github.com/dimiro1/faas-go/internal/ui/components/button"
+
 type FunctionDetails struct {
 	ID          string
 	Name        string
@@ -224,7 +226,7 @@ func FunctionDetailsView(fn FunctionDetails, tabs []Tab, activeTab string, baseU
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = BackButton("/").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = button.BackButton("/").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -297,7 +299,7 @@ func FunctionDetailsView(fn FunctionDetails, tabs []Tab, activeTab string, baseU
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(fn.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/function_details.templ`, Line: 87, Col: 15}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/function_details.templ`, Line: 89, Col: 15}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -336,7 +338,7 @@ func FunctionDetailsView(fn FunctionDetails, tabs []Tab, activeTab string, baseU
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(fn.Description)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/function_details.templ`, Line: 90, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/function_details.templ`, Line: 92, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {

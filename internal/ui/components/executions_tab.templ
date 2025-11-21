@@ -1,5 +1,7 @@
 package components
 
+import "github.com/dimiro1/faas-go/internal/ui/components/button"
+
 type ExecutionsData struct {
 	Executions []Execution
 	Pagination PaginationInfo
@@ -16,7 +18,6 @@ css executionsToolbar() {
 	display: flex;
 	gap: 0.5rem;
 }
-
 
 css executionDetailsContainer() {
 	display: flex;
@@ -94,7 +95,7 @@ type ExecutionDetailsData struct {
 templ ExecutionDetails(data ExecutionDetailsData) {
 	<div class={ executionDetailsContainer() }>
 		<div class={ executionDetailsHeader() }>
-			@BackButton("/functions/hello")
+			@button.BackButton("/functions/hello")
 			<div class={ executionDetailsInfo() }>
 				<h3 class={ executionDetailsTitle() }>{ data.ID }</h3>
 				@ExecutionStatus(data.Status)

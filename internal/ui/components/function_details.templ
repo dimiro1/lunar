@@ -1,5 +1,7 @@
 package components
 
+import "github.com/dimiro1/faas-go/internal/ui/components/button"
+
 type FunctionDetails struct {
 	ID          string
 	Name        string
@@ -80,7 +82,7 @@ templ FunctionDetailsView(fn FunctionDetails, tabs []Tab, activeTab string, base
 		<!-- Header -->
 		<div class={ functionDetailsHeader() }>
 			<div class={ functionDetailsLeft() }>
-				@BackButton("/")
+				@button.BackButton("/")
 				<div class={ functionDetailsDivider() }></div>
 				<div class={ functionDetailsInfo() }>
 					<h1 class={ functionDetailsTitle() }>

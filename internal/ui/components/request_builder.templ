@@ -1,5 +1,10 @@
 package components
 
+import (
+	"github.com/dimiro1/faas-go/internal/ui/components/button"
+	"github.com/dimiro1/faas-go/internal/ui/components/icons"
+)
+
 type RequestBuilderData struct {
 	URL     string
 	Methods []string
@@ -36,7 +41,6 @@ css reqBuilderLabel() {
 	color: var(--color-text-muted);
 }
 
-
 css reqBuilderBtnWrapper() {
 	width: 100%;
 	display: flex;
@@ -59,9 +63,13 @@ templ RequestBuilder(data RequestBuilderData) {
 				@Textarea("", "")
 			</div>
 			<div class={ reqBuilderBtnWrapper() } style="display: flex;">
-				<button class={ btn(), btnPrimary() } style="width: 100%; justify-content: center;">
-					<i class="fas fa-paper-plane"></i> Send Request
-				</button>
+				@button.Button(button.Props{
+					Variant:   button.Default,
+					Icon:      icons.PaperAirplane(),
+					FullWidth: true,
+				}) {
+					Send Request
+				}
 			</div>
 		</div>
 	}
