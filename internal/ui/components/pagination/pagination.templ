@@ -93,11 +93,13 @@ templ Pagination(props Props) {
 			outline-offset: 2px;
 		}
 	</style>
-	<div
+	<nav
 		if props.ID != "" {
 			id={ props.ID }
 		}
 		class={ paginationBase(), templ.KV(props.Class, props.Class != "") }
+		role="navigation"
+		aria-label="Pagination"
 		{ props.Attributes... }
 	>
 		<div class={ paginationInfo() }>
@@ -107,7 +109,7 @@ templ Pagination(props Props) {
 		</div>
 		<div class={ paginationControls() }>
 			if props.ShowPerPage {
-				<select class={ paginationSelect() } data-pagination-select="true">
+				<select class={ paginationSelect() } data-pagination-select="true" aria-label="Results per page">
 					for _, opt := range getPerPageOptions(props) {
 						<option
 							value={ fmt.Sprintf("%d", opt) }
@@ -137,7 +139,7 @@ templ Pagination(props Props) {
 				</button>
 			</div>
 		</div>
-	</div>
+	</nav>
 }
 
 // Helper to get per page options
@@ -167,6 +169,7 @@ templ Simple(props Props) {
 				class={ paginationBtn(), paginationBtnBorder(), templ.KV(paginationBtnDisabled(), !props.HasPrev) }
 				disabled?={ !props.HasPrev }
 				data-pagination-btn="true"
+				aria-label="Go to previous page"
 			>
 				Previous
 			</button>
@@ -174,6 +177,7 @@ templ Simple(props Props) {
 				class={ paginationBtn(), templ.KV(paginationBtnDisabled(), !props.HasNext) }
 				disabled?={ !props.HasNext }
 				data-pagination-btn="true"
+				aria-label="Go to next page"
 			>
 				Next
 			</button>

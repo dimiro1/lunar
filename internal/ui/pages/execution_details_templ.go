@@ -10,6 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"github.com/dimiro1/faas-go/internal/ui/components"
+	"github.com/dimiro1/faas-go/internal/ui/components/log"
 	"github.com/dimiro1/faas-go/internal/ui/components/navbar"
 	"github.com/dimiro1/faas-go/internal/ui/components/tabs"
 )
@@ -83,10 +84,10 @@ func PreviewExecutionDetails() templ.Component {
 						ID:       "exec_12345abcde",
 						Status:   "SUCCESS",
 						Duration: "12ms",
-						Logs: []components.LogEntry{
-							{Timestamp: "10:42:05.100", Level: "INFO", Message: "Function started"},
-							{Timestamp: "10:42:05.105", Level: "INFO", Message: "Processing request"},
-							{Timestamp: "10:42:05.112", Level: "INFO", Message: "Function completed"},
+						Logs: []log.Entry{
+							{Timestamp: "10:42:05.100", Level: log.LevelInfo, Message: "Function started"},
+							{Timestamp: "10:42:05.105", Level: log.LevelInfo, Message: "Processing request"},
+							{Timestamp: "10:42:05.112", Level: log.LevelInfo, Message: "Function completed"},
 						},
 						Input: `{
   "method": "GET",

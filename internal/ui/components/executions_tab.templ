@@ -4,6 +4,7 @@ import (
 	"github.com/dimiro1/faas-go/internal/ui/components/button"
 	"github.com/dimiro1/faas-go/internal/ui/components/form"
 	"github.com/dimiro1/faas-go/internal/ui/components/icons"
+	"github.com/dimiro1/faas-go/internal/ui/components/log"
 	"github.com/dimiro1/faas-go/internal/ui/components/pagination"
 	"github.com/dimiro1/faas-go/internal/ui/components/table"
 )
@@ -58,8 +59,8 @@ css executionDetailsDuration() {
 }
 
 css executionDetailsPanels() {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
+	display: flex;
+	flex-direction: column;
 	gap: 1.5rem;
 }
 
@@ -69,14 +70,15 @@ css codePanelLogs() {
 }
 
 templ ExecutionsTab(data ExecutionsData) {
-	<div class={ executionsTabContainer() }>
+	<div class={ executionsTabContainer() } role="region" aria-label="Executions list">
 		<!-- Search and Refresh -->
-		<div class={ executionsToolbar() }>
+		<div class={ executionsToolbar() } role="search">
 			@form.SearchInputFull("Search execution ID...")
 			@button.Button(button.Props{
-				Variant: button.Ghost,
-				Size:    button.SizeIcon,
-				Icon:    icons.Refresh(),
+				Variant:   button.Ghost,
+				Size:      button.SizeIcon,
+				Icon:      icons.Refresh(),
+				AriaLabel: "Refresh executions",
 			})
 		</div>
 		<!-- Executions Table -->
@@ -98,25 +100,28 @@ type ExecutionDetailsData struct {
 	ID       string
 	Status   string
 	Duration string
-	Logs     []LogEntry
+	Logs     []log.Entry
 	Input    string
 }
 
 templ ExecutionDetails(data ExecutionDetailsData) {
-	<div class={ executionDetailsContainer() }>
+	<div class={ executionDetailsContainer() } role="region" aria-label="Execution details">
 		<div class={ executionDetailsHeader() }>
 			@button.BackButton("/functions/hello")
 			<div class={ executionDetailsInfo() }>
 				<h3 class={ executionDetailsTitle() }>{ data.ID }</h3>
 				@ExecutionStatus(data.Status)
-				<span class={ executionDetailsDuration() }>{ data.Duration }</span>
+				<span class={ executionDetailsDuration() } aria-label="Duration">{ data.Duration }</span>
 			</div>
 		</div>
 		<div class={ executionDetailsPanels() }>
-			<!-- Logs Panel -->
-			@CodePanel("Execution Logs", "", false)
 			<!-- Input Event Panel -->
 			@CodePanel("Input Event (JSON)", data.Input, true)
+			<!-- Logs Panel -->
+			<div role="region" aria-label="Execution logs">
+				<h4 style="font-size: var(--text-sm); font-weight: 600; color: var(--color-text); margin: 0 0 0.75rem 0;">Execution Logs</h4>
+				@log.Viewer(log.Props{MaxHeight: "300px"}, data.Logs)
+			</div>
 		</div>
 	</div>
 }

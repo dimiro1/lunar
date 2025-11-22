@@ -1,0 +1,53 @@
+package log
+
+import "github.com/dimiro1/faas-go/internal/ui/components/preview"
+
+templ Preview() {
+	@preview.Page(preview.PreviewPageProps{
+		Title:       "Log",
+		Description: "Log viewer for displaying execution logs and messages.",
+	}) {
+		@preview.Section("Default") {
+			@Viewer(Props{}, []Entry{
+				{Timestamp: "10:42:05.100", Level: LevelInfo, Message: "Function started"},
+				{Timestamp: "10:42:05.105", Level: LevelInfo, Message: "Processing request"},
+				{Timestamp: "10:42:05.112", Level: LevelInfo, Message: "Function completed"},
+			})
+		}
+
+		@preview.Section("Multiple Levels") {
+			@Viewer(Props{}, []Entry{
+				{Timestamp: "10:42:05.100", Level: LevelInfo, Message: "Starting execution"},
+				{Timestamp: "10:42:05.102", Level: LevelDebug, Message: "Loading configuration from environment"},
+				{Timestamp: "10:42:05.105", Level: LevelWarn, Message: "Deprecated API version detected"},
+				{Timestamp: "10:42:05.108", Level: LevelError, Message: "Failed to connect to database"},
+				{Timestamp: "10:42:05.110", Level: LevelInfo, Message: "Retrying connection..."},
+				{Timestamp: "10:42:05.115", Level: LevelInfo, Message: "Connection established"},
+			})
+		}
+
+		@preview.Section("Empty State") {
+			@Viewer(Props{}, []Entry{})
+		}
+
+		@preview.Section("Custom Max Height") {
+			@Viewer(Props{MaxHeight: "150px"}, []Entry{
+				{Timestamp: "10:42:05.100", Level: LevelInfo, Message: "Line 1"},
+				{Timestamp: "10:42:05.101", Level: LevelInfo, Message: "Line 2"},
+				{Timestamp: "10:42:05.102", Level: LevelInfo, Message: "Line 3"},
+				{Timestamp: "10:42:05.103", Level: LevelInfo, Message: "Line 4"},
+				{Timestamp: "10:42:05.104", Level: LevelInfo, Message: "Line 5"},
+				{Timestamp: "10:42:05.105", Level: LevelInfo, Message: "Line 6"},
+				{Timestamp: "10:42:05.106", Level: LevelInfo, Message: "Line 7"},
+				{Timestamp: "10:42:05.107", Level: LevelInfo, Message: "Line 8"},
+			})
+		}
+
+		@preview.Section("Long Messages") {
+			@Viewer(Props{}, []Entry{
+				{Timestamp: "10:42:05.100", Level: LevelInfo, Message: "This is a very long log message that should wrap properly when it exceeds the available width of the container"},
+				{Timestamp: "10:42:05.105", Level: LevelError, Message: "Error: connection refused to postgres://localhost:5432/mydb - SQLSTATE[08006] [7] could not connect to server"},
+			})
+		}
+	}
+}

@@ -1,0 +1,145 @@
+package log
+
+// Level represents the log level
+type Level string
+
+const (
+	LevelInfo    Level = "INFO"
+	LevelError   Level = "ERROR"
+	LevelWarn    Level = "WARN"
+	LevelDebug   Level = "DEBUG"
+)
+
+// Entry represents a single log entry
+type Entry struct {
+	Timestamp string
+	Level     Level
+	Message   string
+}
+
+// Props contains configuration for the log viewer
+type Props struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	MaxHeight  string
+}
+
+css logContainer() {
+	display: flex;
+	flex-direction: column;
+	font-family: var(--font-mono);
+	font-size: var(--text-xs);
+	background-color: var(--color-background);
+	border: 1px solid var(--color-border);
+	border-radius: 6px;
+	overflow: hidden;
+}
+
+css logScroll() {
+	overflow-y: auto;
+	max-height: 300px;
+}
+
+css logEntry() {
+	display: flex;
+	gap: 1rem;
+	padding: 0.5rem 0.75rem;
+	border-bottom: 1px solid var(--color-border);
+}
+
+css logEntryLast() {
+	border-bottom: none;
+}
+
+css logTimestamp() {
+	color: var(--color-text-muted);
+	flex-shrink: 0;
+}
+
+css logLevel() {
+	font-weight: 600;
+	flex-shrink: 0;
+	min-width: 3.5rem;
+}
+
+css logLevelInfo() {
+	color: var(--color-primary);
+}
+
+css logLevelError() {
+	color: var(--color-danger);
+}
+
+css logLevelWarn() {
+	color: var(--color-warning);
+}
+
+css logLevelDebug() {
+	color: var(--color-subtle);
+}
+
+css logMessage() {
+	color: var(--color-text);
+	word-break: break-all;
+}
+
+css logEmpty() {
+	padding: 1.5rem;
+	text-align: center;
+	color: var(--color-text-muted);
+}
+
+// Viewer renders a list of log entries
+templ Viewer(props Props, entries []Entry) {
+	<div
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		class={ logContainer(), templ.KV(props.Class, props.Class != "") }
+		role="log"
+		aria-label="Log entries"
+		aria-live="polite"
+		{ props.Attributes... }
+	>
+		<div
+			class={ logScroll() }
+			if props.MaxHeight != "" {
+				style={ "max-height: " + props.MaxHeight }
+			}
+			tabindex="0"
+		>
+			if len(entries) == 0 {
+				<div class={ logEmpty() }>No logs available</div>
+			} else {
+				for i, entry := range entries {
+					@EntryRow(entry, i == len(entries)-1)
+				}
+			}
+		</div>
+	</div>
+}
+
+// EntryRow renders a single log entry
+templ EntryRow(entry Entry, isLast bool) {
+	<div class={ logEntry(), templ.KV(logEntryLast(), isLast) } role="listitem">
+		<span class={ logTimestamp() } aria-label="Timestamp">{ entry.Timestamp }</span>
+		<span class={ logLevel(), getLevelClass(entry.Level) } aria-label="Log level">{ string(entry.Level) }</span>
+		<span class={ logMessage() }>{ entry.Message }</span>
+	</div>
+}
+
+func getLevelClass(level Level) templ.CSSClass {
+	switch level {
+	case LevelInfo:
+		return logLevelInfo()
+	case LevelError:
+		return logLevelError()
+	case LevelWarn:
+		return logLevelWarn()
+	case LevelDebug:
+		return logLevelDebug()
+	default:
+		return logLevelInfo()
+	}
+}
