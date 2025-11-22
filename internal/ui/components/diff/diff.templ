@@ -1,6 +1,15 @@
 package diff
 
-import "fmt"
+import (
+	"bytes"
+	"fmt"
+	"strings"
+
+	"github.com/alecthomas/chroma/v2"
+	"github.com/alecthomas/chroma/v2/formatters/html"
+	"github.com/alecthomas/chroma/v2/lexers"
+	"github.com/alecthomas/chroma/v2/styles"
+)
 
 // LineType represents the type of diff line
 type LineType string
@@ -28,12 +37,13 @@ type Props struct {
 	OldVersion string
 	NewVersion string
 	NoBorder   bool
+	Language   string
 }
 
 css diffContainer() {
 	font-family: var(--font-mono);
 	font-size: var(--text-xs);
-	background-color: #0d1117;
+	background-color: var(--diff-bg, #0d1117);
 	border: 1px solid var(--color-border);
 	border-radius: 6px;
 	overflow: hidden;
@@ -59,19 +69,17 @@ css diffLineNumber() {
 	width: 40px;
 	padding: 2px 8px;
 	text-align: right;
-	color: #6e7681;
-	border-right: 1px solid #30363d;
+	color: var(--diff-line-number, #6e7681);
+	border-right: 1px solid var(--diff-border, #30363d);
 	user-select: none;
-	background: #161b22;
+	background: var(--diff-gutter-bg, #161b22);
 }
 
 css diffLineType() {
-	width: 20px;
-	padding: 2px 8px;
-	text-align: center;
-	border-right: 1px solid #30363d;
+	width: 4px;
+	padding: 0;
+	border-right: 1px solid var(--diff-border, #30363d);
 	user-select: none;
-	font-weight: bold;
 }
 
 css diffContent() {
@@ -81,61 +89,159 @@ css diffContent() {
 }
 
 css diffLineAdded() {
-	background: #14532d40;
+	background: var(--diff-added-bg, #14532d40);
 }
 
 css diffLineRemoved() {
-	background: #7f1d1d40;
+	background: var(--diff-removed-bg, #7f1d1d40);
 }
 
 css diffTypeAdded() {
-	color: #86efac;
+	background: var(--diff-added-text, #86efac);
 }
 
 css diffTypeRemoved() {
-	color: #ef4444;
+	background: var(--diff-removed-text, #ef4444);
 }
 
 css diffTypeUnchanged() {
-	color: #666;
+	background: transparent;
 }
 
 css diffContentAdded() {
-	color: #86efac;
+	color: var(--diff-added-text, #86efac);
 }
 
 css diffContentRemoved() {
-	color: #fca5a5;
+	color: var(--diff-removed-content, #fca5a5);
 }
 
 css diffContentUnchanged() {
-	color: #e5e5e5;
+	color: var(--diff-unchanged-text, #e5e5e5);
+}
+
+css diffLineUnchanged() {
+	opacity: 0.7;
+}
+
+var diffStylesHandle = templ.NewOnceHandle()
+
+templ diffStyles() {
+	@diffStylesHandle.Once() {
+		<style>
+			tr[class*="diffLine"] {
+				transition: none;
+				cursor: default;
+			}
+			tr[class*="diffLineAdded"]:hover td:not([class*="diffLineType"]) {
+				background-color: rgba(20, 83, 45, 0.4) !important;
+			}
+			tr[class*="diffLineRemoved"]:hover td:not([class*="diffLineType"]) {
+				background-color: rgba(127, 29, 29, 0.4) !important;
+			}
+			tr[class*="diffLineUnchanged"]:hover td:not([class*="diffLineType"]) {
+				background-color: rgba(255, 255, 255, 0.03) !important;
+			}
+		</style>
+	}
 }
 
 css versionLabels() {
 	display: flex;
-	gap: 12px;
+	align-items: center;
+	gap: 16px;
 	font-size: var(--text-xs);
 }
 
+css versionItem() {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
 css versionOld() {
-	color: #ef4444;
+	color: var(--diff-removed-text, #ef4444);
 }
 
 css versionNew() {
-	color: #86efac;
+	color: var(--diff-added-text, #86efac);
 }
 
-// VersionLabels renders the version comparison labels
-templ VersionLabels(oldVersion, newVersion string) {
+css versionMeta() {
+	color: var(--color-text-muted);
+	font-size: var(--text-xs);
+}
+
+css versionStats() {
+	display: flex;
+	gap: 8px;
+	margin-left: auto;
+}
+
+css statsAdded() {
+	color: var(--diff-added-text, #86efac);
+}
+
+css statsRemoved() {
+	color: var(--diff-removed-text, #ef4444);
+}
+
+// VersionLabelProps contains configuration for version labels
+type VersionLabelProps struct {
+	OldLabel   string
+	NewLabel   string
+	OldMeta    string // e.g., "2 days ago"
+	NewMeta    string // e.g., "just now"
+	Additions  int
+	Deletions  int
+}
+
+// VersionLabels renders the version comparison labels (simple version)
+templ VersionLabels(oldLabel, newLabel string) {
+	@VersionLabelsWithProps(VersionLabelProps{
+		OldLabel: oldLabel,
+		NewLabel: newLabel,
+	})
+}
+
+// VersionLabelsWithProps renders version labels with full configuration
+templ VersionLabelsWithProps(props VersionLabelProps) {
 	<div class={ versionLabels() }>
-		<span class={ versionOld() }>- Version { oldVersion }</span>
-		<span class={ versionNew() }>+ Version { newVersion }</span>
+		<span class={ versionItem(), versionOld() }>
+			<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<line x1="5" y1="12" x2="19" y2="12"></line>
+			</svg>
+			{ props.OldLabel }
+			if props.OldMeta != "" {
+				<span class={ versionMeta() }>({ props.OldMeta })</span>
+			}
+		</span>
+		<span class={ versionItem(), versionNew() }>
+			<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<line x1="12" y1="5" x2="12" y2="19"></line>
+				<line x1="5" y1="12" x2="19" y2="12"></line>
+			</svg>
+			{ props.NewLabel }
+			if props.NewMeta != "" {
+				<span class={ versionMeta() }>({ props.NewMeta })</span>
+			}
+		</span>
+		if props.Additions > 0 || props.Deletions > 0 {
+			<span class={ versionStats() }>
+				if props.Additions > 0 {
+					<span class={ statsAdded() }>+{ intToString(props.Additions) }</span>
+				}
+				if props.Deletions > 0 {
+					<span class={ statsRemoved() }>-{ intToString(props.Deletions) }</span>
+				}
+			</span>
+		}
 	</div>
 }
 
 // Viewer renders a diff view
 templ Viewer(props Props, lines []Line) {
+	@diffStyles()
 	<div
 		if props.ID != "" {
 			id={ props.ID }
@@ -155,7 +261,7 @@ templ Viewer(props Props, lines []Line) {
 			<table class={ diffTable() }>
 				<tbody>
 					for _, line := range lines {
-						@DiffLine(line)
+						@DiffLine(line, props.Language)
 					}
 				</tbody>
 			</table>
@@ -164,8 +270,8 @@ templ Viewer(props Props, lines []Line) {
 }
 
 // DiffLine renders a single diff line
-templ DiffLine(line Line) {
-	<tr class={ templ.KV(diffLineAdded(), line.Type == LineAdded), templ.KV(diffLineRemoved(), line.Type == LineRemoved) }>
+templ DiffLine(line Line, language string) {
+	<tr class={ templ.KV(diffLineAdded(), line.Type == LineAdded), templ.KV(diffLineRemoved(), line.Type == LineRemoved), templ.KV(diffLineUnchanged(), line.Type == LineUnchanged) }>
 		<td class={ diffLineNumber() }>
 			if line.OldLine > 0 {
 				{ intToString(line.OldLine) }
@@ -176,12 +282,14 @@ templ DiffLine(line Line) {
 				{ intToString(line.NewLine) }
 			}
 		</td>
-		<td class={ diffLineType(), getTypeColor(line.Type) }>
-			{ getTypeSymbol(line.Type) }
-		</td>
-		<td class={ diffContent(), getContentColor(line.Type) }>
+		<td class={ diffLineType(), getTypeColor(line.Type) } aria-label={ getTypeAriaLabel(line.Type) }></td>
+		<td class={ diffContent() }>
 			if line.Content != "" {
-				{ line.Content }
+				if language != "" {
+					@templ.Raw(highlightLine(line.Content, language))
+				} else {
+					{ line.Content }
+				}
 			} else {
 				{ " " }
 			}
@@ -222,6 +330,52 @@ func getTypeSymbol(lineType LineType) string {
 	}
 }
 
+func getTypeAriaLabel(lineType LineType) string {
+	switch lineType {
+	case LineAdded:
+		return "Line added"
+	case LineRemoved:
+		return "Line removed"
+	default:
+		return "Unchanged line"
+	}
+}
+
 func intToString(n int) string {
 	return fmt.Sprintf("%d", n)
+}
+
+func highlightLine(code, language string) string {
+	lexer := lexers.Get(language)
+	if lexer == nil {
+		lexer = lexers.Fallback
+	}
+	lexer = chroma.Coalesce(lexer)
+
+	style := styles.Get("github-dark")
+	if style == nil {
+		style = styles.Fallback
+	}
+
+	formatter := html.New(
+		html.WithClasses(false),
+		html.PreventSurroundingPre(true),
+	)
+
+	iterator, err := lexer.Tokenise(nil, code)
+	if err != nil {
+		return code
+	}
+
+	var buf bytes.Buffer
+	err = formatter.Format(&buf, style, iterator)
+	if err != nil {
+		return code
+	}
+
+	// Remove any surrounding tags that might be added
+	result := buf.String()
+	result = strings.TrimPrefix(result, "<code>")
+	result = strings.TrimSuffix(result, "</code>")
+	return result
 }

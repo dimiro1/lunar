@@ -82,7 +82,14 @@ func Preview() templ.Component {
 							}()
 						}
 						ctx = templ.InitializeContext(ctx)
-						templ_7745c5c3_Err = VersionLabels("2", "3").Render(ctx, templ_7745c5c3_Buffer)
+						templ_7745c5c3_Err = VersionLabelsWithProps(VersionLabelProps{
+							OldLabel:  "Version 2",
+							NewLabel:  "Version 3",
+							OldMeta:   "2 days ago",
+							NewMeta:   "just now",
+							Additions: 3,
+							Deletions: 2,
+						}).Render(ctx, templ_7745c5c3_Buffer)
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
@@ -108,7 +115,7 @@ func Preview() templ.Component {
 							}()
 						}
 						ctx = templ.InitializeContext(ctx)
-						templ_7745c5c3_Err = Viewer(Props{MaxHeight: "300px", NoBorder: true}, []Line{
+						templ_7745c5c3_Err = Viewer(Props{MaxHeight: "300px", NoBorder: true, Language: "lua"}, []Line{
 							{OldLine: 1, NewLine: 1, Type: LineUnchanged, Content: "function handler(ctx, event)"},
 							{OldLine: 2, NewLine: 0, Type: LineRemoved, Content: "  -- Parse query parameters"},
 							{OldLine: 0, NewLine: 2, Type: LineAdded, Content: "  -- Parse query parameters from event"},
@@ -165,7 +172,7 @@ func Preview() templ.Component {
 					}()
 				}
 				ctx = templ.InitializeContext(ctx)
-				templ_7745c5c3_Err = Viewer(Props{MaxHeight: "300px"}, []Line{
+				templ_7745c5c3_Err = Viewer(Props{MaxHeight: "300px", Language: "lua"}, []Line{
 					{OldLine: 1, NewLine: 1, Type: LineUnchanged, Content: "local json = require(\"json\")"},
 					{OldLine: 2, NewLine: 2, Type: LineUnchanged, Content: ""},
 					{OldLine: 3, NewLine: 3, Type: LineUnchanged, Content: "-- Main entry point"},
@@ -207,7 +214,7 @@ func Preview() templ.Component {
 					}()
 				}
 				ctx = templ.InitializeContext(ctx)
-				templ_7745c5c3_Err = Viewer(Props{MaxHeight: "200px"}, []Line{
+				templ_7745c5c3_Err = Viewer(Props{MaxHeight: "200px", Language: "go"}, []Line{
 					{OldLine: 1, NewLine: 1, Type: LineUnchanged, Content: "package main"},
 					{OldLine: 2, NewLine: 2, Type: LineUnchanged, Content: ""},
 					{OldLine: 3, NewLine: 3, Type: LineUnchanged, Content: "import ("},
@@ -248,7 +255,7 @@ func Preview() templ.Component {
 					}()
 				}
 				ctx = templ.InitializeContext(ctx)
-				templ_7745c5c3_Err = Viewer(Props{MaxHeight: "150px"}, []Line{
+				templ_7745c5c3_Err = Viewer(Props{MaxHeight: "150px", Language: "javascript"}, []Line{
 					{OldLine: 1, NewLine: 1, Type: LineUnchanged, Content: "// Config"},
 					{OldLine: 0, NewLine: 2, Type: LineAdded, Content: "const DEBUG = true"},
 					{OldLine: 0, NewLine: 3, Type: LineAdded, Content: "const VERSION = \"1.0.0\""},
@@ -280,7 +287,7 @@ func Preview() templ.Component {
 					}()
 				}
 				ctx = templ.InitializeContext(ctx)
-				templ_7745c5c3_Err = Viewer(Props{MaxHeight: "150px"}, []Line{
+				templ_7745c5c3_Err = Viewer(Props{MaxHeight: "150px", Language: "javascript"}, []Line{
 					{OldLine: 1, NewLine: 1, Type: LineUnchanged, Content: "// Deprecated functions"},
 					{OldLine: 2, NewLine: 0, Type: LineRemoved, Content: "function oldFunction() {}"},
 					{OldLine: 3, NewLine: 0, Type: LineRemoved, Content: "function legacyHandler() {}"},

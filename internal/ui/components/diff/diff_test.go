@@ -157,3 +157,174 @@ func TestLineTypeConstants(t *testing.T) {
 		t.Errorf("LineUnchanged = %q, want %q", LineUnchanged, "unchanged")
 	}
 }
+
+func TestHighlightLine(t *testing.T) {
+	tests := []struct {
+		name     string
+		code     string
+		language string
+		wantRaw  bool // if true, expect the raw code back (no highlighting)
+	}{
+		{
+			name:     "valid go code",
+			code:     "func main() {}",
+			language: "go",
+			wantRaw:  false,
+		},
+		{
+			name:     "valid lua code",
+			code:     "local x = 10",
+			language: "lua",
+			wantRaw:  false,
+		},
+		{
+			name:     "unknown language falls back",
+			code:     "some code",
+			language: "unknownlang123",
+			wantRaw:  false, // uses fallback lexer
+		},
+		{
+			name:     "empty code",
+			code:     "",
+			language: "go",
+			wantRaw:  false,
+		},
+		{
+			name:     "javascript code",
+			code:     "const x = 5;",
+			language: "javascript",
+			wantRaw:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := highlightLine(tt.code, tt.language)
+			if result == "" && tt.code != "" {
+				t.Errorf("highlightLine(%q, %q) returned empty string", tt.code, tt.language)
+			}
+			// Result should not be wrapped in <code> tags (we strip them)
+			if len(result) > 6 && result[:6] == "<code>" {
+				t.Errorf("highlightLine(%q, %q) should not have <code> wrapper", tt.code, tt.language)
+			}
+		})
+	}
+}
+
+func TestGetTypeAriaLabel(t *testing.T) {
+	tests := []struct {
+		name     string
+		lineType LineType
+		want     string
+	}{
+		{
+			name:     "added line",
+			lineType: LineAdded,
+			want:     "Line added",
+		},
+		{
+			name:     "removed line",
+			lineType: LineRemoved,
+			want:     "Line removed",
+		},
+		{
+			name:     "unchanged line",
+			lineType: LineUnchanged,
+			want:     "Unchanged line",
+		},
+		{
+			name:     "unknown type",
+			lineType: LineType("unknown"),
+			want:     "Unchanged line",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := getTypeAriaLabel(tt.lineType)
+			if result != tt.want {
+				t.Errorf("getTypeAriaLabel(%v) = %q, want %q", tt.lineType, result, tt.want)
+			}
+		})
+	}
+}
+
+func TestVersionLabelProps(t *testing.T) {
+	tests := []struct {
+		name  string
+		props VersionLabelProps
+	}{
+		{
+			name: "basic labels",
+			props: VersionLabelProps{
+				OldLabel: "v1.0",
+				NewLabel: "v2.0",
+			},
+		},
+		{
+			name: "with metadata",
+			props: VersionLabelProps{
+				OldLabel: "v1.0",
+				NewLabel: "v2.0",
+				OldMeta:  "2 days ago",
+				NewMeta:  "just now",
+			},
+		},
+		{
+			name: "with stats",
+			props: VersionLabelProps{
+				OldLabel:  "v1.0",
+				NewLabel:  "v2.0",
+				Additions: 10,
+				Deletions: 5,
+			},
+		},
+		{
+			name: "full configuration",
+			props: VersionLabelProps{
+				OldLabel:  "main",
+				NewLabel:  "feature-branch",
+				OldMeta:   "abc123",
+				NewMeta:   "def456",
+				Additions: 25,
+				Deletions: 12,
+			},
+		},
+		{
+			name: "only additions",
+			props: VersionLabelProps{
+				OldLabel:  "v1.0",
+				NewLabel:  "v2.0",
+				Additions: 5,
+				Deletions: 0,
+			},
+		},
+		{
+			name: "only deletions",
+			props: VersionLabelProps{
+				OldLabel:  "v1.0",
+				NewLabel:  "v2.0",
+				Additions: 0,
+				Deletions: 3,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Verify props are valid
+			if tt.props.OldLabel == "" {
+				t.Error("OldLabel should not be empty")
+			}
+			if tt.props.NewLabel == "" {
+				t.Error("NewLabel should not be empty")
+			}
+			if tt.props.Additions < 0 {
+				t.Error("Additions should not be negative")
+			}
+			if tt.props.Deletions < 0 {
+				t.Error("Deletions should not be negative")
+			}
+		})
+	}
+}

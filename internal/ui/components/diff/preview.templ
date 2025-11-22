@@ -13,10 +13,17 @@ templ Preview() {
 		@preview.Section("In Card with Header") {
 			@card.Card(card.Props{}) {
 				@card.Header(card.HeaderProps{Title: "Code Changes"}) {
-					@VersionLabels("2", "3")
+					@VersionLabelsWithProps(VersionLabelProps{
+						OldLabel:  "Version 2",
+						NewLabel:  "Version 3",
+						OldMeta:   "2 days ago",
+						NewMeta:   "just now",
+						Additions: 3,
+						Deletions: 2,
+					})
 				}
 				@card.Content(card.ContentProps{NoPadding: true}) {
-					@Viewer(Props{MaxHeight: "300px", NoBorder: true}, []Line{
+					@Viewer(Props{MaxHeight: "300px", NoBorder: true, Language: "lua"}, []Line{
 						{OldLine: 1, NewLine: 1, Type: LineUnchanged, Content: "function handler(ctx, event)"},
 						{OldLine: 2, NewLine: 0, Type: LineRemoved, Content: "  -- Parse query parameters"},
 						{OldLine: 0, NewLine: 2, Type: LineAdded, Content: "  -- Parse query parameters from event"},
@@ -41,7 +48,7 @@ templ Preview() {
 		}
 
 		@preview.Section("Basic Diff") {
-			@Viewer(Props{MaxHeight: "300px"}, []Line{
+			@Viewer(Props{MaxHeight: "300px", Language: "lua"}, []Line{
 				{OldLine: 1, NewLine: 1, Type: LineUnchanged, Content: "local json = require(\"json\")"},
 				{OldLine: 2, NewLine: 2, Type: LineUnchanged, Content: ""},
 				{OldLine: 3, NewLine: 3, Type: LineUnchanged, Content: "-- Main entry point"},
@@ -61,7 +68,7 @@ templ Preview() {
 		}
 
 		@preview.Section("Large Diff with Scroll") {
-			@Viewer(Props{MaxHeight: "200px"}, []Line{
+			@Viewer(Props{MaxHeight: "200px", Language: "go"}, []Line{
 				{OldLine: 1, NewLine: 1, Type: LineUnchanged, Content: "package main"},
 				{OldLine: 2, NewLine: 2, Type: LineUnchanged, Content: ""},
 				{OldLine: 3, NewLine: 3, Type: LineUnchanged, Content: "import ("},
@@ -80,7 +87,7 @@ templ Preview() {
 		}
 
 		@preview.Section("Only Additions") {
-			@Viewer(Props{MaxHeight: "150px"}, []Line{
+			@Viewer(Props{MaxHeight: "150px", Language: "javascript"}, []Line{
 				{OldLine: 1, NewLine: 1, Type: LineUnchanged, Content: "// Config"},
 				{OldLine: 0, NewLine: 2, Type: LineAdded, Content: "const DEBUG = true"},
 				{OldLine: 0, NewLine: 3, Type: LineAdded, Content: "const VERSION = \"1.0.0\""},
@@ -90,7 +97,7 @@ templ Preview() {
 		}
 
 		@preview.Section("Only Deletions") {
-			@Viewer(Props{MaxHeight: "150px"}, []Line{
+			@Viewer(Props{MaxHeight: "150px", Language: "javascript"}, []Line{
 				{OldLine: 1, NewLine: 1, Type: LineUnchanged, Content: "// Deprecated functions"},
 				{OldLine: 2, NewLine: 0, Type: LineRemoved, Content: "function oldFunction() {}"},
 				{OldLine: 3, NewLine: 0, Type: LineRemoved, Content: "function legacyHandler() {}"},
