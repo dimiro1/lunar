@@ -114,6 +114,13 @@ templ SettingsTab(data SettingsData) {
 					Checked:     data.Enabled,
 				})
 			}
+			@card.Footer() {
+				@button.Button(button.Props{
+					Variant: button.Default,
+				}) {
+					Save Status
+				}
+			}
 		}
 		<!-- Danger Zone -->
 		@card.Card(card.Props{Variant: card.Danger}) {
