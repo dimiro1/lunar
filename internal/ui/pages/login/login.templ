@@ -62,13 +62,13 @@ templ LoginPage(data LoginPageData) {
 						<form method="POST" action="/login">
 							@form.FormGroup(form.FormGroupProps{}) {
 								@form.Label(form.LabelProps{Text: "API Key", For: "api-key", Required: true})
-								@form.Input(form.InputProps{
+								@form.PasswordInput(form.InputProps{
 									ID:          "api-key",
 									Name:        "api_key",
-									Type:        "password",
 									Placeholder: "Enter your API key",
 									Required:    true,
-								Error:       data.Error != "",
+									Error:       data.Error != "",
+									AriaLabel:   "API Key",
 								})
 							}
 							if data.Error != "" {

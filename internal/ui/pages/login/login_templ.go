@@ -280,13 +280,13 @@ func LoginPage(data LoginPageData) templ.Component {
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						templ_7745c5c3_Err = form.Input(form.InputProps{
+						templ_7745c5c3_Err = form.PasswordInput(form.InputProps{
 							ID:          "api-key",
 							Name:        "api_key",
-							Type:        "password",
 							Placeholder: "Enter your API key",
 							Required:    true,
 							Error:       data.Error != "",
+							AriaLabel:   "API Key",
 						}).Render(ctx, templ_7745c5c3_Buffer)
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err

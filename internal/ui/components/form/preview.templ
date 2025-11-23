@@ -144,6 +144,61 @@ templ Preview() {
 				}
 			}
 		}
+		<!-- Password Input -->
+		@preview.Section("Password Input") {
+			@preview.Card() {
+				@preview.Grid() {
+					@preview.Item("Default") {
+						@PasswordInput(InputProps{
+							Placeholder: "Enter password...",
+						})
+					}
+					@preview.Item("With Value") {
+						@PasswordInput(InputProps{
+							Value:       "mysecretpassword",
+							Placeholder: "Password",
+						})
+					}
+					@preview.Item("Monospace") {
+						@PasswordInput(InputProps{
+							Value: "api_key_12345",
+							Mono:  true,
+						})
+					}
+					@preview.Item("Disabled") {
+						@PasswordInput(InputProps{
+							Value:    "disabled-value",
+							Disabled: true,
+						})
+					}
+				}
+			}
+		}
+		<!-- Copy Input -->
+		@preview.Section("Copy Input") {
+			@preview.Card() {
+				@preview.Grid() {
+					@preview.Item("Default") {
+						@CopyInput(InputProps{
+							Value: "https://api.example.com/webhook",
+							Mono:  true,
+						})
+					}
+					@preview.Item("Readonly") {
+						@CopyInput(InputProps{
+							Value:    "sk_live_1234567890abcdef",
+							Readonly: true,
+							Mono:     true,
+						})
+					}
+					@preview.Item("With Placeholder") {
+						@CopyInput(InputProps{
+							Placeholder: "Generated URL will appear here",
+						})
+					}
+				}
+			}
+		}
 		<!-- Props-based Input -->
 		@preview.Section("Props-based Input") {
 			@preview.Card() {

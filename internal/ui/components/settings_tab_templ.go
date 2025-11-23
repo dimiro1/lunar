@@ -451,7 +451,12 @@ func SettingsTab(data SettingsData) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = InputWithCopy(data.InvocationURL, true).Render(ctx, templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = form.CopyInput(form.InputProps{
+						Value:     data.InvocationURL,
+						Readonly:  true,
+						Mono:      true,
+						AriaLabel: "Invocation URL",
+					}).Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}

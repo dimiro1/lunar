@@ -106,7 +106,12 @@ templ SettingsTab(data SettingsData) {
 			@card.LargeContent() {
 				@form.FormGroup(form.FormGroupProps{}) {
 					@form.Label(form.LabelProps{Text: "Full Invocation URL"})
-					@InputWithCopy(data.InvocationURL, true)
+					@form.CopyInput(form.InputProps{
+						Value:     data.InvocationURL,
+						Readonly:  true,
+						Mono:      true,
+						AriaLabel: "Invocation URL",
+					})
 				}
 				@form.FormGroup(form.FormGroupProps{}) {
 					@form.Label(form.LabelProps{Text: "Supported Methods"})

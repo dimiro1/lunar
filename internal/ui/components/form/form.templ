@@ -414,6 +414,36 @@ css passwordInput() {
 	padding-right: 2.5rem;
 }
 
+css copyWrapper() {
+	position: relative;
+	display: inline-flex;
+	width: 100%;
+}
+
+css copyWrapperGrow() {
+	flex: 1;
+}
+
+css copyButton() {
+	position: absolute;
+	right: 0.5rem;
+	top: 50%;
+	transform: translateY(-50%);
+	background: transparent;
+	border: none;
+	padding: 0.25rem;
+	cursor: pointer;
+	color: var(--color-text-muted);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 4px;
+}
+
+css copyInput() {
+	padding-right: 2.5rem;
+}
+
 // Helper functions
 
 func getWidthClass(width InputWidth) templ.CSSClass {
@@ -696,6 +726,81 @@ templ passwordToggleScript() {
 					if (showIcon) showIcon.style.display = 'none';
 					if (hideIcon) hideIcon.style.display = '';
 				}
+			}
+		</script>
+	}
+}
+
+// CopyInput component with copy to clipboard button
+templ CopyInput(props InputProps) {
+	<div class={ copyWrapper(), templ.KV(copyWrapperGrow(), props.Width == WidthGrow) }>
+		<input
+			if props.ID != "" {
+				id={ props.ID }
+			}
+			if props.Name != "" {
+				name={ props.Name }
+			}
+			type="text"
+			if props.Placeholder != "" {
+				placeholder={ props.Placeholder }
+			}
+			if props.Value != "" {
+				value={ props.Value }
+			}
+			class={ inputBase(), getWidthClass(props.Width), copyInput(), templ.KV(inputMono(), props.Mono), templ.KV(inputDisabled(), props.Disabled), templ.KV(inputError(), props.Error), templ.KV(props.Class, props.Class != "") }
+			disabled?={ props.Disabled }
+			readonly?={ props.Readonly }
+			required?={ props.Required }
+			if props.AriaLabel != "" {
+				aria-label={ props.AriaLabel }
+			}
+			if props.AriaDescribedBy != "" {
+				aria-describedby={ props.AriaDescribedBy }
+			}
+			if props.AriaInvalid {
+				aria-invalid="true"
+			}
+			data-copy-input="true"
+			{ props.Attributes... }
+		/>
+		<button type="button" class={ copyButton() } onclick="copyToClipboard(this)" title="Copy to clipboard" aria-label="Copy to clipboard">
+			<span data-icon-copy>@icons.Copy()</span>
+			<span data-icon-check style="display: none; color: var(--color-success);">@icons.Check()</span>
+		</button>
+	</div>
+	@copyScript()
+}
+
+var copyScriptHandle = templ.NewOnceHandle()
+
+templ copyScript() {
+	@copyScriptHandle.Once() {
+		<script>
+			function copyToClipboard(button) {
+				const wrapper = button.closest('div');
+				if (!wrapper) return;
+
+				const input = wrapper.querySelector('[data-copy-input]');
+				if (!input) return;
+
+				const copyIcon = button.querySelector('[data-icon-copy]');
+				const checkIcon = button.querySelector('[data-icon-check]');
+
+				navigator.clipboard.writeText(input.value).then(() => {
+					// Visual feedback - show checkmark
+					button.setAttribute('title', 'Copied!');
+					if (copyIcon) copyIcon.style.display = 'none';
+					if (checkIcon) checkIcon.style.display = '';
+
+					setTimeout(() => {
+						button.setAttribute('title', 'Copy to clipboard');
+						if (copyIcon) copyIcon.style.display = '';
+						if (checkIcon) checkIcon.style.display = 'none';
+					}, 2000);
+				}).catch(err => {
+					console.error('Failed to copy:', err);
+				});
 			}
 		</script>
 	}
