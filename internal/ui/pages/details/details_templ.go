@@ -218,24 +218,23 @@ func PreviewCodeTab() templ.Component {
 						code.CodeFile{
 							Filename: "handler.lua",
 							Language: "Lua 5.4",
-							Code: `<span class="lua-kw">local</span> json <span class="lua-kw">=</span> <span class="lua-func">require</span>(<span class="lua-str">"json"</span>)
+							Code: `local json = require("json")
 
-<span class="lua-comment">-- Main entry point for the function</span>
-<span class="lua-kw">function</span> <span class="lua-func">handler</span>(ctx, event)
-  <span class="lua-func">print</span>(<span class="lua-str">"Function invoked with method: "</span> .. event.method)
+-- Main entry point for the function
+function handler(ctx, event)
+  print("Function invoked with method: " .. event.method)
 
-  <span class="lua-kw">local</span> response <span class="lua-kw">=</span> {
-    <span class="lua-field">message</span> <span class="lua-kw">=</span> <span class="lua-str">"Hello from Lua!"</span>,
-    <span class="lua-field">timestamp</span> <span class="lua-kw">=</span> os.<span class="lua-func">time</span>()
+  local response = {
+    message = "Hello from Lua!",
+    timestamp = os.time()
   }
 
-  <span class="lua-kw">return</span> {
-    <span class="lua-field">statusCode</span> <span class="lua-kw">=</span> <span class="lua-num">200</span>,
-    <span class="lua-field">headers</span> <span class="lua-kw">=</span> { [<span class="lua-str">"Content-Type"</span>] = <span class="lua-str">"application/json"</span> },
-    <span class="lua-field">body</span> <span class="lua-kw">=</span> json.<span class="lua-func">encode</span>(response)
+  return {
+    statusCode = 200,
+    headers = { ["Content-Type"] = "application/json" },
+    body = json.encode(response)
   }
-<span class="lua-kw">end</span>`,
-							Lines: 17,
+end`,
 						},
 						[]api_reference.Section{
 							{

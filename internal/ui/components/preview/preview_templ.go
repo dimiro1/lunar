@@ -177,7 +177,7 @@ func Page(props PreviewPageProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link rel=\"stylesheet\" href=\"/static/css/base.css\"><link rel=\"stylesheet\" href=\"/styles/templ.css\"><link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css\"><script src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js\"></script><style>\n\t\t\t\t[data-back-link]:hover {\n\t\t\t\t\tcolor: var(--color-text);\n\t\t\t\t}\n\t\t\t</style></head><body>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link rel=\"stylesheet\" href=\"/static/css/base.css\"><link rel=\"stylesheet\" href=\"/styles/templ.css\"><link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css\"><link rel=\"stylesheet\" data-name=\"vs/editor/editor.main\" href=\"https://unpkg.com/monaco-editor@0.54.0/min/vs/editor/editor.main.css\"><script src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js\"></script><script>\n\t\t\t\tvar require = {\n\t\t\t\t\tpaths: {\n\t\t\t\t\t\tvs: \"https://unpkg.com/monaco-editor@0.54.0/min/vs\"\n\t\t\t\t\t}\n\t\t\t\t};\n\t\t\t</script><script src=\"https://unpkg.com/monaco-editor@0.54.0/min/vs/loader.js\"></script><style>\n\t\t\t\t[data-back-link]:hover {\n\t\t\t\t\tcolor: var(--color-text);\n\t\t\t\t}\n\t\t\t</style></head><body>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -272,7 +272,7 @@ func Page(props PreviewPageProps) templ.Component {
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(props.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/preview/preview.templ`, Line: 105, Col: 47}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/preview/preview.templ`, Line: 114, Col: 47}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -307,7 +307,7 @@ func Page(props PreviewPageProps) templ.Component {
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(props.Description)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/preview/preview.templ`, Line: 106, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/preview/preview.templ`, Line: 115, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -398,7 +398,7 @@ func Section(title string) templ.Component {
 		var templ_7745c5c3_Var20 string
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/preview/preview.templ`, Line: 117, Col: 45}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/preview/preview.templ`, Line: 126, Col: 45}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
@@ -583,7 +583,7 @@ func Item(label string) templ.Component {
 		var templ_7745c5c3_Var30 string
 		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/preview/preview.templ`, Line: 139, Col: 39}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/preview/preview.templ`, Line: 148, Col: 39}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 		if templ_7745c5c3_Err != nil {

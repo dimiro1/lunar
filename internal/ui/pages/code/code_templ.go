@@ -9,10 +9,10 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"fmt"
 	"github.com/dimiro1/faas-go/internal/ui/components/api_reference"
 	"github.com/dimiro1/faas-go/internal/ui/components/card"
 	"github.com/dimiro1/faas-go/internal/ui/components/icons"
+	"github.com/dimiro1/faas-go/internal/ui/components/monaco_editor"
 )
 
 // This is now the source of truth for the Code tab page (moved from components)
@@ -21,7 +21,6 @@ type CodeFile struct {
 	Filename string
 	Language string
 	Code     string
-	Lines    int
 }
 
 func codeTabContainer() templ.CSSClass {
@@ -29,7 +28,6 @@ func codeTabContainer() templ.CSSClass {
 	templ_7745c5c3_CSSBuilder.WriteString(`display:grid;`)
 	templ_7745c5c3_CSSBuilder.WriteString(`grid-template-columns:3fr 2fr;`)
 	templ_7745c5c3_CSSBuilder.WriteString(`gap:1.5rem;`)
-	templ_7745c5c3_CSSBuilder.WriteString(`height:600px;`)
 	templ_7745c5c3_CSSID := templ.CSSID(`codeTabContainer`, templ_7745c5c3_CSSBuilder.String())
 	return templ.ComponentCSSClass{
 		ID:    templ_7745c5c3_CSSID,
@@ -44,57 +42,6 @@ func codeEditorLang() templ.CSSClass {
 	templ_7745c5c3_CSSBuilder.WriteString(`color:var(--color-text-muted);`)
 	templ_7745c5c3_CSSBuilder.WriteString(`text-transform:uppercase;`)
 	templ_7745c5c3_CSSID := templ.CSSID(`codeEditorLang`, templ_7745c5c3_CSSBuilder.String())
-	return templ.ComponentCSSClass{
-		ID:    templ_7745c5c3_CSSID,
-		Class: templ.SafeCSS(`.` + templ_7745c5c3_CSSID + `{` + templ_7745c5c3_CSSBuilder.String() + `}`),
-	}
-}
-
-func codeEditorLines() templ.CSSClass {
-	templ_7745c5c3_CSSBuilder := templruntime.GetBuilder()
-	templ_7745c5c3_CSSBuilder.WriteString(`display:flex;`)
-	templ_7745c5c3_CSSBuilder.WriteString(`font-family:var(--font-mono);`)
-	templ_7745c5c3_CSSBuilder.WriteString(`font-size:var(--text-sm);`)
-	templ_7745c5c3_CSSBuilder.WriteString(`line-height:1.75;`)
-	templ_7745c5c3_CSSID := templ.CSSID(`codeEditorLines`, templ_7745c5c3_CSSBuilder.String())
-	return templ.ComponentCSSClass{
-		ID:    templ_7745c5c3_CSSID,
-		Class: templ.SafeCSS(`.` + templ_7745c5c3_CSSID + `{` + templ_7745c5c3_CSSBuilder.String() + `}`),
-	}
-}
-
-func codeLineNumbers() templ.CSSClass {
-	templ_7745c5c3_CSSBuilder := templruntime.GetBuilder()
-	templ_7745c5c3_CSSBuilder.WriteString(`display:flex;`)
-	templ_7745c5c3_CSSBuilder.WriteString(`flex-direction:column;`)
-	templ_7745c5c3_CSSBuilder.WriteString(`text-align:right;`)
-	templ_7745c5c3_CSSBuilder.WriteString(`padding-right:1rem;`)
-	templ_7745c5c3_CSSBuilder.WriteString(`margin-right:1rem;`)
-	templ_7745c5c3_CSSBuilder.WriteString(`border-right:1px solid var(--color-border);`)
-	templ_7745c5c3_CSSBuilder.WriteString(`color:var(--color-text-muted);`)
-	templ_7745c5c3_CSSBuilder.WriteString(`user-select:none;`)
-	templ_7745c5c3_CSSID := templ.CSSID(`codeLineNumbers`, templ_7745c5c3_CSSBuilder.String())
-	return templ.ComponentCSSClass{
-		ID:    templ_7745c5c3_CSSID,
-		Class: templ.SafeCSS(`.` + templ_7745c5c3_CSSID + `{` + templ_7745c5c3_CSSBuilder.String() + `}`),
-	}
-}
-
-func codeContent() templ.CSSClass {
-	templ_7745c5c3_CSSBuilder := templruntime.GetBuilder()
-	templ_7745c5c3_CSSBuilder.WriteString(`flex:1;`)
-	templ_7745c5c3_CSSBuilder.WriteString(`color:var(--color-text);`)
-	templ_7745c5c3_CSSID := templ.CSSID(`codeContent`, templ_7745c5c3_CSSBuilder.String())
-	return templ.ComponentCSSClass{
-		ID:    templ_7745c5c3_CSSID,
-		Class: templ.SafeCSS(`.` + templ_7745c5c3_CSSID + `{` + templ_7745c5c3_CSSBuilder.String() + `}`),
-	}
-}
-
-func codeContentPre() templ.CSSClass {
-	templ_7745c5c3_CSSBuilder := templruntime.GetBuilder()
-	templ_7745c5c3_CSSBuilder.WriteString(`margin:0;`)
-	templ_7745c5c3_CSSID := templ.CSSID(`codeContentPre`, templ_7745c5c3_CSSBuilder.String())
 	return templ.ComponentCSSClass{
 		ID:    templ_7745c5c3_CSSID,
 		Class: templ.SafeCSS(`.` + templ_7745c5c3_CSSID + `{` + templ_7745c5c3_CSSBuilder.String() + `}`),
@@ -193,7 +140,7 @@ func Page(file CodeFile, apiSections []api_reference.Section) templ.Component {
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(file.Language)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/pages/code/code.templ`, Line: 68, Col: 52}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/pages/code/code.templ`, Line: 39, Col: 52}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {
@@ -207,7 +154,7 @@ func Page(file CodeFile, apiSections []api_reference.Section) templ.Component {
 			})
 			templ_7745c5c3_Err = card.Header(card.HeaderProps{
 				Title: file.Filename,
-				Icon:  icons.Code(),
+				Icon:  icons.Lua(),
 			}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var5), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -228,128 +175,22 @@ func Page(file CodeFile, apiSections []api_reference.Section) templ.Component {
 					}()
 				}
 				ctx = templ.InitializeContext(ctx)
-				var templ_7745c5c3_Var10 = []any{codeEditorLines()}
-				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var10...)
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div class=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var11 string
-				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var10).String())
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/pages/code/code.templ`, Line: 1, Col: 0}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var12 = []any{codeLineNumbers()}
-				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var12...)
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<div class=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var13 string
-				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var12).String())
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/pages/code/code.templ`, Line: 1, Col: 0}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				for i := 1; i <= file.Lines; i++ {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<span>")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var14 string
-					templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", i))
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/pages/code/code.templ`, Line: 74, Col: 35}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</span>")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var15 = []any{codeContent()}
-				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var15...)
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<div class=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var16 string
-				templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var15).String())
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/pages/code/code.templ`, Line: 1, Col: 0}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var17 = []any{codeContentPre()}
-				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var17...)
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<pre class=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var18 string
-				templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var17).String())
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/pages/code/code.templ`, Line: 1, Col: 0}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\"><code>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templ.Raw(file.Code).Render(ctx, templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</code></pre></div></div>")
+				templ_7745c5c3_Err = monaco_editor.Editor(monaco_editor.Props{
+					ID:          "code-editor",
+					Value:       file.Code,
+					Language:    "lua",
+					Theme:       "github-dark",
+					ReadOnly:    false,
+					LineNumbers: true,
+					Minimap:     false,
+					Height:      "500px",
+				}).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = card.SimpleContent().Render(templ.WithChildren(ctx, templ_7745c5c3_Var9), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = card.Content(card.ContentProps{NoPadding: true}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var9), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -359,7 +200,7 @@ func Page(file CodeFile, apiSections []api_reference.Section) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<!-- API Reference Sidebar -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<!-- API Reference Sidebar -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -367,7 +208,7 @@ func Page(file CodeFile, apiSections []api_reference.Section) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

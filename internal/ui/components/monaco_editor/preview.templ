@@ -1,0 +1,55 @@
+package monaco_editor
+
+import (
+	"github.com/dimiro1/faas-go/internal/ui/components/preview"
+)
+
+templ Preview() {
+	@preview.Page(preview.PreviewPageProps{
+		Title:       "Monaco Editor",
+		Description: "Code editor with syntax highlighting, autocomplete and hover support.",
+	}) {
+		@preview.Section("Default Editor") {
+			@Editor(Props{
+				ID:          "preview-editor",
+				Value:       `local json = require("json")
+
+-- Main entry point for the function
+function handler(ctx, event)
+  log.info("Function started")
+
+  local response = {
+    message = "Hello from Lua!",
+    timestamp = time.now()
+  }
+
+  return {
+    statusCode = 200,
+    headers = { ["Content-Type"] = "application/json" },
+    body = json.encode(response)
+  }
+end`,
+				Language:    "lua",
+				Theme:       "github-dark",
+				ReadOnly:    false,
+				LineNumbers: true,
+				Minimap:     false,
+				Height:      "400px",
+			})
+		}
+		@preview.Section("Read-only Editor") {
+			@Editor(Props{
+				ID:          "preview-readonly",
+				Value:       `-- This is a read-only example
+local result = kv.get("counter") or "0"
+print("Current count: " .. result)`,
+				Language:    "lua",
+				Theme:       "github-dark",
+				ReadOnly:    true,
+				LineNumbers: true,
+				Minimap:     false,
+				Height:      "150px",
+			})
+		}
+	}
+}

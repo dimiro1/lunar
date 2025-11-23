@@ -1,10 +1,10 @@
 package code
 
 import (
-	"fmt"
 	"github.com/dimiro1/faas-go/internal/ui/components/api_reference"
 	"github.com/dimiro1/faas-go/internal/ui/components/card"
 	"github.com/dimiro1/faas-go/internal/ui/components/icons"
+	"github.com/dimiro1/faas-go/internal/ui/components/monaco_editor"
 )
 
 // This is now the source of truth for the Code tab page (moved from components)
@@ -13,14 +13,12 @@ type CodeFile struct {
 	Filename string
 	Language string
 	Code     string
-	Lines    int
 }
 
 css codeTabContainer() {
 	display: grid;
 	grid-template-columns: 3fr 2fr;
 	gap: 1.5rem;
-	height: 600px;
 }
 
 css codeEditorLang() {
@@ -30,58 +28,27 @@ css codeEditorLang() {
 	text-transform: uppercase;
 }
 
-css codeEditorLines() {
-	display: flex;
-	font-family: var(--font-mono);
-	font-size: var(--text-sm);
-	line-height: 1.75;
-}
-
-css codeLineNumbers() {
-	display: flex;
-	flex-direction: column;
-	text-align: right;
-	padding-right: 1rem;
-	margin-right: 1rem;
-	border-right: 1px solid var(--color-border);
-	color: var(--color-text-muted);
-	user-select: none;
-}
-
-css codeContent() {
-	flex: 1;
-	color: var(--color-text);
-}
-
-css codeContentPre() {
-	margin: 0;
-}
-
 templ Page(file CodeFile, apiSections []api_reference.Section) {
 	<div class={ codeTabContainer() }>
 		<!-- Code Editor -->
 		@card.Card(card.Props{Elevation: card.ElevationLg}) {
 			@card.Header(card.HeaderProps{
 				Title: file.Filename,
-				Icon:  icons.Code(),
+				Icon:  icons.Lua(),
 			}) {
 				<span class={ codeEditorLang() }>{ file.Language }</span>
 			}
-			@card.SimpleContent() {
-				<div class={ codeEditorLines() }>
-					<div class={ codeLineNumbers() }>
-						for i := 1; i <= file.Lines; i++ {
-							<span>{ fmt.Sprintf("%d", i) }</span>
-						}
-					</div>
-					<div class={ codeContent() }>
-						<pre class={ codeContentPre() }>
-							<code>
-								@templ.Raw(file.Code)
-							</code>
-						</pre>
-					</div>
-				</div>
+			@card.Content(card.ContentProps{NoPadding: true}) {
+				@monaco_editor.Editor(monaco_editor.Props{
+					ID:          "code-editor",
+					Value:       file.Code,
+					Language:    "lua",
+					Theme:       "github-dark",
+					ReadOnly:    false,
+					LineNumbers: true,
+					Minimap:     false,
+					Height:      "500px",
+				})
 			}
 		}
 		<!-- API Reference Sidebar -->

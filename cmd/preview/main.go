@@ -18,6 +18,7 @@ import (
 	"github.com/dimiro1/faas-go/internal/ui/components/icons"
 	"github.com/dimiro1/faas-go/internal/ui/components/kbd"
 	logcomponent "github.com/dimiro1/faas-go/internal/ui/components/log"
+	"github.com/dimiro1/faas-go/internal/ui/components/monaco_editor"
 	"github.com/dimiro1/faas-go/internal/ui/components/navbar"
 	"github.com/dimiro1/faas-go/internal/ui/components/pagination"
 	"github.com/dimiro1/faas-go/internal/ui/components/preview"
@@ -154,6 +155,10 @@ func main() {
 
 	mux.HandleFunc("/preview/component/template-card", func(w http.ResponseWriter, r *http.Request) {
 		_ = template_card.Preview().Render(r.Context(), w)
+	})
+
+	mux.HandleFunc("/preview/component/monaco-editor", func(w http.ResponseWriter, r *http.Request) {
+		_ = monaco_editor.Preview().Render(r.Context(), w)
 	})
 
 	mux.HandleFunc("/preview", func(w http.ResponseWriter, r *http.Request) {
