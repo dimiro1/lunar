@@ -58,6 +58,8 @@ templ Index() {
 			<title>Component Library</title>
 			<link rel="stylesheet" href="/static/css/base.css"/>
 			<link rel="stylesheet" href="/styles/templ.css"/>
+			<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css"/>
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
 		</head>
 		<body>
 			<div class={ indexContainer() }>
@@ -80,6 +82,7 @@ templ Index() {
 					@IndexCard(ComponentInfo{Name: "Tabs", Href: "/preview/component/tabs"})
 					@IndexCard(ComponentInfo{Name: "API Reference", Href: "/preview/component/api-reference"})
 					@IndexCard(ComponentInfo{Name: "Env Editor", Href: "/preview/component/env-editor"})
+					@IndexCard(ComponentInfo{Name: "Request Builder", Href: "/preview/component/request-builder"})
 				</div>
 			</div>
 		</body>

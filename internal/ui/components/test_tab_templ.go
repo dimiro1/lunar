@@ -8,7 +8,10 @@ package components
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/dimiro1/faas-go/internal/ui/components/code_example"
+import (
+	"github.com/dimiro1/faas-go/internal/ui/components/code_example"
+	"github.com/dimiro1/faas-go/internal/ui/components/request_builder"
+)
 
 type TestTabData struct {
 	Examples []code_example.Example
@@ -80,11 +83,15 @@ func TestTab(data TestTabData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\"><div id=\"test-code-examples\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = code_example.CodeExamples(data.Examples).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -93,7 +100,7 @@ func TestTab(data TestTabData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -106,11 +113,12 @@ func TestTab(data TestTabData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = RequestBuilder(RequestBuilderData{
+		templ_7745c5c3_Err = request_builder.RequestBuilder(request_builder.Props{
+			ID:      "test-request-builder",
 			URL:     data.URL,
 			Methods: data.Methods,
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -121,7 +129,7 @@ func TestTab(data TestTabData) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div><script>\n\t\t\tdocument.addEventListener('request-code-updated', (e) => {\n\t\t\t\tconst { codes } = e.detail;\n\t\t\t\tconst container = document.getElementById('test-code-examples');\n\t\t\t\tif (!container) return;\n\n\t\t\t\t// Map language IDs\n\t\t\t\tconst langMap = {\n\t\t\t\t\t'curl': 'curl',\n\t\t\t\t\t'javascript': 'node',\n\t\t\t\t\t'python': 'python',\n\t\t\t\t\t'go': 'go'\n\t\t\t\t};\n\n\t\t\t\tObject.entries(codes).forEach(([lang, code]) => {\n\t\t\t\t\tconst panelId = langMap[lang] || lang;\n\t\t\t\t\tconst panel = container.querySelector(`[data-panel=\"${panelId}\"]`);\n\t\t\t\t\tif (panel) {\n\t\t\t\t\t\tconst codeEl = panel.querySelector('code');\n\t\t\t\t\t\tif (codeEl) {\n\t\t\t\t\t\t\tcodeEl.textContent = code;\n\t\t\t\t\t\t\tcodeEl.removeAttribute('data-highlighted');\n\t\t\t\t\t\t\tif (window.hljs) {\n\t\t\t\t\t\t\t\thljs.highlightElement(codeEl);\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t});\n\t\t\t});\n\t\t</script></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -9,7 +9,6 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"github.com/dimiro1/faas-go/internal/ui/components/button"
 	"github.com/dimiro1/faas-go/internal/ui/components/card"
 	"github.com/dimiro1/faas-go/internal/ui/components/code"
 	"github.com/dimiro1/faas-go/internal/ui/components/icons"
@@ -67,6 +66,15 @@ func copyButtonWrapper() templ.CSSClass {
 	templ_7745c5c3_CSSBuilder.WriteString(`position:absolute;`)
 	templ_7745c5c3_CSSBuilder.WriteString(`top:0.75rem;`)
 	templ_7745c5c3_CSSBuilder.WriteString(`right:0.75rem;`)
+	templ_7745c5c3_CSSBuilder.WriteString(`background:none;`)
+	templ_7745c5c3_CSSBuilder.WriteString(`border:none;`)
+	templ_7745c5c3_CSSBuilder.WriteString(`padding:0.5rem;`)
+	templ_7745c5c3_CSSBuilder.WriteString(`cursor:pointer;`)
+	templ_7745c5c3_CSSBuilder.WriteString(`color:var(--color-text-muted);`)
+	templ_7745c5c3_CSSBuilder.WriteString(`border-radius:6px;`)
+	templ_7745c5c3_CSSBuilder.WriteString(`display:flex;`)
+	templ_7745c5c3_CSSBuilder.WriteString(`align-items:center;`)
+	templ_7745c5c3_CSSBuilder.WriteString(`justify-content:center;`)
 	templ_7745c5c3_CSSID := templ.CSSID(`copyButtonWrapper`, templ_7745c5c3_CSSBuilder.String())
 	return templ.ComponentCSSClass{
 		ID:    templ_7745c5c3_CSSID,
@@ -187,7 +195,7 @@ func CodeExamples(examples []Example) templ.Component {
 					var templ_7745c5c3_Var8 string
 					templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(ex.ID)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/code_example/code_example.templ`, Line: 60, Col: 22}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/code_example/code_example.templ`, Line: 68, Col: 22}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 					if templ_7745c5c3_Err != nil {
@@ -200,7 +208,7 @@ func CodeExamples(examples []Example) templ.Component {
 					var templ_7745c5c3_Var9 string
 					templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(ex.Label)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/code_example/code_example.templ`, Line: 63, Col: 16}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/code_example/code_example.templ`, Line: 71, Col: 16}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 					if templ_7745c5c3_Err != nil {
@@ -237,12 +245,16 @@ func CodeExamples(examples []Example) templ.Component {
 					}()
 				}
 				ctx = templ.InitializeContext(ctx)
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<div style=\"position: relative;\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
 				var templ_7745c5c3_Var11 = []any{copyButtonWrapper()}
 				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var11...)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<div class=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<button type=\"button\" class=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -255,19 +267,23 @@ func CodeExamples(examples []Example) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" onclick=\"copyCodeExample(this)\" aria-label=\"Copy code\"><span data-icon-copy>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = button.Button(button.Props{
-					Variant: button.Ghost,
-					Size:    button.SizeIcon,
-					Icon:    icons.Copy(),
-				}).Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = icons.Copy().Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</span> <span data-icon-check style=\"display: none; color: var(--color-success);\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = icons.Check().Render(ctx, templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</span></button> ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -277,20 +293,20 @@ func CodeExamples(examples []Example) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<div data-panel=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<div data-panel=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var14 string
 					templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(ex.ID)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/code_example/code_example.templ`, Line: 78, Col: 23}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/code_example/code_example.templ`, Line: 89, Col: 24}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" class=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\" class=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -303,7 +319,7 @@ func CodeExamples(examples []Example) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -316,10 +332,14 @@ func CodeExamples(examples []Example) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
 				}
 				return nil
 			})
@@ -376,7 +396,7 @@ func codeExampleScript() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<script>\n\t\t\tfunction selectCodeExample(button) {\n\t\t\t\tconst container = button.closest('[class*=\"cardBase\"]');\n\t\t\t\tif (!container) return;\n\n\t\t\t\t// Update tabs - remove active class\n\t\t\t\tconst tabs = container.querySelectorAll('[data-tab]');\n\t\t\t\ttabs.forEach(tab => {\n\t\t\t\t\ttab.className = tab.className.replace(/codeExampleTabActive_[a-f0-9]+/g, '').trim();\n\t\t\t\t});\n\t\t\t\t// Add active class to clicked button\n\t\t\t\tconst activeTabClass = Array.from(document.styleSheets)\n\t\t\t\t\t.flatMap(sheet => {\n\t\t\t\t\t\ttry { return Array.from(sheet.cssRules); } catch(e) { return []; }\n\t\t\t\t\t})\n\t\t\t\t\t.find(rule => rule.selectorText && rule.selectorText.includes('codeExampleTabActive_'));\n\t\t\t\tif (activeTabClass) {\n\t\t\t\t\tbutton.classList.add(activeTabClass.selectorText.replace('.', ''));\n\t\t\t\t}\n\n\t\t\t\t// Update panels\n\t\t\t\tconst tabId = button.getAttribute('data-tab');\n\t\t\t\tconst panels = container.querySelectorAll('[data-panel]');\n\t\t\t\tpanels.forEach(panel => {\n\t\t\t\t\tpanel.className = panel.className.replace(/codePanelActive_[a-f0-9]+/g, '').trim();\n\t\t\t\t});\n\t\t\t\tconst activePanel = container.querySelector('[data-panel=\"' + tabId + '\"]');\n\t\t\t\tif (activePanel) {\n\t\t\t\t\tconst activePanelClass = Array.from(document.styleSheets)\n\t\t\t\t\t\t.flatMap(sheet => {\n\t\t\t\t\t\t\ttry { return Array.from(sheet.cssRules); } catch(e) { return []; }\n\t\t\t\t\t\t})\n\t\t\t\t\t\t.find(rule => rule.selectorText && rule.selectorText.includes('codePanelActive_'));\n\t\t\t\t\tif (activePanelClass) {\n\t\t\t\t\t\tactivePanel.classList.add(activePanelClass.selectorText.replace('.', ''));\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t</script>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<script>\n\t\t\tfunction copyCodeExample(button) {\n\t\t\t\tconst container = button.closest('[class*=\"cardBase\"]');\n\t\t\t\tif (!container) return;\n\n\t\t\t\t// Find the active panel\n\t\t\t\tconst activePanel = container.querySelector('[data-panel][class*=\"codePanelActive\"]');\n\t\t\t\tif (!activePanel) return;\n\n\t\t\t\tconst codeEl = activePanel.querySelector('code');\n\t\t\t\tif (!codeEl) return;\n\n\t\t\t\tnavigator.clipboard.writeText(codeEl.textContent).then(() => {\n\t\t\t\t\tconst copyIcon = button.querySelector('[data-icon-copy]');\n\t\t\t\t\tconst checkIcon = button.querySelector('[data-icon-check]');\n\t\t\t\t\tif (copyIcon && checkIcon) {\n\t\t\t\t\t\tcopyIcon.style.display = 'none';\n\t\t\t\t\t\tcheckIcon.style.display = 'inline';\n\t\t\t\t\t\tsetTimeout(() => {\n\t\t\t\t\t\t\tcopyIcon.style.display = 'inline';\n\t\t\t\t\t\t\tcheckIcon.style.display = 'none';\n\t\t\t\t\t\t}, 2000);\n\t\t\t\t\t}\n\t\t\t\t});\n\t\t\t}\n\n\t\t\tfunction selectCodeExample(button) {\n\t\t\t\tconst container = button.closest('[class*=\"cardBase\"]');\n\t\t\t\tif (!container) return;\n\n\t\t\t\t// Update tabs - remove active class\n\t\t\t\tconst tabs = container.querySelectorAll('[data-tab]');\n\t\t\t\ttabs.forEach(tab => {\n\t\t\t\t\ttab.className = tab.className.replace(/codeExampleTabActive_[a-f0-9]+/g, '').trim();\n\t\t\t\t});\n\t\t\t\t// Add active class to clicked button\n\t\t\t\tconst activeTabClass = Array.from(document.styleSheets)\n\t\t\t\t\t.flatMap(sheet => {\n\t\t\t\t\t\ttry { return Array.from(sheet.cssRules); } catch(e) { return []; }\n\t\t\t\t\t})\n\t\t\t\t\t.find(rule => rule.selectorText && rule.selectorText.includes('codeExampleTabActive_'));\n\t\t\t\tif (activeTabClass) {\n\t\t\t\t\tbutton.classList.add(activeTabClass.selectorText.replace('.', ''));\n\t\t\t\t}\n\n\t\t\t\t// Update panels\n\t\t\t\tconst tabId = button.getAttribute('data-tab');\n\t\t\t\tconst panels = container.querySelectorAll('[data-panel]');\n\t\t\t\tpanels.forEach(panel => {\n\t\t\t\t\tpanel.className = panel.className.replace(/codePanelActive_[a-f0-9]+/g, '').trim();\n\t\t\t\t});\n\t\t\t\tconst activePanel = container.querySelector('[data-panel=\"' + tabId + '\"]');\n\t\t\t\tif (activePanel) {\n\t\t\t\t\tconst activePanelClass = Array.from(document.styleSheets)\n\t\t\t\t\t\t.flatMap(sheet => {\n\t\t\t\t\t\t\ttry { return Array.from(sheet.cssRules); } catch(e) { return []; }\n\t\t\t\t\t\t})\n\t\t\t\t\t\t.find(rule => rule.selectorText && rule.selectorText.includes('codePanelActive_'));\n\t\t\t\t\tif (activePanelClass) {\n\t\t\t\t\t\tactivePanel.classList.add(activePanelClass.selectorText.replace('.', ''));\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t</script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

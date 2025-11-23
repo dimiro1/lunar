@@ -21,6 +21,7 @@ import (
 	"github.com/dimiro1/faas-go/internal/ui/components/navbar"
 	"github.com/dimiro1/faas-go/internal/ui/components/pagination"
 	"github.com/dimiro1/faas-go/internal/ui/components/preview"
+	"github.com/dimiro1/faas-go/internal/ui/components/request_builder"
 	"github.com/dimiro1/faas-go/internal/ui/components/table"
 	"github.com/dimiro1/faas-go/internal/ui/components/tabs"
 	"github.com/dimiro1/faas-go/internal/ui/pages"
@@ -143,6 +144,10 @@ func main() {
 		_ = env_editor.Preview().Render(r.Context(), w)
 	})
 
+	mux.HandleFunc("/preview/component/request-builder", func(w http.ResponseWriter, r *http.Request) {
+		_ = request_builder.Preview().Render(r.Context(), w)
+	})
+
 	mux.HandleFunc("/preview", func(w http.ResponseWriter, r *http.Request) {
 		_ = preview.Index().Render(r.Context(), w)
 	})
@@ -178,6 +183,7 @@ func main() {
 	fmt.Println("  - http://localhost:8080/preview/component/code-example (Code Example Component)")
 	fmt.Println("  - http://localhost:8080/preview/component/diff (Diff Component)")
 	fmt.Println("  - http://localhost:8080/preview/component/api-reference (API Reference Component)")
+	fmt.Println("  - http://localhost:8080/preview/component/request-builder (Request Builder Component)")
 
 	log.Fatal(http.ListenAndServe(":8080", handler))
 }

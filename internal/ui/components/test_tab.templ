@@ -1,6 +1,9 @@
 package components
 
-import "github.com/dimiro1/faas-go/internal/ui/components/code_example"
+import (
+	"github.com/dimiro1/faas-go/internal/ui/components/code_example"
+	"github.com/dimiro1/faas-go/internal/ui/components/request_builder"
+)
 
 type TestTabData struct {
 	Examples []code_example.Example
@@ -23,13 +26,46 @@ css testTabPanels() {
 
 templ TestTab(data TestTabData) {
 	<div class={ testTabContainer() }>
-		@code_example.CodeExamples(data.Examples)
+		<div id="test-code-examples">
+			@code_example.CodeExamples(data.Examples)
+		</div>
 		<div class={ testTabPanels() }>
-			@RequestBuilder(RequestBuilderData{
+			@request_builder.RequestBuilder(request_builder.Props{
+				ID:      "test-request-builder",
 				URL:     data.URL,
 				Methods: data.Methods,
 			})
 			@ResponseViewer(data.Response)
 		</div>
+		<script>
+			document.addEventListener('request-code-updated', (e) => {
+				const { codes } = e.detail;
+				const container = document.getElementById('test-code-examples');
+				if (!container) return;
+
+				// Map language IDs
+				const langMap = {
+					'curl': 'curl',
+					'javascript': 'node',
+					'python': 'python',
+					'go': 'go'
+				};
+
+				Object.entries(codes).forEach(([lang, code]) => {
+					const panelId = langMap[lang] || lang;
+					const panel = container.querySelector(`[data-panel="${panelId}"]`);
+					if (panel) {
+						const codeEl = panel.querySelector('code');
+						if (codeEl) {
+							codeEl.textContent = code;
+							codeEl.removeAttribute('data-highlighted');
+							if (window.hljs) {
+								hljs.highlightElement(codeEl);
+							}
+						}
+					}
+				});
+			});
+		</script>
 	</div>
 }

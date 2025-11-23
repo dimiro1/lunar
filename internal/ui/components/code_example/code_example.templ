@@ -1,7 +1,6 @@
 package code_example
 
 import (
-	"github.com/dimiro1/faas-go/internal/ui/components/button"
 	"github.com/dimiro1/faas-go/internal/ui/components/card"
 	"github.com/dimiro1/faas-go/internal/ui/components/code"
 	"github.com/dimiro1/faas-go/internal/ui/components/icons"
@@ -40,6 +39,15 @@ css copyButtonWrapper() {
 	position: absolute;
 	top: 0.75rem;
 	right: 0.75rem;
+	background: none;
+	border: none;
+	padding: 0.5rem;
+	cursor: pointer;
+	color: var(--color-text-muted);
+	border-radius: 6px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 css codePanel() {
@@ -66,26 +74,30 @@ templ CodeExamples(examples []Example) {
 			</div>
 		}
 		@card.Content(card.ContentProps{NoPadding: true}) {
-			<div class={ copyButtonWrapper() }>
-				@button.Button(button.Props{
-					Variant: button.Ghost,
-					Size:    button.SizeIcon,
-					Icon:    icons.Copy(),
-				})
-			</div>
-			for _, ex := range examples {
-				<div
-					data-panel={ ex.ID }
-					class={ codePanel(), templ.KV(codePanelActive(), ex.Active) }
+		<div style="position: relative;">
+				<button
+					type="button"
+					class={ copyButtonWrapper() }
+					onclick="copyCodeExample(this)"
+					aria-label="Copy code"
 				>
-					@code.Simple(code.Props{
-						Language: ex.Language,
-						Code:     ex.Code,
-						NoBorder: true,
-						Padded:   true,
-					})
-				</div>
-			}
+					<span data-icon-copy>@icons.Copy()</span>
+					<span data-icon-check style="display: none; color: var(--color-success);">@icons.Check()</span>
+				</button>
+				for _, ex := range examples {
+					<div
+						data-panel={ ex.ID }
+						class={ codePanel(), templ.KV(codePanelActive(), ex.Active) }
+					>
+						@code.Simple(code.Props{
+							Language: ex.Language,
+							Code:     ex.Code,
+							NoBorder: true,
+							Padded:   true,
+						})
+					</div>
+				}
+			</div>
 		}
 	}
 	@codeExampleScript()
@@ -96,6 +108,31 @@ var codeExampleScriptHandle = templ.NewOnceHandle()
 templ codeExampleScript() {
 	@codeExampleScriptHandle.Once() {
 		<script>
+			function copyCodeExample(button) {
+				const container = button.closest('[class*="cardBase"]');
+				if (!container) return;
+
+				// Find the active panel
+				const activePanel = container.querySelector('[data-panel][class*="codePanelActive"]');
+				if (!activePanel) return;
+
+				const codeEl = activePanel.querySelector('code');
+				if (!codeEl) return;
+
+				navigator.clipboard.writeText(codeEl.textContent).then(() => {
+					const copyIcon = button.querySelector('[data-icon-copy]');
+					const checkIcon = button.querySelector('[data-icon-check]');
+					if (copyIcon && checkIcon) {
+						copyIcon.style.display = 'none';
+						checkIcon.style.display = 'inline';
+						setTimeout(() => {
+							copyIcon.style.display = 'inline';
+							checkIcon.style.display = 'none';
+						}, 2000);
+					}
+				});
+			}
+
 			function selectCodeExample(button) {
 				const container = button.closest('[class*="cardBase"]');
 				if (!container) return;

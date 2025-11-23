@@ -1,0 +1,192 @@
+package request_builder
+
+import (
+	"github.com/dimiro1/faas-go/internal/ui/components/button"
+	"github.com/dimiro1/faas-go/internal/ui/components/card"
+	"github.com/dimiro1/faas-go/internal/ui/components/form"
+	"github.com/dimiro1/faas-go/internal/ui/components/icons"
+)
+
+type Props struct {
+	ID      string
+	URL     string
+	Methods []string
+}
+
+css requestBuilderUrl() {
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+}
+
+css requestBuilderFields() {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+templ RequestBuilder(props Props) {
+	@card.Simple() {
+		@card.SimpleHeader("Request Builder")
+		@card.LargeContent() {
+			<div
+				id={ props.ID }
+				data-request-builder="true"
+				data-url={ props.URL }
+			>
+				<div class={ requestBuilderUrl() }>
+					@form.SelectInput(form.SelectProps{
+						Options:    props.Methods,
+						Attributes: templ.Attributes{"data-rb-method": "true", "onchange": "updateRequestCode(this)"},
+					})
+					@form.CopyInput(form.InputProps{
+						Value:     props.URL,
+						Readonly:  true,
+						Mono:      true,
+						AriaLabel: "Request URL",
+					})
+				</div>
+				<div class={ requestBuilderFields() }>
+					@form.FormGroup(form.FormGroupProps{}) {
+						@form.Label(form.LabelProps{Text: "Query Params", For: props.ID + "-query"})
+						@form.Input(form.InputProps{
+							ID:          props.ID + "-query",
+							Placeholder: "key=value&other=value",
+							Mono:        true,
+							Attributes:  templ.Attributes{"data-rb-query": "true", "oninput": "updateRequestCode(this)"},
+						})
+					}
+					@form.FormGroup(form.FormGroupProps{}) {
+						@form.Label(form.LabelProps{Text: "Headers (JSON)", For: props.ID + "-headers"})
+						@form.TextareaInput(form.TextareaProps{
+							ID:         props.ID + "-headers",
+							Rows:       2,
+							Value:      `{"Content-Type": "application/json"}`,
+							Attributes: templ.Attributes{"data-rb-headers": "true", "oninput": "updateRequestCode(this)"},
+						})
+					}
+					@form.FormGroup(form.FormGroupProps{}) {
+						@form.Label(form.LabelProps{Text: "Body", For: props.ID + "-body"})
+						@form.TextareaInput(form.TextareaProps{
+							ID:         props.ID + "-body",
+							Rows:       4,
+							Attributes: templ.Attributes{"data-rb-body": "true", "oninput": "updateRequestCode(this)"},
+						})
+					}
+					@button.Button(button.Props{
+						Variant:   button.Default,
+						Icon:      icons.PaperAirplane(),
+						FullWidth: true,
+					}) {
+						Send Request
+					}
+				</div>
+			</div>
+		}
+	}
+	@requestBuilderScript()
+}
+
+var requestBuilderScriptHandle = templ.NewOnceHandle()
+
+templ requestBuilderScript() {
+	@requestBuilderScriptHandle.Once() {
+		<script>
+			function getRequestBuilder(el) {
+				return el.closest('[data-request-builder]');
+			}
+
+			function getRequestData(builder) {
+				const method = builder.querySelector('[data-rb-method]')?.value || 'GET';
+				const baseUrl = builder.getAttribute('data-url') || '';
+				const query = builder.querySelector('[data-rb-query]')?.value || '';
+				const headersJson = builder.querySelector('[data-rb-headers]')?.value || '';
+				const body = builder.querySelector('[data-rb-body]')?.value || '';
+
+				let url = baseUrl;
+				if (query) url += (url.includes('?') ? '&' : '?') + query;
+
+				let headers = [];
+				try {
+					if (headersJson.trim()) {
+						headers = Object.entries(JSON.parse(headersJson)).map(([k, v]) => ({ key: k, value: String(v) }));
+					}
+				} catch (e) {}
+
+				return { method, url, headers, body };
+			}
+
+			function generateCode(data) {
+				const { method, url, headers, body } = data;
+				const hasBody = body && ['POST', 'PUT', 'PATCH'].includes(method);
+
+				// cURL
+				let curl = `curl -X ${method}`;
+				headers.forEach(h => curl += ` \\\n  -H '${h.key}: ${h.value}'`);
+				if (hasBody) curl += ` \\\n  -d '${body.replace(/'/g, "'\\''")}'`;
+				curl += ` \\\n  '${url}'`;
+
+				// JavaScript
+				let js = headers.length || hasBody
+					? `const response = await fetch('${url}', {\n  method: '${method}',\n`
+					: `const response = await fetch('${url}');\n\n`;
+				if (headers.length || hasBody) {
+					if (headers.length) {
+						js += `  headers: {\n${headers.map(h => `    '${h.key}': '${h.value}'`).join(',\n')}\n  },\n`;
+					}
+					if (hasBody) {
+						js += `  body: '${body.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n')}'\n`;
+					}
+					js += `});\n\n`;
+				}
+				js += `const data = await response.json();\nconsole.log(data);`;
+
+				// Python
+				let py = `import requests\n\n`;
+				if (headers.length) {
+					py += `headers = {\n${headers.map(h => `    '${h.key}': '${h.value}'`).join(',\n')}\n}\n\n`;
+				}
+				py += `response = requests.${method.toLowerCase()}(\n    '${url}'`;
+				if (headers.length) py += `,\n    headers=headers`;
+				if (hasBody) py += `,\n    data='${body.replace(/'/g, "\\'")}'`;
+				py += `\n)\n\nprint(response.json())`;
+
+				// Go
+				let go = `package main\n\nimport (\n\t"fmt"\n\t"io"\n\t"net/http"`;
+				if (hasBody) go += `\n\t"strings"`;
+				go += `\n)\n\nfunc main() {\n`;
+				if (hasBody) {
+					go += `\tbody := strings.NewReader("${body.replace(/"/g, '\\"').replace(/\n/g, '\\n')}")\n`;
+					go += `\treq, err := http.NewRequest("${method}", "${url}", body)\n`;
+				} else {
+					go += `\treq, err := http.NewRequest("${method}", "${url}", nil)\n`;
+				}
+				go += `\tif err != nil {\n\t\tpanic(err)\n\t}\n\n`;
+				headers.forEach(h => go += `\treq.Header.Set("${h.key}", "${h.value}")\n`);
+				if (headers.length) go += `\n`;
+				go += `\tclient := &http.Client{}\n\tresp, err := client.Do(req)\n`;
+				go += `\tif err != nil {\n\t\tpanic(err)\n\t}\n\tdefer resp.Body.Close()\n\n`;
+				go += `\tresBody, _ := io.ReadAll(resp.Body)\n\tfmt.Println(string(resBody))\n}`;
+
+				return { curl, javascript: js, python: py, go };
+			}
+
+			function updateRequestCode(el) {
+				const builder = getRequestBuilder(el);
+				if (!builder) return;
+
+				const codes = generateCode(getRequestData(builder));
+				builder.dispatchEvent(new CustomEvent('request-code-updated', {
+					bubbles: true,
+					detail: { builderId: builder.id, codes }
+				}));
+			}
+
+			document.addEventListener('DOMContentLoaded', () => {
+				document.querySelectorAll('[data-request-builder]').forEach(builder => {
+					updateRequestCode(builder);
+				});
+			});
+		</script>
+	}
+}
