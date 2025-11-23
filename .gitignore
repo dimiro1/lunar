@@ -22,3 +22,6 @@ go.work
 /dist/
 /build/
 tmp/
+
+# editor
+.idea

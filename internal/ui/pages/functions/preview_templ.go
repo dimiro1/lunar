@@ -11,6 +11,7 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"github.com/dimiro1/faas-go/internal/ui/components"
 	"github.com/dimiro1/faas-go/internal/ui/components/navbar"
+	"github.com/dimiro1/faas-go/internal/ui/components/template_card"
 )
 
 // PreviewCreateFunction renders the create function page for visual inspection
@@ -55,7 +56,7 @@ func PreviewCreateFunction() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = CreateFunction([]components.Template{
+			templ_7745c5c3_Err = CreateFunction([]template_card.Template{
 				{ID: "hello", Name: "Hello World", Icon: "fa-code", Description: "Basic HTTP response example.", Selected: true},
 				{ID: "json", Name: "JSON API", Icon: "fa-exchange-alt", Description: "Parse JSON input and return JSON.", Selected: false},
 				{ID: "webhook", Name: "Webhook", Icon: "fa-bell", Description: "Validate and process webhooks.", Selected: false},

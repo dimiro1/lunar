@@ -3,13 +3,14 @@ package functions
 import (
 	"github.com/dimiro1/faas-go/internal/ui/components"
 	"github.com/dimiro1/faas-go/internal/ui/components/navbar"
+	"github.com/dimiro1/faas-go/internal/ui/components/template_card"
 )
 
 // PreviewCreateFunction renders the create function page for visual inspection
 templ PreviewCreateFunction() {
 	@components.Layout("FaaS Console - Create Function") {
 		@navbar.Header("create", "")
-		@CreateFunction([]components.Template{
+		@CreateFunction([]template_card.Template{
 			{ID: "hello", Name: "Hello World", Icon: "fa-code", Description: "Basic HTTP response example.", Selected: true},
 			{ID: "json", Name: "JSON API", Icon: "fa-exchange-alt", Description: "Parse JSON input and return JSON.", Selected: false},
 			{ID: "webhook", Name: "Webhook", Icon: "fa-bell", Description: "Validate and process webhooks.", Selected: false},

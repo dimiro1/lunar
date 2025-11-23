@@ -1,0 +1,130 @@
+package template_card
+
+type Template struct {
+	ID          string
+	Name        string
+	Icon        string
+	Description string
+	Selected    bool
+	GroupName   string // Radio group name to scope selection
+}
+
+css templateCard() {
+	border: 1px solid var(--color-border);
+	background-color: var(--color-background);
+	border-radius: 4px;
+	padding: 0.75rem;
+	cursor: pointer;
+	transition: border-color 0.2s;
+}
+
+css templateCardSelected() {
+	border-color: var(--color-accent);
+	background-color: rgba(59, 130, 246, 0.05);
+	box-shadow: 0 0 0 1px var(--color-accent);
+}
+
+css templateCardHeader() {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
+}
+
+css templateCardIcon() {
+	color: var(--color-subtle);
+}
+
+css templateCardIconSelected() {
+	color: var(--color-accent);
+}
+
+css templateCardName() {
+	font-weight: 700;
+	color: white;
+	font-size: 12px;
+}
+
+css templateCardDescription() {
+	font-size: 10px;
+	color: var(--color-subtle);
+}
+
+func getGroupName(tmpl Template) string {
+	if tmpl.GroupName != "" {
+		return tmpl.GroupName
+	}
+	return "template"
+}
+
+templ TemplateCard(tmpl Template) {
+	<label
+		class={ templateCard(), templ.KV(templateCardSelected(), tmpl.Selected) }
+		data-template-card
+		data-group={ getGroupName(tmpl) }
+	>
+		<input
+			type="radio"
+			name={ getGroupName(tmpl) }
+			value={ tmpl.ID }
+			checked?={ tmpl.Selected }
+			style="display: none;"
+			onchange="selectTemplateCard(this)"
+		/>
+		<div class={ templateCardHeader() }>
+			<i class={ "fas " + tmpl.Icon, templ.KV(templateCardIconSelected(), tmpl.Selected), templ.KV(templateCardIcon(), !tmpl.Selected) }></i>
+			<span class={ templateCardName() }>{ tmpl.Name }</span>
+		</div>
+		<p class={ templateCardDescription() }>{ tmpl.Description }</p>
+	</label>
+	@templateCardScript()
+}
+
+var templateCardScriptHandle = templ.NewOnceHandle()
+
+templ templateCardScript() {
+	@templateCardScriptHandle.Once() {
+		<script>
+			function selectTemplateCard(input) {
+				// Get the group name from the input
+				const groupName = input.name;
+				// Get all template cards in the same group
+				const cards = document.querySelectorAll(`[data-template-card][data-group="${groupName}"]`);
+
+				cards.forEach(card => {
+					const radio = card.querySelector('input[type="radio"]');
+					const icon = card.querySelector('i');
+
+					// Remove all selected classes
+					card.className = card.className.replace(/templateCardSelected_[a-f0-9]+/g, '').trim();
+					if (icon) {
+						icon.className = icon.className.replace(/templateCardIconSelected_[a-f0-9]+/g, '').trim();
+					}
+
+					// Add selected class if this is the selected card
+					if (radio && radio.checked) {
+						// Find the selected class from stylesheets
+						const selectedClass = Array.from(document.styleSheets)
+							.flatMap(sheet => {
+								try { return Array.from(sheet.cssRules); } catch(e) { return []; }
+							})
+							.find(rule => rule.selectorText && rule.selectorText.includes('templateCardSelected_'));
+
+						const iconSelectedClass = Array.from(document.styleSheets)
+							.flatMap(sheet => {
+								try { return Array.from(sheet.cssRules); } catch(e) { return []; }
+							})
+							.find(rule => rule.selectorText && rule.selectorText.includes('templateCardIconSelected_'));
+
+						if (selectedClass) {
+							card.classList.add(selectedClass.selectorText.replace('.', ''));
+						}
+						if (iconSelectedClass && icon) {
+							icon.classList.add(iconSelectedClass.selectorText.replace('.', ''));
+						}
+					}
+				});
+			}
+		</script>
+	}
+}

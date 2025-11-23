@@ -1,9 +1,9 @@
 package functions
 
 import (
-	"github.com/dimiro1/faas-go/internal/ui/components"
 	"github.com/dimiro1/faas-go/internal/ui/components/button"
 	"github.com/dimiro1/faas-go/internal/ui/components/form"
+	"github.com/dimiro1/faas-go/internal/ui/components/template_card"
 )
 
 css createFunctionMain() {
@@ -55,7 +55,7 @@ css formActions() {
 	margin-top: 2rem;
 }
 
-templ CreateFunction(templates []components.Template) {
+templ CreateFunction(templates []template_card.Template) {
 	<main class={ createFunctionMain() }>
 		<div class={ createFunctionHeader() }>
 			<div class={ createFunctionBack() }>
@@ -73,7 +73,7 @@ templ CreateFunction(templates []components.Template) {
 				@form.Label(form.LabelProps{Text: "Starter Template"})
 				<div class={ templateGrid() }>
 					for _, tmpl := range templates {
-						@components.TemplateCard(tmpl)
+						@template_card.TemplateCard(tmpl)
 					}
 				</div>
 			}

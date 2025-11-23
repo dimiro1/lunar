@@ -24,6 +24,7 @@ import (
 	"github.com/dimiro1/faas-go/internal/ui/components/request_builder"
 	"github.com/dimiro1/faas-go/internal/ui/components/table"
 	"github.com/dimiro1/faas-go/internal/ui/components/tabs"
+	"github.com/dimiro1/faas-go/internal/ui/components/template_card"
 	"github.com/dimiro1/faas-go/internal/ui/pages/dashboard"
 	"github.com/dimiro1/faas-go/internal/ui/pages/functions"
 	"github.com/dimiro1/faas-go/internal/ui/pages/login"
@@ -147,6 +148,10 @@ func main() {
 
 	mux.HandleFunc("/preview/component/request-builder", func(w http.ResponseWriter, r *http.Request) {
 		_ = request_builder.Preview().Render(r.Context(), w)
+	})
+
+	mux.HandleFunc("/preview/component/template-card", func(w http.ResponseWriter, r *http.Request) {
+		_ = template_card.Preview().Render(r.Context(), w)
 	})
 
 	mux.HandleFunc("/preview", func(w http.ResponseWriter, r *http.Request) {

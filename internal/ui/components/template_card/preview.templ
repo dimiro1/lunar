@@ -1,0 +1,73 @@
+package template_card
+
+import "github.com/dimiro1/faas-go/internal/ui/components/preview"
+
+css previewGrid() {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 1rem;
+}
+
+templ Preview() {
+	@preview.Page(preview.PreviewPageProps{
+		Title:       "Template Card",
+		Description: "Cards for selecting starter templates when creating new functions.",
+	}) {
+		@preview.Section("Default State") {
+			<div class={ previewGrid() }>
+				@TemplateCard(Template{
+					ID:          "hello",
+					Name:        "Hello World",
+					Icon:        "fa-code",
+					Description: "Basic HTTP response example.",
+					Selected:    false,
+					GroupName:   "default-group",
+				})
+				@TemplateCard(Template{
+					ID:          "json",
+					Name:        "JSON API",
+					Icon:        "fa-exchange-alt",
+					Description: "Parse JSON input and return JSON.",
+					Selected:    false,
+					GroupName:   "default-group",
+				})
+				@TemplateCard(Template{
+					ID:          "webhook",
+					Name:        "Webhook",
+					Icon:        "fa-bell",
+					Description: "Validate and process webhooks.",
+					Selected:    false,
+					GroupName:   "default-group",
+				})
+			</div>
+		}
+		@preview.Section("Selected State") {
+			<div class={ previewGrid() }>
+				@TemplateCard(Template{
+					ID:          "hello",
+					Name:        "Hello World",
+					Icon:        "fa-code",
+					Description: "Basic HTTP response example.",
+					Selected:    true,
+					GroupName:   "selected-group",
+				})
+				@TemplateCard(Template{
+					ID:          "json",
+					Name:        "JSON API",
+					Icon:        "fa-exchange-alt",
+					Description: "Parse JSON input and return JSON.",
+					Selected:    false,
+					GroupName:   "selected-group",
+				})
+				@TemplateCard(Template{
+					ID:          "webhook",
+					Name:        "Webhook",
+					Icon:        "fa-bell",
+					Description: "Validate and process webhooks.",
+					Selected:    false,
+					GroupName:   "selected-group",
+				})
+			</div>
+		}
+	}
+}
