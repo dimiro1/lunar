@@ -66,7 +66,7 @@ templ CodeExamples(examples []Example) {
 					<button
 						class={ codeExampleTab(), templ.KV(codeExampleTabActive(), ex.Active) }
 						data-tab={ ex.ID }
-						onclick="selectCodeExample(this)"
+						data-code-example-tab="true"
 					>
 						{ ex.Label }
 					</button>
@@ -74,15 +74,19 @@ templ CodeExamples(examples []Example) {
 			</div>
 		}
 		@card.Content(card.ContentProps{NoPadding: true}) {
-		<div style="position: relative;">
+			<div style="position: relative;">
 				<button
 					type="button"
 					class={ copyButtonWrapper() }
-					onclick="copyCodeExample(this)"
+					data-code-example-copy="true"
 					aria-label="Copy code"
 				>
-					<span data-icon-copy>@icons.Copy()</span>
-					<span data-icon-check style="display: none; color: var(--color-success);">@icons.Check()</span>
+					<span data-icon-copy>
+						@icons.Copy()
+					</span>
+					<span data-icon-check style="display: none; color: var(--color-success);">
+						@icons.Check()
+					</span>
 				</button>
 				for _, ex := range examples {
 					<div
@@ -108,68 +112,76 @@ var codeExampleScriptHandle = templ.NewOnceHandle()
 templ codeExampleScript() {
 	@codeExampleScriptHandle.Once() {
 		<script>
-			function copyCodeExample(button) {
-				const container = button.closest('[class*="cardBase"]');
-				if (!container) return;
+			document.addEventListener('DOMContentLoaded', () => {
+				// Copy button handlers
+				document.querySelectorAll('[data-code-example-copy]').forEach(button => {
+					button.addEventListener('click', () => {
+						const container = button.closest('[class*="cardBase"]');
+						if (!container) return;
 
-				// Find the active panel
-				const activePanel = container.querySelector('[data-panel][class*="codePanelActive"]');
-				if (!activePanel) return;
+						// Find the active panel
+						const activePanel = container.querySelector('[data-panel][class*="codePanelActive"]');
+						if (!activePanel) return;
 
-				const codeEl = activePanel.querySelector('code');
-				if (!codeEl) return;
+						const codeEl = activePanel.querySelector('code');
+						if (!codeEl) return;
 
-				navigator.clipboard.writeText(codeEl.textContent).then(() => {
-					const copyIcon = button.querySelector('[data-icon-copy]');
-					const checkIcon = button.querySelector('[data-icon-check]');
-					if (copyIcon && checkIcon) {
-						copyIcon.style.display = 'none';
-						checkIcon.style.display = 'inline';
-						setTimeout(() => {
-							copyIcon.style.display = 'inline';
-							checkIcon.style.display = 'none';
-						}, 2000);
-					}
+						navigator.clipboard.writeText(codeEl.textContent).then(() => {
+							const copyIcon = button.querySelector('[data-icon-copy]');
+							const checkIcon = button.querySelector('[data-icon-check]');
+							if (copyIcon && checkIcon) {
+								copyIcon.style.display = 'none';
+								checkIcon.style.display = 'inline';
+								setTimeout(() => {
+									copyIcon.style.display = 'inline';
+									checkIcon.style.display = 'none';
+								}, 2000);
+							}
+						});
+					});
 				});
-			}
 
-			function selectCodeExample(button) {
-				const container = button.closest('[class*="cardBase"]');
-				if (!container) return;
+				// Tab selection handlers
+				document.querySelectorAll('[data-code-example-tab]').forEach(button => {
+					button.addEventListener('click', () => {
+						const container = button.closest('[class*="cardBase"]');
+						if (!container) return;
 
-				// Update tabs - remove active class
-				const tabs = container.querySelectorAll('[data-tab]');
-				tabs.forEach(tab => {
-					tab.className = tab.className.replace(/codeExampleTabActive_[a-f0-9]+/g, '').trim();
+						// Update tabs - remove active class
+						const tabs = container.querySelectorAll('[data-tab]');
+						tabs.forEach(tab => {
+							tab.className = tab.className.replace(/codeExampleTabActive_[a-f0-9]+/g, '').trim();
+						});
+						// Add active class to clicked button
+						const activeTabClass = Array.from(document.styleSheets)
+							.flatMap(sheet => {
+								try { return Array.from(sheet.cssRules); } catch(e) { return []; }
+							})
+							.find(rule => rule.selectorText && rule.selectorText.includes('codeExampleTabActive_'));
+						if (activeTabClass) {
+							button.classList.add(activeTabClass.selectorText.replace('.', ''));
+						}
+
+						// Update panels
+						const tabId = button.getAttribute('data-tab');
+						const panels = container.querySelectorAll('[data-panel]');
+						panels.forEach(panel => {
+							panel.className = panel.className.replace(/codePanelActive_[a-f0-9]+/g, '').trim();
+						});
+						const activePanel = container.querySelector('[data-panel="' + tabId + '"]');
+						if (activePanel) {
+							const activePanelClass = Array.from(document.styleSheets)
+								.flatMap(sheet => {
+									try { return Array.from(sheet.cssRules); } catch(e) { return []; }
+								})
+								.find(rule => rule.selectorText && rule.selectorText.includes('codePanelActive_'));
+							if (activePanelClass) {
+								activePanel.classList.add(activePanelClass.selectorText.replace('.', ''));
+							}
+						}
+					});
 				});
-				// Add active class to clicked button
-				const activeTabClass = Array.from(document.styleSheets)
-					.flatMap(sheet => {
-						try { return Array.from(sheet.cssRules); } catch(e) { return []; }
-					})
-					.find(rule => rule.selectorText && rule.selectorText.includes('codeExampleTabActive_'));
-				if (activeTabClass) {
-					button.classList.add(activeTabClass.selectorText.replace('.', ''));
-				}
-
-				// Update panels
-				const tabId = button.getAttribute('data-tab');
-				const panels = container.querySelectorAll('[data-panel]');
-				panels.forEach(panel => {
-					panel.className = panel.className.replace(/codePanelActive_[a-f0-9]+/g, '').trim();
-				});
-				const activePanel = container.querySelector('[data-panel="' + tabId + '"]');
-				if (activePanel) {
-					const activePanelClass = Array.from(document.styleSheets)
-						.flatMap(sheet => {
-							try { return Array.from(sheet.cssRules); } catch(e) { return []; }
-						})
-						.find(rule => rule.selectorText && rule.selectorText.includes('codePanelActive_'));
-					if (activePanelClass) {
-						activePanel.classList.add(activePanelClass.selectorText.replace('.', ''));
-					}
-				}
-			}
+			});
 		</script>
 	}
 }

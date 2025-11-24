@@ -173,7 +173,6 @@ type FormGroupProps struct {
 	Class string
 }
 
-
 // CSS styles
 
 css inputBase() {
@@ -271,6 +270,7 @@ css labelRequired() {
 }
 
 // Checkbox styles
+
 css checkboxWrapper() {
 	display: flex;
 	align-items: center;
@@ -306,6 +306,7 @@ css checkboxDisabled() {
 }
 
 // Radio styles
+
 css radioWrapper() {
 	display: flex;
 	align-items: center;
@@ -335,6 +336,7 @@ css radioDisabled() {
 }
 
 // Help text styles
+
 css helpText() {
 	font-size: var(--text-xs);
 	color: var(--color-text-muted);
@@ -350,13 +352,13 @@ css helpTextSuccess() {
 }
 
 // Form group styles
+
 css formGroup() {
 	display: flex;
 	flex-direction: column;
 	gap: 0;
 	margin-bottom: 1rem;
 }
-
 
 css textareaBase() {
 	width: 100%;
@@ -585,7 +587,6 @@ templ FormGroup(props FormGroupProps) {
 	</div>
 }
 
-
 // Input component with Props
 templ Input(props InputProps) {
 	if props.Icon != nil {
@@ -689,9 +690,13 @@ templ PasswordInput(props InputProps) {
 			data-password-input="true"
 			{ props.Attributes... }
 		/>
-		<button type="button" class={ passwordToggle() } onclick="togglePasswordVisibility(this)" title="Show password" data-visible="false">
-			<span data-icon-show>@icons.Eye()</span>
-			<span data-icon-hide style="display: none;">@icons.EyeSlash()</span>
+		<button type="button" class={ passwordToggle() } data-password-toggle="true" title="Show password" data-visible="false">
+			<span data-icon-show>
+				@icons.Eye()
+			</span>
+			<span data-icon-hide style="display: none;">
+				@icons.EyeSlash()
+			</span>
 		</button>
 	</div>
 	@passwordToggleScript()
@@ -702,31 +707,35 @@ var passwordToggleScriptHandle = templ.NewOnceHandle()
 templ passwordToggleScript() {
 	@passwordToggleScriptHandle.Once() {
 		<script>
-			function togglePasswordVisibility(button) {
-				const wrapper = button.closest('div');
-				if (!wrapper) return;
+			document.addEventListener('DOMContentLoaded', () => {
+				document.querySelectorAll('[data-password-toggle]').forEach(button => {
+					button.addEventListener('click', () => {
+						const wrapper = button.closest('div');
+						if (!wrapper) return;
 
-				const input = wrapper.querySelector('[data-password-input]');
-				if (!input) return;
+						const input = wrapper.querySelector('[data-password-input]');
+						if (!input) return;
 
-				const isVisible = button.getAttribute('data-visible') === 'true';
-				const showIcon = button.querySelector('[data-icon-show]');
-				const hideIcon = button.querySelector('[data-icon-hide]');
+						const isVisible = button.getAttribute('data-visible') === 'true';
+						const showIcon = button.querySelector('[data-icon-show]');
+						const hideIcon = button.querySelector('[data-icon-hide]');
 
-				if (isVisible) {
-					input.type = 'password';
-					button.setAttribute('data-visible', 'false');
-					button.setAttribute('title', 'Show password');
-					if (showIcon) showIcon.style.display = '';
-					if (hideIcon) hideIcon.style.display = 'none';
-				} else {
-					input.type = 'text';
-					button.setAttribute('data-visible', 'true');
-					button.setAttribute('title', 'Hide password');
-					if (showIcon) showIcon.style.display = 'none';
-					if (hideIcon) hideIcon.style.display = '';
-				}
-			}
+						if (isVisible) {
+							input.type = 'password';
+							button.setAttribute('data-visible', 'false');
+							button.setAttribute('title', 'Show password');
+							if (showIcon) showIcon.style.display = '';
+							if (hideIcon) hideIcon.style.display = 'none';
+						} else {
+							input.type = 'text';
+							button.setAttribute('data-visible', 'true');
+							button.setAttribute('title', 'Hide password');
+							if (showIcon) showIcon.style.display = 'none';
+							if (hideIcon) hideIcon.style.display = '';
+						}
+					});
+				});
+			});
 		</script>
 	}
 }
@@ -764,9 +773,13 @@ templ CopyInput(props InputProps) {
 			data-copy-input="true"
 			{ props.Attributes... }
 		/>
-		<button type="button" class={ copyButton() } onclick="copyToClipboard(this)" title="Copy to clipboard" aria-label="Copy to clipboard">
-			<span data-icon-copy>@icons.Copy()</span>
-			<span data-icon-check style="display: none; color: var(--color-success);">@icons.Check()</span>
+		<button type="button" class={ copyButton() } data-copy-button="true" title="Copy to clipboard" aria-label="Copy to clipboard">
+			<span data-icon-copy>
+				@icons.Copy()
+			</span>
+			<span data-icon-check style="display: none; color: var(--color-success);">
+				@icons.Check()
+			</span>
 		</button>
 	</div>
 	@copyScript()
@@ -777,37 +790,40 @@ var copyScriptHandle = templ.NewOnceHandle()
 templ copyScript() {
 	@copyScriptHandle.Once() {
 		<script>
-			function copyToClipboard(button) {
-				const wrapper = button.closest('div');
-				if (!wrapper) return;
+			document.addEventListener('DOMContentLoaded', () => {
+				document.querySelectorAll('[data-copy-button]').forEach(button => {
+					button.addEventListener('click', () => {
+						const wrapper = button.closest('div');
+						if (!wrapper) return;
 
-				const input = wrapper.querySelector('[data-copy-input]');
-				if (!input) return;
+						const input = wrapper.querySelector('[data-copy-input]');
+						if (!input) return;
 
-				const copyIcon = button.querySelector('[data-icon-copy]');
-				const checkIcon = button.querySelector('[data-icon-check]');
+						const copyIcon = button.querySelector('[data-icon-copy]');
+						const checkIcon = button.querySelector('[data-icon-check]');
 
-				navigator.clipboard.writeText(input.value).then(() => {
-					// Visual feedback - show checkmark
-					button.setAttribute('title', 'Copied!');
-					if (copyIcon) copyIcon.style.display = 'none';
-					if (checkIcon) checkIcon.style.display = '';
+						navigator.clipboard.writeText(input.value).then(() => {
+							// Visual feedback - show checkmark
+							button.setAttribute('title', 'Copied!');
+							if (copyIcon) copyIcon.style.display = 'none';
+							if (checkIcon) checkIcon.style.display = '';
 
-					setTimeout(() => {
-						button.setAttribute('title', 'Copy to clipboard');
-						if (copyIcon) copyIcon.style.display = '';
-						if (checkIcon) checkIcon.style.display = 'none';
-					}, 2000);
-				}).catch(err => {
-					console.error('Failed to copy:', err);
+							setTimeout(() => {
+								button.setAttribute('title', 'Copy to clipboard');
+								if (copyIcon) copyIcon.style.display = '';
+								if (checkIcon) checkIcon.style.display = 'none';
+							}, 2000);
+						}).catch(err => {
+							console.error('Failed to copy:', err);
+						});
+					});
 				});
-			}
+			});
 		</script>
 	}
 }
 
 // Legacy convenience functions for backward compatibility
-
 templ TextInput(inputType string, placeholder string, value string) {
 	@Input(InputProps{
 		Type:        inputType,
@@ -892,7 +908,9 @@ templ Search(props SearchProps) {
 				class={ inputBase(), inputFull(), inputWithIcon(), templ.KV(props.Class, props.Class != "") }
 				if props.AriaLabel != "" {
 					aria-label={ props.AriaLabel }
-				} else if props.Placeholder != "" {
+				}
+				else
+				if props.Placeholder != "" {
 					aria-label={ props.Placeholder }
 				}
 				if props.AriaDescribedBy != "" {
@@ -923,7 +941,9 @@ templ Search(props SearchProps) {
 				class={ inputBase(), inputFull(), inputWithIcon(), templ.KV(props.Class, props.Class != "") }
 				if props.AriaLabel != "" {
 					aria-label={ props.AriaLabel }
-				} else if props.Placeholder != "" {
+				}
+				else
+				if props.Placeholder != "" {
 					aria-label={ props.Placeholder }
 				}
 				if props.AriaDescribedBy != "" {

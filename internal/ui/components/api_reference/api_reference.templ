@@ -1,8 +1,6 @@
 package api_reference
 
-import (
-	"github.com/dimiro1/faas-go/internal/ui/components/card"
-)
+import "github.com/dimiro1/faas-go/internal/ui/components/card"
 
 type DocItem struct {
 	Name        string
@@ -129,7 +127,6 @@ templ Reference(sections []Section) {
 					if section.Active {
 						data-active="true"
 					}
-					onclick="selectApiTab(this)"
 				>
 					{ section.Name }
 				</button>
@@ -215,54 +212,58 @@ var apiReferenceScriptHandle = templ.NewOnceHandle()
 templ apiReferenceScript() {
 	@apiReferenceScriptHandle.Once() {
 		<script>
-			function selectApiTab(button) {
-				const container = button.closest('[class*="cardBase"]');
-				if (!container) return;
+			document.addEventListener('DOMContentLoaded', () => {
+				document.querySelectorAll('[data-api-tab]').forEach(button => {
+					button.addEventListener('click', () => {
+						const container = button.closest('[class*="cardBase"]');
+						if (!container) return;
 
-				// Find the currently active tab to get its active class
-				const currentActive = container.querySelector('[data-api-tab][data-active="true"]');
-				let activeClassName = null;
-				if (currentActive) {
-					activeClassName = Array.from(currentActive.classList).find(cls => cls.startsWith('tabActive_'));
-				}
+						// Find the currently active tab to get its active class
+						const currentActive = container.querySelector('[data-api-tab][data-active="true"]');
+						let activeClassName = null;
+						if (currentActive) {
+							activeClassName = Array.from(currentActive.classList).find(cls => cls.startsWith('tabActive_'));
+						}
 
-				// Update tabs
-				const tabs = container.querySelectorAll('[data-api-tab]');
-				tabs.forEach(tab => {
-					tab.removeAttribute('data-active');
-					if (activeClassName) {
-						tab.classList.remove(activeClassName);
-					}
+						// Update tabs
+						const tabs = container.querySelectorAll('[data-api-tab]');
+						tabs.forEach(tab => {
+							tab.removeAttribute('data-active');
+							if (activeClassName) {
+								tab.classList.remove(activeClassName);
+							}
+						});
+
+						// Add active class to clicked button
+						button.setAttribute('data-active', 'true');
+						if (activeClassName) {
+							button.classList.add(activeClassName);
+						}
+
+						// Update panels
+						const tabId = button.getAttribute('data-api-tab');
+						const panels = container.querySelectorAll('[data-api-panel]');
+
+						// Find active panel class from current active panel
+						const currentActivePanel = container.querySelector('[data-api-panel][class*="apiPanelActive_"]');
+						let activePanelClassName = null;
+						if (currentActivePanel) {
+							activePanelClassName = Array.from(currentActivePanel.classList).find(cls => cls.startsWith('apiPanelActive_'));
+						}
+
+						panels.forEach(panel => {
+							if (activePanelClassName) {
+								panel.classList.remove(activePanelClassName);
+							}
+						});
+
+						const activePanel = container.querySelector('[data-api-panel="' + tabId + '"]');
+						if (activePanel && activePanelClassName) {
+							activePanel.classList.add(activePanelClassName);
+						}
+					});
 				});
-
-				// Add active class to clicked button
-				button.setAttribute('data-active', 'true');
-				if (activeClassName) {
-					button.classList.add(activeClassName);
-				}
-
-				// Update panels
-				const tabId = button.getAttribute('data-api-tab');
-				const panels = container.querySelectorAll('[data-api-panel]');
-
-				// Find active panel class from current active panel
-				const currentActivePanel = container.querySelector('[data-api-panel][class*="apiPanelActive_"]');
-				let activePanelClassName = null;
-				if (currentActivePanel) {
-					activePanelClassName = Array.from(currentActivePanel.classList).find(cls => cls.startsWith('apiPanelActive_'));
-				}
-
-				panels.forEach(panel => {
-					if (activePanelClassName) {
-						panel.classList.remove(activePanelClassName);
-					}
-				});
-
-				const activePanel = container.querySelector('[data-api-panel="' + tabId + '"]');
-				if (activePanel && activePanelClassName) {
-					activePanel.classList.add(activePanelClassName);
-				}
-			}
+			});
 		</script>
 	}
 }

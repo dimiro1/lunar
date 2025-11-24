@@ -37,7 +37,7 @@ templ RequestBuilder(props Props) {
 				<div class={ requestBuilderUrl() }>
 					@form.SelectInput(form.SelectProps{
 						Options:    props.Methods,
-						Attributes: templ.Attributes{"data-rb-method": "true", "onchange": "updateRequestCode(this)"},
+						Attributes: templ.Attributes{"data-rb-method": "true"},
 					})
 					@form.CopyInput(form.InputProps{
 						Value:     props.URL,
@@ -53,7 +53,7 @@ templ RequestBuilder(props Props) {
 							ID:          props.ID + "-query",
 							Placeholder: "key=value&other=value",
 							Mono:        true,
-							Attributes:  templ.Attributes{"data-rb-query": "true", "oninput": "updateRequestCode(this)"},
+							Attributes:  templ.Attributes{"data-rb-query": "true"},
 						})
 					}
 					@form.FormGroup(form.FormGroupProps{}) {
@@ -62,7 +62,7 @@ templ RequestBuilder(props Props) {
 							ID:         props.ID + "-headers",
 							Rows:       2,
 							Value:      `{"Content-Type": "application/json"}`,
-							Attributes: templ.Attributes{"data-rb-headers": "true", "oninput": "updateRequestCode(this)"},
+							Attributes: templ.Attributes{"data-rb-headers": "true"},
 						})
 					}
 					@form.FormGroup(form.FormGroupProps{}) {
@@ -70,7 +70,7 @@ templ RequestBuilder(props Props) {
 						@form.TextareaInput(form.TextareaProps{
 							ID:         props.ID + "-body",
 							Rows:       4,
-							Attributes: templ.Attributes{"data-rb-body": "true", "oninput": "updateRequestCode(this)"},
+							Attributes: templ.Attributes{"data-rb-body": "true"},
 						})
 					}
 					@button.Button(button.Props{
@@ -92,10 +92,6 @@ var requestBuilderScriptHandle = templ.NewOnceHandle()
 templ requestBuilderScript() {
 	@requestBuilderScriptHandle.Once() {
 		<script>
-			function getRequestBuilder(el) {
-				return el.closest('[data-request-builder]');
-			}
-
 			function getRequestData(builder) {
 				const method = builder.querySelector('[data-rb-method]')?.value || 'GET';
 				const baseUrl = builder.getAttribute('data-url') || '';
@@ -171,10 +167,7 @@ templ requestBuilderScript() {
 				return { curl, javascript: js, python: py, go };
 			}
 
-			function updateRequestCode(el) {
-				const builder = getRequestBuilder(el);
-				if (!builder) return;
-
+			function updateRequestCode(builder) {
 				const codes = generateCode(getRequestData(builder));
 				builder.dispatchEvent(new CustomEvent('request-code-updated', {
 					bubbles: true,
@@ -184,7 +177,29 @@ templ requestBuilderScript() {
 
 			document.addEventListener('DOMContentLoaded', () => {
 				document.querySelectorAll('[data-request-builder]').forEach(builder => {
+					// Initial update
 					updateRequestCode(builder);
+
+					// Method select change handler
+					const methodSelect = builder.querySelector('[data-rb-method]');
+					if (methodSelect) {
+						methodSelect.addEventListener('change', () => updateRequestCode(builder));
+					}
+
+					// Input handlers for query, headers, body
+					const queryInput = builder.querySelector('[data-rb-query]');
+					const headersInput = builder.querySelector('[data-rb-headers]');
+					const bodyInput = builder.querySelector('[data-rb-body]');
+
+					if (queryInput) {
+						queryInput.addEventListener('input', () => updateRequestCode(builder));
+					}
+					if (headersInput) {
+						headersInput.addEventListener('input', () => updateRequestCode(builder));
+					}
+					if (bodyInput) {
+						bodyInput.addEventListener('input', () => updateRequestCode(builder));
+					}
 				});
 			});
 		</script>

@@ -8,9 +8,7 @@ package api_reference
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import (
-	"github.com/dimiro1/faas-go/internal/ui/components/card"
-)
+import "github.com/dimiro1/faas-go/internal/ui/components/card"
 
 type DocItem struct {
 	Name        string
@@ -300,7 +298,7 @@ func Reference(sections []Section) templ.Component {
 					var templ_7745c5c3_Var6 string
 					templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(section.ID)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/api_reference/api_reference.templ`, Line: 128, Col: 30}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/api_reference/api_reference.templ`, Line: 126, Col: 30}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 					if templ_7745c5c3_Err != nil {
@@ -316,14 +314,14 @@ func Reference(sections []Section) templ.Component {
 							return templ_7745c5c3_Err
 						}
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, " onclick=\"selectApiTab(this)\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, ">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var7 string
 					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(section.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/api_reference/api_reference.templ`, Line: 134, Col: 19}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/api_reference/api_reference.templ`, Line: 131, Col: 19}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 					if templ_7745c5c3_Err != nil {
@@ -391,7 +389,7 @@ func Reference(sections []Section) templ.Component {
 					var templ_7745c5c3_Var12 string
 					templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(section.ID)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/api_reference/api_reference.templ`, Line: 142, Col: 33}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/api_reference/api_reference.templ`, Line: 139, Col: 33}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 					if templ_7745c5c3_Err != nil {
@@ -493,7 +491,7 @@ func SectionContent(section Section) templ.Component {
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(section.Description)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/api_reference/api_reference.templ`, Line: 155, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/api_reference/api_reference.templ`, Line: 152, Col: 52}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -603,7 +601,7 @@ func DocItemComponent(item DocItem) templ.Component {
 		var templ_7745c5c3_Var25 string
 		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(item.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/api_reference/api_reference.templ`, Line: 164, Col: 47}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/api_reference/api_reference.templ`, Line: 161, Col: 47}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 		if templ_7745c5c3_Err != nil {
@@ -638,7 +636,7 @@ func DocItemComponent(item DocItem) templ.Component {
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(item.Type)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/api_reference/api_reference.templ`, Line: 165, Col: 72}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/api_reference/api_reference.templ`, Line: 162, Col: 72}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
@@ -673,7 +671,7 @@ func DocItemComponent(item DocItem) templ.Component {
 		var templ_7745c5c3_Var31 string
 		templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(item.Description)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/api_reference/api_reference.templ`, Line: 167, Col: 57}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/api_reference/api_reference.templ`, Line: 164, Col: 57}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 		if templ_7745c5c3_Err != nil {
@@ -765,7 +763,7 @@ func GroupedSectionContent(section GroupedSection) templ.Component {
 		var templ_7745c5c3_Var35 string
 		templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(section.Description)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/api_reference/api_reference.templ`, Line: 204, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/api_reference/api_reference.templ`, Line: 201, Col: 52}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
 		if templ_7745c5c3_Err != nil {
@@ -801,7 +799,7 @@ func GroupedSectionContent(section GroupedSection) templ.Component {
 			var templ_7745c5c3_Var38 string
 			templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(group.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/api_reference/api_reference.templ`, Line: 206, Col: 86}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/api_reference/api_reference.templ`, Line: 203, Col: 86}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 			if templ_7745c5c3_Err != nil {
@@ -857,7 +855,7 @@ func apiReferenceScript() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<script>\n\t\t\tfunction selectApiTab(button) {\n\t\t\t\tconst container = button.closest('[class*=\"cardBase\"]');\n\t\t\t\tif (!container) return;\n\n\t\t\t\t// Find the currently active tab to get its active class\n\t\t\t\tconst currentActive = container.querySelector('[data-api-tab][data-active=\"true\"]');\n\t\t\t\tlet activeClassName = null;\n\t\t\t\tif (currentActive) {\n\t\t\t\t\tactiveClassName = Array.from(currentActive.classList).find(cls => cls.startsWith('tabActive_'));\n\t\t\t\t}\n\n\t\t\t\t// Update tabs\n\t\t\t\tconst tabs = container.querySelectorAll('[data-api-tab]');\n\t\t\t\ttabs.forEach(tab => {\n\t\t\t\t\ttab.removeAttribute('data-active');\n\t\t\t\t\tif (activeClassName) {\n\t\t\t\t\t\ttab.classList.remove(activeClassName);\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\t// Add active class to clicked button\n\t\t\t\tbutton.setAttribute('data-active', 'true');\n\t\t\t\tif (activeClassName) {\n\t\t\t\t\tbutton.classList.add(activeClassName);\n\t\t\t\t}\n\n\t\t\t\t// Update panels\n\t\t\t\tconst tabId = button.getAttribute('data-api-tab');\n\t\t\t\tconst panels = container.querySelectorAll('[data-api-panel]');\n\n\t\t\t\t// Find active panel class from current active panel\n\t\t\t\tconst currentActivePanel = container.querySelector('[data-api-panel][class*=\"apiPanelActive_\"]');\n\t\t\t\tlet activePanelClassName = null;\n\t\t\t\tif (currentActivePanel) {\n\t\t\t\t\tactivePanelClassName = Array.from(currentActivePanel.classList).find(cls => cls.startsWith('apiPanelActive_'));\n\t\t\t\t}\n\n\t\t\t\tpanels.forEach(panel => {\n\t\t\t\t\tif (activePanelClassName) {\n\t\t\t\t\t\tpanel.classList.remove(activePanelClassName);\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\tconst activePanel = container.querySelector('[data-api-panel=\"' + tabId + '\"]');\n\t\t\t\tif (activePanel && activePanelClassName) {\n\t\t\t\t\tactivePanel.classList.add(activePanelClassName);\n\t\t\t\t}\n\t\t\t}\n\t\t</script>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<script>\n\t\t\tdocument.addEventListener('DOMContentLoaded', () => {\n\t\t\t\tdocument.querySelectorAll('[data-api-tab]').forEach(button => {\n\t\t\t\t\tbutton.addEventListener('click', () => {\n\t\t\t\t\t\tconst container = button.closest('[class*=\"cardBase\"]');\n\t\t\t\t\t\tif (!container) return;\n\n\t\t\t\t\t\t// Find the currently active tab to get its active class\n\t\t\t\t\t\tconst currentActive = container.querySelector('[data-api-tab][data-active=\"true\"]');\n\t\t\t\t\t\tlet activeClassName = null;\n\t\t\t\t\t\tif (currentActive) {\n\t\t\t\t\t\t\tactiveClassName = Array.from(currentActive.classList).find(cls => cls.startsWith('tabActive_'));\n\t\t\t\t\t\t}\n\n\t\t\t\t\t\t// Update tabs\n\t\t\t\t\t\tconst tabs = container.querySelectorAll('[data-api-tab]');\n\t\t\t\t\t\ttabs.forEach(tab => {\n\t\t\t\t\t\t\ttab.removeAttribute('data-active');\n\t\t\t\t\t\t\tif (activeClassName) {\n\t\t\t\t\t\t\t\ttab.classList.remove(activeClassName);\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t});\n\n\t\t\t\t\t\t// Add active class to clicked button\n\t\t\t\t\t\tbutton.setAttribute('data-active', 'true');\n\t\t\t\t\t\tif (activeClassName) {\n\t\t\t\t\t\t\tbutton.classList.add(activeClassName);\n\t\t\t\t\t\t}\n\n\t\t\t\t\t\t// Update panels\n\t\t\t\t\t\tconst tabId = button.getAttribute('data-api-tab');\n\t\t\t\t\t\tconst panels = container.querySelectorAll('[data-api-panel]');\n\n\t\t\t\t\t\t// Find active panel class from current active panel\n\t\t\t\t\t\tconst currentActivePanel = container.querySelector('[data-api-panel][class*=\"apiPanelActive_\"]');\n\t\t\t\t\t\tlet activePanelClassName = null;\n\t\t\t\t\t\tif (currentActivePanel) {\n\t\t\t\t\t\t\tactivePanelClassName = Array.from(currentActivePanel.classList).find(cls => cls.startsWith('apiPanelActive_'));\n\t\t\t\t\t\t}\n\n\t\t\t\t\t\tpanels.forEach(panel => {\n\t\t\t\t\t\t\tif (activePanelClassName) {\n\t\t\t\t\t\t\t\tpanel.classList.remove(activePanelClassName);\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t});\n\n\t\t\t\t\t\tconst activePanel = container.querySelector('[data-api-panel=\"' + tabId + '\"]');\n\t\t\t\t\t\tif (activePanel && activePanelClassName) {\n\t\t\t\t\t\t\tactivePanel.classList.add(activePanelClassName);\n\t\t\t\t\t\t}\n\t\t\t\t\t});\n\t\t\t\t});\n\t\t\t});\n\t\t</script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

@@ -266,7 +266,7 @@ func Editor(props Props) templ.Component {
 			Variant:    button.Secondary,
 			Size:       button.SizeSm,
 			Icon:       icons.Plus(),
-			Attributes: templ.Attributes{"onclick": "addEnvVar(this)", "type": "button", "aria-label": "Add new environment variable"},
+			Attributes: templ.Attributes{"data-env-add": "true", "type": "button", "aria-label": "Add new environment variable"},
 		}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var9), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -495,11 +495,11 @@ func EnvRow(env EnvVar, state string) templ.Component {
 			Variant: button.Ghost,
 			Size:    button.SizeIcon,
 			Attributes: templ.Attributes{
-				"onclick":      "toggleEnvRowState(this)",
-				"type":         "button",
-				"title":        getButtonTitle(state),
-				"aria-label":   getButtonTitle(state) + " variable",
-				"data-removed": getDataRemoved(state),
+				"data-env-toggle": "true",
+				"type":            "button",
+				"title":           getButtonTitle(state),
+				"aria-label":      getButtonTitle(state) + " variable",
+				"data-removed":    getDataRemoved(state),
 			},
 		}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var20), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -512,7 +512,7 @@ func EnvRow(env EnvVar, state string) templ.Component {
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(state)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/env_editor/env_editor.templ`, Line: 151, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/components/env_editor/env_editor.templ`, Line: 167, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -704,11 +704,11 @@ func NewRowTemplate() templ.Component {
 			Variant: button.Ghost,
 			Size:    button.SizeIcon,
 			Attributes: templ.Attributes{
-				"onclick":      "toggleEnvRowState(this)",
-				"type":         "button",
-				"title":        "Remove",
-				"aria-label":   "Remove variable",
-				"data-removed": "false",
+				"data-env-toggle": "true",
+				"type":            "button",
+				"title":           "Remove",
+				"aria-label":      "Remove variable",
+				"data-removed":    "false",
 			},
 		}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var31), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -761,7 +761,7 @@ func envEditorScript() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, " <style>\n\t\t\t[data-env-row][data-state=\"removed\"] {\n\t\t\t\topacity: 0.5;\n\t\t\t\tborder-left-color: var(--color-danger);\n\t\t\t}\n\t\t\t[data-env-row][data-state=\"added\"] {\n\t\t\t\tborder-left-color: var(--color-success);\n\t\t\t}\n\t\t</style> <script>\n\t\t\tfunction addEnvVar(button) {\n\t\t\t\tconst editor = button.closest('[data-env-editor]');\n\t\t\t\tif (!editor) return;\n\n\t\t\t\tconst rowsContainer = editor.querySelector('[data-env-rows]');\n\t\t\t\tconst template = document.getElementById('env-row-template');\n\t\t\t\tif (!template || !rowsContainer) return;\n\n\t\t\t\tconst newRow = template.content.cloneNode(true);\n\t\t\t\trowsContainer.appendChild(newRow);\n\n\t\t\t\t// Focus the key input\n\t\t\t\tconst lastRow = rowsContainer.lastElementChild;\n\t\t\t\tif (lastRow) {\n\t\t\t\t\tconst keyInput = lastRow.querySelector('input[name=\"env_key[]\"]');\n\t\t\t\t\tif (keyInput) keyInput.focus();\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tfunction toggleEnvRowState(button) {\n\t\t\t\tconst row = button.closest('[data-env-row]');\n\t\t\t\tif (!row) return;\n\n\t\t\t\tconst state = row.getAttribute('data-state');\n\t\t\t\tconst isRemoved = button.getAttribute('data-removed') === 'true';\n\t\t\t\tconst trashIcon = button.querySelector('[data-icon-trash]');\n\t\t\t\tconst undoIcon = button.querySelector('[data-icon-undo]');\n\n\t\t\t\tif (isRemoved) {\n\t\t\t\t\t// Restore the row\n\t\t\t\t\trow.setAttribute('data-state', 'original');\n\t\t\t\t\tbutton.setAttribute('data-removed', 'false');\n\t\t\t\t\tbutton.setAttribute('title', 'Remove');\n\t\t\t\t\tbutton.setAttribute('aria-label', 'Remove variable');\n\n\t\t\t\t\t// Update hidden state field\n\t\t\t\t\tconst stateInput = row.querySelector('input[name=\"env_state[]\"]');\n\t\t\t\t\tif (stateInput) stateInput.value = 'original';\n\n\t\t\t\t\t// Enable inputs\n\t\t\t\t\trow.querySelectorAll('input:not([type=\"hidden\"])').forEach(input => {\n\t\t\t\t\t\tinput.disabled = false;\n\t\t\t\t\t});\n\n\t\t\t\t\t// Toggle icons\n\t\t\t\t\tif (trashIcon) trashIcon.style.display = '';\n\t\t\t\t\tif (undoIcon) undoIcon.style.display = 'none';\n\t\t\t\t} else {\n\t\t\t\t\t// Remove the row\n\t\t\t\t\tif (state === 'added') {\n\t\t\t\t\t\t// New rows are completely removed\n\t\t\t\t\t\trow.remove();\n\t\t\t\t\t} else {\n\t\t\t\t\t\t// Original rows are marked as removed\n\t\t\t\t\t\trow.setAttribute('data-state', 'removed');\n\t\t\t\t\t\tbutton.setAttribute('data-removed', 'true');\n\t\t\t\t\t\tbutton.setAttribute('title', 'Restore');\n\t\t\t\t\t\tbutton.setAttribute('aria-label', 'Restore variable');\n\n\t\t\t\t\t\t// Update hidden state field\n\t\t\t\t\t\tconst stateInput = row.querySelector('input[name=\"env_state[]\"]');\n\t\t\t\t\t\tif (stateInput) stateInput.value = 'removed';\n\n\t\t\t\t\t\t// Disable inputs\n\t\t\t\t\t\trow.querySelectorAll('input:not([type=\"hidden\"])').forEach(input => {\n\t\t\t\t\t\t\tinput.disabled = true;\n\t\t\t\t\t\t});\n\n\t\t\t\t\t\t// Toggle icons\n\t\t\t\t\t\tif (trashIcon) trashIcon.style.display = 'none';\n\t\t\t\t\t\tif (undoIcon) undoIcon.style.display = '';\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t</script>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, " <style>\n\t\t\t[data-env-row][data-state=\"removed\"] {\n\t\t\t\topacity: 0.5;\n\t\t\t\tborder-left-color: var(--color-danger);\n\t\t\t}\n\t\t\t[data-env-row][data-state=\"added\"] {\n\t\t\t\tborder-left-color: var(--color-success);\n\t\t\t}\n\t\t</style> <script>\n\t\t\tfunction handleToggleEnvRowState(button) {\n\t\t\t\tconst row = button.closest('[data-env-row]');\n\t\t\t\tif (!row) return;\n\n\t\t\t\tconst state = row.getAttribute('data-state');\n\t\t\t\tconst isRemoved = button.getAttribute('data-removed') === 'true';\n\t\t\t\tconst trashIcon = button.querySelector('[data-icon-trash]');\n\t\t\t\tconst undoIcon = button.querySelector('[data-icon-undo]');\n\n\t\t\t\tif (isRemoved) {\n\t\t\t\t\t// Restore the row\n\t\t\t\t\trow.setAttribute('data-state', 'original');\n\t\t\t\t\tbutton.setAttribute('data-removed', 'false');\n\t\t\t\t\tbutton.setAttribute('title', 'Remove');\n\t\t\t\t\tbutton.setAttribute('aria-label', 'Remove variable');\n\n\t\t\t\t\t// Update hidden state field\n\t\t\t\t\tconst stateInput = row.querySelector('input[name=\"env_state[]\"]');\n\t\t\t\t\tif (stateInput) stateInput.value = 'original';\n\n\t\t\t\t\t// Enable inputs\n\t\t\t\t\trow.querySelectorAll('input:not([type=\"hidden\"])').forEach(input => {\n\t\t\t\t\t\tinput.disabled = false;\n\t\t\t\t\t});\n\n\t\t\t\t\t// Toggle icons\n\t\t\t\t\tif (trashIcon) trashIcon.style.display = '';\n\t\t\t\t\tif (undoIcon) undoIcon.style.display = 'none';\n\t\t\t\t} else {\n\t\t\t\t\t// Remove the row\n\t\t\t\t\tif (state === 'added') {\n\t\t\t\t\t\t// New rows are completely removed\n\t\t\t\t\t\trow.remove();\n\t\t\t\t\t} else {\n\t\t\t\t\t\t// Original rows are marked as removed\n\t\t\t\t\t\trow.setAttribute('data-state', 'removed');\n\t\t\t\t\t\tbutton.setAttribute('data-removed', 'true');\n\t\t\t\t\t\tbutton.setAttribute('title', 'Restore');\n\t\t\t\t\t\tbutton.setAttribute('aria-label', 'Restore variable');\n\n\t\t\t\t\t\t// Update hidden state field\n\t\t\t\t\t\tconst stateInput = row.querySelector('input[name=\"env_state[]\"]');\n\t\t\t\t\t\tif (stateInput) stateInput.value = 'removed';\n\n\t\t\t\t\t\t// Disable inputs\n\t\t\t\t\t\trow.querySelectorAll('input:not([type=\"hidden\"])').forEach(input => {\n\t\t\t\t\t\t\tinput.disabled = true;\n\t\t\t\t\t\t});\n\n\t\t\t\t\t\t// Toggle icons\n\t\t\t\t\t\tif (trashIcon) trashIcon.style.display = 'none';\n\t\t\t\t\t\tif (undoIcon) undoIcon.style.display = '';\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tdocument.addEventListener('DOMContentLoaded', () => {\n\t\t\t\t// Add variable button handlers\n\t\t\t\tdocument.querySelectorAll('[data-env-add]').forEach(button => {\n\t\t\t\t\tbutton.addEventListener('click', () => {\n\t\t\t\t\t\tconst editor = button.closest('[data-env-editor]');\n\t\t\t\t\t\tif (!editor) return;\n\n\t\t\t\t\t\tconst rowsContainer = editor.querySelector('[data-env-rows]');\n\t\t\t\t\t\tconst template = document.getElementById('env-row-template');\n\t\t\t\t\t\tif (!template || !rowsContainer) return;\n\n\t\t\t\t\t\tconst newRow = template.content.cloneNode(true);\n\n\t\t\t\t\t\t// Attach event listener to the new toggle button before appending\n\t\t\t\t\t\tconst toggleBtn = newRow.querySelector('[data-env-toggle]');\n\t\t\t\t\t\tif (toggleBtn) {\n\t\t\t\t\t\t\ttoggleBtn.addEventListener('click', () => handleToggleEnvRowState(toggleBtn));\n\t\t\t\t\t\t}\n\n\t\t\t\t\t\trowsContainer.appendChild(newRow);\n\n\t\t\t\t\t\t// Focus the key input\n\t\t\t\t\t\tconst lastRow = rowsContainer.lastElementChild;\n\t\t\t\t\t\tif (lastRow) {\n\t\t\t\t\t\t\tconst keyInput = lastRow.querySelector('input[name=\"env_key[]\"]');\n\t\t\t\t\t\t\tif (keyInput) keyInput.focus();\n\t\t\t\t\t\t}\n\t\t\t\t\t});\n\t\t\t\t});\n\n\t\t\t\t// Toggle button handlers for existing rows\n\t\t\t\tdocument.querySelectorAll('[data-env-toggle]').forEach(button => {\n\t\t\t\t\tbutton.addEventListener('click', () => handleToggleEnvRowState(button));\n\t\t\t\t});\n\t\t\t});\n\t\t</script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

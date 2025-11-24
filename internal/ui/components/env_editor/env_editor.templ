@@ -98,7 +98,7 @@ templ Editor(props Props) {
 				Variant:    button.Secondary,
 				Size:       button.SizeSm,
 				Icon:       icons.Plus(),
-				Attributes: templ.Attributes{"onclick": "addEnvVar(this)", "type": "button", "aria-label": "Add new environment variable"},
+				Attributes: templ.Attributes{"data-env-add": "true", "type": "button", "aria-label": "Add new environment variable"},
 			}) {
 				Add Variable
 			}
@@ -137,15 +137,31 @@ templ EnvRow(env EnvVar, state string) {
 			Variant: button.Ghost,
 			Size:    button.SizeIcon,
 			Attributes: templ.Attributes{
-				"onclick":      "toggleEnvRowState(this)",
-				"type":         "button",
-				"title":        getButtonTitle(state),
-				"aria-label":   getButtonTitle(state) + " variable",
-				"data-removed": getDataRemoved(state),
+				"data-env-toggle": "true",
+				"type":            "button",
+				"title":           getButtonTitle(state),
+				"aria-label":      getButtonTitle(state) + " variable",
+				"data-removed":    getDataRemoved(state),
 			},
 		}) {
-			<span data-icon-trash aria-hidden="true" if state == "removed" { style="display: none;" }>@icons.Trash()</span>
-			<span data-icon-undo aria-hidden="true" if state != "removed" { style="display: none;" }>@icons.Undo()</span>
+			<span
+				data-icon-trash
+				aria-hidden="true"
+				if state == "removed" {
+					style="display: none;"
+				}
+			>
+				@icons.Trash()
+			</span>
+			<span
+				data-icon-undo
+				aria-hidden="true"
+				if state != "removed" {
+					style="display: none;"
+				}
+			>
+				@icons.Undo()
+			</span>
 		}
 		// Hidden field to track state for backend
 		<input type="hidden" name="env_state[]" value={ state }/>
@@ -178,15 +194,19 @@ templ NewRowTemplate() {
 				Variant: button.Ghost,
 				Size:    button.SizeIcon,
 				Attributes: templ.Attributes{
-					"onclick":      "toggleEnvRowState(this)",
-					"type":         "button",
-					"title":        "Remove",
-					"aria-label":   "Remove variable",
-					"data-removed": "false",
+					"data-env-toggle": "true",
+					"type":            "button",
+					"title":           "Remove",
+					"aria-label":      "Remove variable",
+					"data-removed":    "false",
 				},
 			}) {
-				<span data-icon-trash aria-hidden="true">@icons.Trash()</span>
-				<span data-icon-undo aria-hidden="true" style="display: none;">@icons.Undo()</span>
+				<span data-icon-trash aria-hidden="true">
+					@icons.Trash()
+				</span>
+				<span data-icon-undo aria-hidden="true" style="display: none;">
+					@icons.Undo()
+				</span>
 			}
 			<input type="hidden" name="env_state[]" value="added"/>
 		</div>
@@ -208,26 +228,7 @@ templ envEditorScript() {
 			}
 		</style>
 		<script>
-			function addEnvVar(button) {
-				const editor = button.closest('[data-env-editor]');
-				if (!editor) return;
-
-				const rowsContainer = editor.querySelector('[data-env-rows]');
-				const template = document.getElementById('env-row-template');
-				if (!template || !rowsContainer) return;
-
-				const newRow = template.content.cloneNode(true);
-				rowsContainer.appendChild(newRow);
-
-				// Focus the key input
-				const lastRow = rowsContainer.lastElementChild;
-				if (lastRow) {
-					const keyInput = lastRow.querySelector('input[name="env_key[]"]');
-					if (keyInput) keyInput.focus();
-				}
-			}
-
-			function toggleEnvRowState(button) {
+			function handleToggleEnvRowState(button) {
 				const row = button.closest('[data-env-row]');
 				if (!row) return;
 
@@ -282,6 +283,42 @@ templ envEditorScript() {
 					}
 				}
 			}
+
+			document.addEventListener('DOMContentLoaded', () => {
+				// Add variable button handlers
+				document.querySelectorAll('[data-env-add]').forEach(button => {
+					button.addEventListener('click', () => {
+						const editor = button.closest('[data-env-editor]');
+						if (!editor) return;
+
+						const rowsContainer = editor.querySelector('[data-env-rows]');
+						const template = document.getElementById('env-row-template');
+						if (!template || !rowsContainer) return;
+
+						const newRow = template.content.cloneNode(true);
+
+						// Attach event listener to the new toggle button before appending
+						const toggleBtn = newRow.querySelector('[data-env-toggle]');
+						if (toggleBtn) {
+							toggleBtn.addEventListener('click', () => handleToggleEnvRowState(toggleBtn));
+						}
+
+						rowsContainer.appendChild(newRow);
+
+						// Focus the key input
+						const lastRow = rowsContainer.lastElementChild;
+						if (lastRow) {
+							const keyInput = lastRow.querySelector('input[name="env_key[]"]');
+							if (keyInput) keyInput.focus();
+						}
+					});
+				});
+
+				// Toggle button handlers for existing rows
+				document.querySelectorAll('[data-env-toggle]').forEach(button => {
+					button.addEventListener('click', () => handleToggleEnvRowState(button));
+				});
+			});
 		</script>
 	}
 }
