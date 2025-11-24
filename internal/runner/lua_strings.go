@@ -116,10 +116,10 @@ func stringsHasSuffix(L *lua.LState) int {
 func stringsReplace(L *lua.LState) int {
 	str := L.CheckString(1)
 	old := L.CheckString(2)
-	new := L.CheckString(3)
+	replacement := L.CheckString(3)
 	n := L.OptInt(4, -1) // default to replace all
 
-	result := strings.Replace(str, old, new, n)
+	result := strings.Replace(str, old, replacement, n)
 	L.Push(lua.LString(result))
 	return 1
 }

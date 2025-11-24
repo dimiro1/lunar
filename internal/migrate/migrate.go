@@ -5,6 +5,7 @@ package migrate
 import (
 	"database/sql"
 	"embed"
+	"errors"
 	"fmt"
 	"io/fs"
 	"log/slog"
@@ -38,7 +39,7 @@ func Run(db *sql.DB, migrationFS fs.FS) error {
 
 	// Get current version
 	version, dirty, err := m.Version()
-	if err != nil && err != migrate.ErrNilVersion {
+	if err != nil && !errors.Is(err, migrate.ErrNilVersion) {
 		return fmt.Errorf("failed to get migration version: %w", err)
 	}
 
@@ -50,11 +51,11 @@ func Run(db *sql.DB, migrationFS fs.FS) error {
 	slog.Info("Running database migrations", "current_version", version)
 
 	err = m.Up()
-	if err != nil && err != migrate.ErrNoChange {
+	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 
-	if err == migrate.ErrNoChange {
+	if errors.Is(err, migrate.ErrNoChange) {
 		slog.Info("No pending migrations to run")
 	} else {
 		newVersion, _, err := m.Version()
@@ -100,7 +101,7 @@ func Status(db *sql.DB, migrationFS fs.FS) (version uint, dirty bool, err error)
 	}
 
 	version, dirty, err = m.Version()
-	if err == migrate.ErrNilVersion {
+	if errors.Is(err, migrate.ErrNilVersion) {
 		return 0, false, nil
 	}
 

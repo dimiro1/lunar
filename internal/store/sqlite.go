@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -50,7 +51,7 @@ func (db *SQLiteDB) GetFunction(ctx context.Context, id string) (Function, error
 	err := db.db.QueryRowContext(ctx, query, id).Scan(
 		&fn.ID, &fn.Name, &description, &fn.Disabled, &fn.CreatedAt, &fn.UpdatedAt,
 	)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return Function{}, fmt.Errorf("function not found")
 	}
 	if err != nil {
@@ -266,7 +267,7 @@ func (db *SQLiteDB) GetVersion(ctx context.Context, functionID string, version i
 	err := db.db.QueryRowContext(ctx, query, functionID, version).Scan(
 		&v.ID, &v.FunctionID, &v.Version, &v.Code, &v.CreatedAt, &createdBy, &v.IsActive,
 	)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return FunctionVersion{}, fmt.Errorf("version not found")
 	}
 	if err != nil {
@@ -290,7 +291,7 @@ func (db *SQLiteDB) GetVersionByID(ctx context.Context, versionID string) (Funct
 	err := db.db.QueryRowContext(ctx, query, versionID).Scan(
 		&v.ID, &v.FunctionID, &v.Version, &v.Code, &v.CreatedAt, &createdBy, &v.IsActive,
 	)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return FunctionVersion{}, fmt.Errorf("version not found")
 	}
 	if err != nil {
@@ -355,7 +356,7 @@ func (db *SQLiteDB) GetActiveVersion(ctx context.Context, functionID string) (Fu
 	err := db.db.QueryRowContext(ctx, query, functionID).Scan(
 		&v.ID, &v.FunctionID, &v.Version, &v.Code, &v.CreatedAt, &createdBy, &v.IsActive,
 	)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return FunctionVersion{}, fmt.Errorf("no active version found")
 	}
 	if err != nil {
@@ -435,7 +436,7 @@ func (db *SQLiteDB) GetExecution(ctx context.Context, executionID string) (Execu
 		&exec.ID, &exec.FunctionID, &exec.FunctionVersionID,
 		&exec.Status, &durationMs, &errorMessage, &eventJSON, &exec.CreatedAt,
 	)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return Execution{}, fmt.Errorf("execution not found")
 	}
 	if err != nil {

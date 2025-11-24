@@ -30,25 +30,25 @@ func registerRandom(L *lua.LState) {
 // randomInt generates a random integer between min and max (inclusive)
 // Usage: local num = random.int(min, max)
 func randomInt(L *lua.LState) int {
-	min := L.CheckInt(1)
-	max := L.CheckInt(2)
+	minValue := L.CheckInt(1)
+	maxValue := L.CheckInt(2)
 
-	if min > max {
+	if minValue > maxValue {
 		L.ArgError(1, "min must be less than or equal to max")
 		return 0
 	}
 
 	// Use crypto/rand for better randomness
-	rangeSize := int64(max - min + 1)
+	rangeSize := int64(maxValue - minValue + 1)
 	n, err := rand.Int(rand.Reader, big.NewInt(rangeSize))
 	if err != nil {
 		// Fallback to math/rand
-		result := mathrand.Intn(int(rangeSize)) + min
+		result := mathrand.Intn(int(rangeSize)) + minValue
 		L.Push(lua.LNumber(result))
 		return 1
 	}
 
-	result := int(n.Int64()) + min
+	result := int(n.Int64()) + minValue
 	L.Push(lua.LNumber(result))
 	return 1
 }

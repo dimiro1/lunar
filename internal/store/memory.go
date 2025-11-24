@@ -26,7 +26,7 @@ func NewMemoryDB() *MemoryDB {
 
 // Function operations
 
-func (db *MemoryDB) CreateFunction(ctx context.Context, fn Function) (Function, error) {
+func (db *MemoryDB) CreateFunction(_ context.Context, fn Function) (Function, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
@@ -40,7 +40,7 @@ func (db *MemoryDB) CreateFunction(ctx context.Context, fn Function) (Function, 
 	return fn, nil
 }
 
-func (db *MemoryDB) GetFunction(ctx context.Context, id string) (Function, error) {
+func (db *MemoryDB) GetFunction(_ context.Context, id string) (Function, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
@@ -51,7 +51,7 @@ func (db *MemoryDB) GetFunction(ctx context.Context, id string) (Function, error
 	return fn, nil
 }
 
-func (db *MemoryDB) ListFunctions(ctx context.Context, params PaginationParams) ([]FunctionWithActiveVersion, int64, error) {
+func (db *MemoryDB) ListFunctions(_ context.Context, params PaginationParams) ([]FunctionWithActiveVersion, int64, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
@@ -94,7 +94,7 @@ func (db *MemoryDB) ListFunctions(ctx context.Context, params PaginationParams) 
 	return allFunctions[start:end], total, nil
 }
 
-func (db *MemoryDB) UpdateFunction(ctx context.Context, id string, updates UpdateFunctionRequest) error {
+func (db *MemoryDB) UpdateFunction(_ context.Context, id string, updates UpdateFunctionRequest) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
@@ -118,7 +118,7 @@ func (db *MemoryDB) UpdateFunction(ctx context.Context, id string, updates Updat
 	return nil
 }
 
-func (db *MemoryDB) DeleteFunction(ctx context.Context, id string) error {
+func (db *MemoryDB) DeleteFunction(_ context.Context, id string) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
@@ -133,7 +133,7 @@ func (db *MemoryDB) DeleteFunction(ctx context.Context, id string) error {
 
 // Version operations
 
-func (db *MemoryDB) CreateVersion(ctx context.Context, functionID string, code string, createdBy *string) (FunctionVersion, error) {
+func (db *MemoryDB) CreateVersion(_ context.Context, functionID string, code string, createdBy *string) (FunctionVersion, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
@@ -165,7 +165,7 @@ func (db *MemoryDB) CreateVersion(ctx context.Context, functionID string, code s
 	return version, nil
 }
 
-func (db *MemoryDB) GetVersion(ctx context.Context, functionID string, version int) (FunctionVersion, error) {
+func (db *MemoryDB) GetVersion(_ context.Context, functionID string, version int) (FunctionVersion, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
@@ -179,7 +179,7 @@ func (db *MemoryDB) GetVersion(ctx context.Context, functionID string, version i
 	return FunctionVersion{}, fmt.Errorf("version not found")
 }
 
-func (db *MemoryDB) GetVersionByID(ctx context.Context, versionID string) (FunctionVersion, error) {
+func (db *MemoryDB) GetVersionByID(_ context.Context, versionID string) (FunctionVersion, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
@@ -194,7 +194,7 @@ func (db *MemoryDB) GetVersionByID(ctx context.Context, versionID string) (Funct
 	return FunctionVersion{}, fmt.Errorf("version not found")
 }
 
-func (db *MemoryDB) ListVersions(ctx context.Context, functionID string, params PaginationParams) ([]FunctionVersion, int64, error) {
+func (db *MemoryDB) ListVersions(_ context.Context, functionID string, params PaginationParams) ([]FunctionVersion, int64, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
@@ -228,7 +228,7 @@ func (db *MemoryDB) ListVersions(ctx context.Context, functionID string, params 
 	return allVersions[start:end], total, nil
 }
 
-func (db *MemoryDB) GetActiveVersion(ctx context.Context, functionID string) (FunctionVersion, error) {
+func (db *MemoryDB) GetActiveVersion(_ context.Context, functionID string) (FunctionVersion, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
@@ -242,7 +242,7 @@ func (db *MemoryDB) GetActiveVersion(ctx context.Context, functionID string) (Fu
 	return FunctionVersion{}, fmt.Errorf("no active version found")
 }
 
-func (db *MemoryDB) ActivateVersion(ctx context.Context, functionID string, version int) error {
+func (db *MemoryDB) ActivateVersion(_ context.Context, functionID string, version int) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
@@ -268,7 +268,7 @@ func (db *MemoryDB) ActivateVersion(ctx context.Context, functionID string, vers
 
 // Execution operations
 
-func (db *MemoryDB) CreateExecution(ctx context.Context, exec Execution) (Execution, error) {
+func (db *MemoryDB) CreateExecution(_ context.Context, exec Execution) (Execution, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
@@ -277,7 +277,7 @@ func (db *MemoryDB) CreateExecution(ctx context.Context, exec Execution) (Execut
 	return exec, nil
 }
 
-func (db *MemoryDB) GetExecution(ctx context.Context, executionID string) (Execution, error) {
+func (db *MemoryDB) GetExecution(_ context.Context, executionID string) (Execution, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
@@ -288,7 +288,7 @@ func (db *MemoryDB) GetExecution(ctx context.Context, executionID string) (Execu
 	return exec, nil
 }
 
-func (db *MemoryDB) UpdateExecution(ctx context.Context, executionID string, status ExecutionStatus, durationMs *int64, errorMsg *string) error {
+func (db *MemoryDB) UpdateExecution(_ context.Context, executionID string, status ExecutionStatus, durationMs *int64, errorMsg *string) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
@@ -305,7 +305,7 @@ func (db *MemoryDB) UpdateExecution(ctx context.Context, executionID string, sta
 	return nil
 }
 
-func (db *MemoryDB) ListExecutions(ctx context.Context, functionID string, params PaginationParams) ([]Execution, int64, error) {
+func (db *MemoryDB) ListExecutions(_ context.Context, functionID string, params PaginationParams) ([]Execution, int64, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
@@ -337,6 +337,6 @@ func (db *MemoryDB) ListExecutions(ctx context.Context, functionID string, param
 
 // Health check
 
-func (db *MemoryDB) Ping(ctx context.Context) error {
+func (db *MemoryDB) Ping(_ context.Context) error {
 	return nil
 }

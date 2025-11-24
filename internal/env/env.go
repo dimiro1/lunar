@@ -2,6 +2,7 @@ package env
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"maps"
 
@@ -100,7 +101,7 @@ func (s *SQLiteStore) Get(functionID, key string) (string, error) {
 		functionID, key,
 	).Scan(&value)
 
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return "", &Error{Message: fmt.Sprintf("key not found: %s", key)}
 	}
 	if err != nil {

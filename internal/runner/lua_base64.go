@@ -41,7 +41,7 @@ func base64Decode(L *lua.LState) int {
 		return 2
 	}
 
-	L.Push(lua.LString(string(decoded)))
+	L.Push(lua.LString(decoded))
 	L.Push(lua.LNil)
 	return 2
 }

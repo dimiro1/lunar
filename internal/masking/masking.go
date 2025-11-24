@@ -54,7 +54,7 @@ var sensitiveLogPatterns = []*regexp.Regexp{
 	// JWT tokens
 	regexp.MustCompile(`eyJ[A-Za-z0-9_-]*\.eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*`),
 	// Bearer tokens
-	regexp.MustCompile(`(?i)bearer\s+[A-Za-z0-9_\-\.]+`),
+	regexp.MustCompile(`(?i)bearer\s+[A-Za-z0-9_\-.]+`),
 	// API keys (various formats including sk_live, sk_test, etc.)
 	regexp.MustCompile(`(?i)(api[_-]?key|apikey|key)[\s:=]+[A-Za-z0-9_\-]{15,}`),
 	// Generic tokens

@@ -36,7 +36,7 @@ func jsonEncode(L *lua.LState) int {
 		return 2
 	}
 
-	L.Push(lua.LString(string(jsonBytes)))
+	L.Push(lua.LString(jsonBytes))
 	return 1
 }
 
