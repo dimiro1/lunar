@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-//go:embed css js index.html
+//go:embed css js index.html llms.txt
 var embeddedFiles embed.FS
 
 // Handler returns an http.Handler that serves the embedded frontend files

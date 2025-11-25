@@ -2,9 +2,8 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-  cmd = ""
+  cmd = "go run ./cmd"
   bin = "go"
-  full_bin = "go run ./cmd"
   delay = 1000
   exclude_dir = ["assets", "tmp", "vendor", "node_modules", "build"]
   exclude_regex = ["_test.go"]

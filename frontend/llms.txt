@@ -1,0 +1,459 @@
+# FaaS-Go: Lua Function Development Guide
+
+> Serverless platform for creating HTTP functions in Lua with a comprehensive standard library
+
+## Handler Function
+
+Every function must define a handler that receives context and event parameters:
+
+```lua
+function handler(ctx, event)
+  -- Your code here
+  return {
+    statusCode = 200,
+    body = "response text",
+    headers = { ["Content-Type"] = "text/plain" },
+    isBase64Encoded = false
+  }
+end
+```
+
+### Context (ctx)
+
+Execution metadata available in every function:
+
+- ctx.executionId (string) - Unique identifier for this execution
+- ctx.functionId (string) - Function identifier
+- ctx.functionName (string) - Function name
+- ctx.version (string) - Function version
+- ctx.requestId (string) - HTTP request identifier
+- ctx.startedAt (number) - Execution start timestamp (Unix seconds)
+- ctx.baseUrl (string) - Base URL of the server deployment
+
+### Event (event)
+
+HTTP request data:
+
+- event.method (string) - HTTP method (GET, POST, PUT, DELETE, etc.)
+- event.path (string) - Request path
+- event.body (string) - Request body as string
+- event.headers (table) - Request headers (key-value pairs)
+- event.query (table) - Query parameters (key-value pairs)
+
+### Response Format
+
+Functions must return a table with:
+
+- statusCode (number) - HTTP status code (default: 200)
+- body (string) - Response body
+- headers (table, optional) - Response headers
+- isBase64Encoded (boolean, optional) - Whether body is base64 encoded
+
+## API Reference
+
+### Logging (log)
+
+Structured logging with execution context tracking:
+
+- log.info(message: string) - Log informational message
+- log.debug(message: string) - Log debug message
+- log.warn(message: string) - Log warning message
+- log.error(message: string) - Log error message
+
+Example:
+```lua
+log.info("Processing request for user: " .. userId)
+log.error("Failed to connect to database")
+```
+
+### Key-Value Storage (kv)
+
+Persistent storage scoped to function ID:
+
+- kv.get(key: string): string | nil - Retrieve value, returns nil if not found
+- kv.set(key: string, value: string): boolean - Set key-value pair, returns success
+- kv.delete(key: string): boolean - Delete key, returns success
+
+Example:
+```lua
+local count = kv.get("counter") or "0"
+kv.set("counter", tostring(tonumber(count) + 1))
+```
+
+### Environment Variables (env)
+
+Environment variable management scoped to function ID:
+
+- env.get(key: string): string | nil - Get environment variable
+- env.set(key: string, value: string): boolean - Set environment variable
+- env.delete(key: string): boolean - Delete environment variable
+
+Example:
+```lua
+local apiKey = env.get("API_KEY")
+local dbUrl = env.get("DATABASE_URL") or "default-url"
+```
+
+### HTTP Client (http)
+
+Make outbound HTTP requests:
+
+- http.get(url: string, options?: table): table | nil, error | nil
+- http.post(url: string, options?: table): table | nil, error | nil
+- http.put(url: string, options?: table): table | nil, error | nil
+- http.delete(url: string, options?: table): table | nil, error | nil
+
+Options table:
+```lua
+{
+  headers = { ["Authorization"] = "Bearer token" },
+  query = { ["param"] = "value" },
+  body = "request body"  -- for POST/PUT
+}
+```
+
+Response table:
+```lua
+{
+  statusCode = 200,
+  body = "response text",
+  headers = { ["Content-Type"] = "application/json" }
+}
+```
+
+Example:
+```lua
+local response, err = http.get("https://api.example.com/data", {
+  headers = { ["Authorization"] = "Bearer " .. apiKey }
+})
+if err then
+  log.error("HTTP request failed: " .. err)
+  return { statusCode = 502, body = "Service unavailable" }
+end
+```
+
+### JSON (json)
+
+JSON encoding and decoding:
+
+- json.encode(value: any): string | nil, error | nil - Encode Lua value to JSON
+- json.decode(jsonString: string): any | nil, error | nil - Decode JSON to Lua value
+
+Example:
+```lua
+local data = { name = "John", age = 30 }
+local jsonStr, err = json.encode(data)
+
+local parsed, err = json.decode(event.body)
+if err then
+  log.error("Invalid JSON: " .. err)
+end
+```
+
+### Base64 (base64)
+
+Base64 encoding and decoding:
+
+- base64.encode(str: string): string - Encode string to base64
+- base64.decode(str: string): string | nil, error | nil - Decode base64 string
+
+Example:
+```lua
+local encoded = base64.encode("Hello World")
+local decoded, err = base64.decode(encoded)
+```
+
+### Cryptography (crypto)
+
+Hash functions, HMAC, and UUID generation:
+
+Hash functions (return hex-encoded string):
+- crypto.md5(str: string): string
+- crypto.sha1(str: string): string
+- crypto.sha256(str: string): string
+- crypto.sha512(str: string): string
+
+HMAC functions (return hex-encoded string):
+- crypto.hmac_sha1(message: string, key: string): string
+- crypto.hmac_sha256(message: string, key: string): string
+- crypto.hmac_sha512(message: string, key: string): string
+
+UUID:
+- crypto.uuid(): string - Generate UUID v4
+
+Example:
+```lua
+local hash = crypto.sha256("password123")
+local signature = crypto.hmac_sha256("message", "secret_key")
+local id = crypto.uuid()
+```
+
+### Time Operations (time)
+
+Time formatting, parsing, and delays:
+
+- time.now(): number - Current Unix timestamp (seconds)
+- time.format(timestamp: number, layout: string): string - Format timestamp using Go layout
+- time.parse(timeStr: string, layout: string): number | nil, error | nil - Parse time string
+- time.sleep(milliseconds: number) - Sleep for specified milliseconds
+
+Go time layout examples:
+- "2006-01-02" - Date only
+- "2006-01-02 15:04:05" - Date and time
+- "2006-01-02T15:04:05Z" - ISO 8601
+
+Example:
+```lua
+local now = time.now()
+local formatted = time.format(now, "2006-01-02 15:04:05")
+local timestamp, err = time.parse("2024-01-15 10:30:00", "2006-01-02 15:04:05")
+time.sleep(1000)  -- Sleep for 1 second
+```
+
+### URL Operations (url)
+
+URL parsing and encoding:
+
+- url.parse(urlStr: string): table | nil, error | nil - Parse URL into components
+- url.encode(str: string): string - URL-encode string (query escape)
+- url.decode(str: string): string | nil, error | nil - URL-decode string
+
+Parsed URL table:
+```lua
+{
+  scheme = "https",
+  host = "example.com",
+  path = "/path/to/resource",
+  fragment = "section",
+  query = { ["key"] = "value" },
+  username = "user",
+  password = "pass"
+}
+```
+
+Example:
+```lua
+local parsed, err = url.parse("https://example.com/api?key=value")
+local encoded = url.encode("hello world")  -- "hello+world"
+local decoded, err = url.decode("hello+world")
+```
+
+### String Manipulation (strings)
+
+Comprehensive string utilities:
+
+- strings.trim(str: string): string - Remove leading/trailing whitespace
+- strings.trimLeft(str: string): string - Remove leading whitespace
+- strings.trimRight(str: string): string - Remove trailing whitespace
+- strings.split(str: string, sep: string): table - Split string into array
+- strings.join(array: table, sep: string): string - Join array elements
+- strings.hasPrefix(str: string, prefix: string): boolean - Check prefix
+- strings.hasSuffix(str: string, suffix: string): boolean - Check suffix
+- strings.contains(str: string, substr: string): boolean - Check substring
+- strings.replace(str: string, old: string, new: string, n?: number): string - Replace occurrences (n=-1 for all)
+- strings.toLower(str: string): string - Convert to lowercase
+- strings.toUpper(str: string): string - Convert to uppercase
+- strings.repeat(str: string, count: number): string - Repeat string
+
+Example:
+```lua
+local trimmed = strings.trim("  hello  ")
+local parts = strings.split("a,b,c", ",")
+local joined = strings.join(parts, "-")
+local replaced = strings.replace("hello world", "world", "lua", -1)
+```
+
+### Random Generation (random)
+
+Cryptographically secure random value generation:
+
+- random.int(min: number, max: number): number - Random integer [min, max] inclusive
+- random.float(): number - Random float [0.0, 1.0)
+- random.string(length: number): string - Random alphanumeric string
+- random.bytes(length: number): string | nil, error | nil - Random bytes (base64-encoded)
+- random.hex(length: number): string | nil, error | nil - Random bytes (hex-encoded)
+- random.id(): string - Globally unique sortable ID (xid, 20 characters)
+
+Example:
+```lua
+local dice = random.int(1, 6)
+local chance = random.float()
+local token = random.string(32)
+local id = random.id()
+```
+
+## Code Examples
+
+### Basic HTTP Handler
+
+```lua
+function handler(ctx, event)
+  log.info("Function started")
+
+  return {
+    statusCode = 200,
+    headers = { ["Content-Type"] = "application/json" },
+    body = json.encode({ message = "Hello" })
+  }
+end
+```
+
+### Counter with KV Store
+
+```lua
+function handler(ctx, event)
+  -- Get current count from KV store
+  local count = kv.get("counter") or "0"
+  local newCount = tonumber(count) + 1
+
+  -- Save updated count
+  kv.set("counter", tostring(newCount))
+
+  log.info("Counter incremented to: " .. newCount)
+
+  return {
+    statusCode = 200,
+    headers = { ["Content-Type"] = "application/json" },
+    body = json.encode({ count = newCount })
+  }
+end
+```
+
+### Hello World with Query Parameters
+
+```lua
+function handler(ctx, event)
+  -- Parse query parameters from event
+  local name = "World"
+  if event.query and event.query.name then
+    name = event.query.name
+  end
+
+  log.info("Greeting: " .. name)
+
+  return {
+    statusCode = 200,
+    headers = { ["Content-Type"] = "application/json" },
+    body = json.encode({ message = "Hello, " .. name .. "!" })
+  }
+end
+```
+
+### Health Check with HTTP Client
+
+```lua
+function handler(ctx, event)
+  -- Check if a website is up
+  local url = "https://www.google.com/"
+
+  local response, err = http.get(url)
+
+  if err then
+    log.error("HTTP request failed: " .. err)
+    return {
+      statusCode = 502,
+      headers = { ["Content-Type"] = "application/json" },
+      body = json.encode({ status = "DOWN", error = err })
+    }
+  end
+
+  if response.statusCode == 200 then
+    log.info("Site is up")
+    return {
+      statusCode = 200,
+      headers = { ["Content-Type"] = "application/json" },
+      body = json.encode({ status = "UP" })
+    }
+  else
+    log.error("Site is down: " .. response.statusCode)
+    return {
+      statusCode = 502,
+      headers = { ["Content-Type"] = "application/json" },
+      body = json.encode({ status = "DOWN" })
+    }
+  end
+end
+```
+
+### API Request with Authentication
+
+```lua
+function handler(ctx, event)
+  -- Get API key from environment
+  local apiKey = env.get("API_KEY")
+  if not apiKey then
+    return {
+      statusCode = 500,
+      body = json.encode({ error = "API_KEY not configured" })
+    }
+  end
+
+  -- Make authenticated API request
+  local response, err = http.get("https://api.example.com/data", {
+    headers = {
+      ["Authorization"] = "Bearer " .. apiKey,
+      ["Accept"] = "application/json"
+    }
+  })
+
+  if err then
+    log.error("API request failed: " .. err)
+    return { statusCode = 502, body = json.encode({ error = err }) }
+  end
+
+  return {
+    statusCode = response.statusCode,
+    headers = { ["Content-Type"] = "application/json" },
+    body = response.body
+  }
+end
+```
+
+### JSON Processing
+
+```lua
+function handler(ctx, event)
+  -- Parse JSON request body
+  local data, err = json.decode(event.body)
+  if err then
+    return {
+      statusCode = 400,
+      body = json.encode({ error = "Invalid JSON: " .. err })
+    }
+  end
+
+  -- Process data
+  local result = {
+    received = data,
+    processed_at = time.format(time.now(), "2006-01-02 15:04:05"),
+    id = crypto.uuid()
+  }
+
+  return {
+    statusCode = 200,
+    headers = { ["Content-Type"] = "application/json" },
+    body = json.encode(result)
+  }
+end
+```
+
+## Execution Environment
+
+- Default timeout: 5 minutes (configurable)
+- Context awareness: All modules respect execution context and timeout
+- Error handling: Functions returning (result, error) return nil and error string on failure
+- Storage scoping: KV and ENV storage are scoped to function ID for isolation
+- Security: Random generation uses crypto/rand for cryptographic security
+
+## Best Practices
+
+1. Always check for errors from functions that return (result, error)
+2. Use structured logging (log.info, log.error) for observability
+3. Store configuration in environment variables, not in code
+4. Use KV store for stateful operations (counters, caching, etc.)
+5. Set appropriate Content-Type headers in responses
+6. Return meaningful HTTP status codes (200, 400, 500, etc.)
+7. Handle missing query parameters and headers gracefully
+8. Use crypto functions for secure operations (signatures, tokens)
+9. Format timestamps consistently using time.format()
+10. Validate and sanitize user input from event.body and event.query

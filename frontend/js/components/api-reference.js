@@ -53,6 +53,18 @@ export const APIReference = {
             ]),
           ),
       ),
+      // Footer
+      m(".api-reference__footer", [
+        m(
+          "a.api-reference__footer-link",
+          {
+            href: "/llms.txt",
+            target: "_blank",
+            rel: "noopener noreferrer",
+          },
+          "LLM Documentation",
+        ),
+      ]),
     ]);
   },
 };
