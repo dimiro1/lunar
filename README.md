@@ -10,6 +10,7 @@ A lightweight, self-hosted Function-as-a-Service platform written in Go with Lua
 * **Built-in APIs** - HTTP client, KV store, environment variables, logging, and more
 * **Version Control** - Track and manage function versions
 * **Execution History** - Monitor function executions and logs
+* **Beautiful Error Messages** - Human-friendly error messages with code context, line numbers, and actionable suggestions
 * **Web Dashboard** - Manage functions through a clean web interface
 * **Lightweight** - Single binary, no external dependencies
 
@@ -38,6 +39,9 @@ A lightweight, self-hosted Function-as-a-Service platform written in Go with Lua
 
 ### Command Palette
 ![Command Palette](shots/command.png)
+
+### Error Messages
+![Error Messages](shots/error-messages.png)
 
 ## Quick Start
 
