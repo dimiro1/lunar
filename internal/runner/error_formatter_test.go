@@ -367,6 +367,37 @@ end`
 	t.Logf("Enhanced error:\n%s", result)
 }
 
+func TestEnhanceError_AlternateSyntaxErrorFormat(t *testing.T) {
+	sourceCode := `function handler(ctx, event)
+  local x = 1
+  local y = 2
+  local z = 3
+
+  if x = y then
+    return { statusCode = 200 }
+  end
+end`
+
+	err := fmt.Errorf("<string> line:6(column:9) near '=': syntax error")
+	enhanced := EnhanceError(err, sourceCode)
+
+	result := enhanced.Error()
+
+	if !strings.Contains(result, "line 6") {
+		t.Errorf("Expected line number in error")
+	}
+
+	if !strings.Contains(result, "if x = y then") {
+		t.Errorf("Expected code context")
+	}
+
+	if !strings.Contains(result, "syntax error") || !strings.Contains(result, "[TIP]") {
+		t.Errorf("Expected syntax_error suggestion")
+	}
+
+	t.Logf("Enhanced error:\n%s", result)
+}
+
 func TestExtractLineNumber(t *testing.T) {
 	tests := []struct {
 		errMsg   string
@@ -375,6 +406,8 @@ func TestExtractLineNumber(t *testing.T) {
 		{"<string>:7: some error", 7},
 		{"<string>:123: another error", 123},
 		{"<string>:1: first line error", 1},
+		{"<string> line:6(column:33) near '=': syntax error", 6},
+		{"<string> line:42(column:10) near 'end': syntax error", 42},
 		{"error without line number", 0},
 		{"", 0},
 	}
@@ -397,7 +430,7 @@ line 6
 line 7`
 
 	// Test middle line
-	context := extractCodeContext(sourceCode, 4, 1)
+	context := extractCodeContext(sourceCode, 4, 0, 1)
 	if !strings.Contains(context, "> ") {
 		t.Errorf("Expected error line marker '>' in context")
 	}
@@ -406,24 +439,24 @@ line 7`
 	}
 
 	// Test first line
-	context = extractCodeContext(sourceCode, 1, 2)
+	context = extractCodeContext(sourceCode, 1, 0, 2)
 	if !strings.Contains(context, "line 1") {
 		t.Errorf("Expected first line in context")
 	}
 
 	// Test last line
-	context = extractCodeContext(sourceCode, 7, 2)
+	context = extractCodeContext(sourceCode, 7, 0, 2)
 	if !strings.Contains(context, "line 7") {
 		t.Errorf("Expected last line in context")
 	}
 
 	// Test invalid line number
-	context = extractCodeContext(sourceCode, 0, 1)
+	context = extractCodeContext(sourceCode, 0, 0, 1)
 	if context != "" {
 		t.Errorf("Expected empty context for invalid line number")
 	}
 
-	context = extractCodeContext(sourceCode, 100, 1)
+	context = extractCodeContext(sourceCode, 100, 0, 1)
 	if context != "" {
 		t.Errorf("Expected empty context for out of range line number")
 	}

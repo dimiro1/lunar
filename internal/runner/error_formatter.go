@@ -14,13 +14,14 @@ func EnhanceError(err error, sourceCode string) error {
 
 	errMsg := err.Error()
 
-	// Extract line number from error message
+	// Extract line number and column from error message
 	lineNum := extractLineNumber(errMsg)
+	colNum := extractColumnNumber(errMsg)
 
 	// Extract code context if we have a line number
 	var codeContext string
 	if lineNum > 0 {
-		codeContext = extractCodeContext(sourceCode, lineNum, 2)
+		codeContext = extractCodeContext(sourceCode, lineNum, colNum, 2)
 	}
 
 	// Detect error pattern and generate suggestion
@@ -33,7 +34,9 @@ func EnhanceError(err error, sourceCode string) error {
 
 // extractLineNumber parses the line number from Lua error messages
 // Example: "<string>:7:" -> 7
+// Example: "<string> line:6(column:33)" -> 6
 func extractLineNumber(errMsg string) int {
+	// Try format: <string>:7:
 	re := regexp.MustCompile(`<string>:(\d+):`)
 	matches := re.FindStringSubmatch(errMsg)
 	if len(matches) > 1 {
@@ -42,11 +45,36 @@ func extractLineNumber(errMsg string) int {
 			return lineNum
 		}
 	}
+
+	// Try format: <string> line:6(column:33)
+	re = regexp.MustCompile(`<string> line:(\d+)`)
+	matches = re.FindStringSubmatch(errMsg)
+	if len(matches) > 1 {
+		var lineNum int
+		if _, err := fmt.Sscanf(matches[1], "%d", &lineNum); err == nil {
+			return lineNum
+		}
+	}
+
+	return 0
+}
+
+// extractColumnNumber parses the column number from Lua error messages
+// Example: "<string> line:6(column:33)" -> 33
+func extractColumnNumber(errMsg string) int {
+	re := regexp.MustCompile(`column:(\d+)`)
+	matches := re.FindStringSubmatch(errMsg)
+	if len(matches) > 1 {
+		var colNum int
+		if _, err := fmt.Sscanf(matches[1], "%d", &colNum); err == nil {
+			return colNum
+		}
+	}
 	return 0
 }
 
 // extractCodeContext extracts lines around the error location
-func extractCodeContext(sourceCode string, lineNum, contextLines int) string {
+func extractCodeContext(sourceCode string, lineNum, colNum, contextLines int) string {
 	if lineNum <= 0 {
 		return ""
 	}
@@ -66,6 +94,14 @@ func extractCodeContext(sourceCode string, lineNum, contextLines int) string {
 			prefix = "> "
 		}
 		context.WriteString(fmt.Sprintf("%s%3d | %s\n", prefix, i+1, lines[i]))
+
+		// Add arrow pointing to column if this is the error line and we have a column number
+		if i == lineNum-1 && colNum > 0 {
+			// Calculate arrow position: prefix (2) + line number (3) + " | " (3) + column (0-indexed)
+			arrowPos := 2 + 3 + 3 + colNum - 1
+			arrow := strings.Repeat(" ", arrowPos) + "^"
+			context.WriteString(arrow + "\n")
+		}
 	}
 
 	return context.String()
@@ -79,6 +115,7 @@ func detectErrorPattern(errMsg string) string {
 		`attempt to call.*nil`:               "nil_call",
 		`bad argument.*expected.*got`:        "bad_argument",
 		`unexpected symbol`:                  "syntax_error",
+		`syntax error`:                       "syntax_error",
 		`'end' expected`:                     "missing_end",
 		`attempt to perform arithmetic`:      "arithmetic_error",
 		`attempt to concatenate`:             "concat_error",

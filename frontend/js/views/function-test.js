@@ -58,7 +58,8 @@ export const FunctionTest = {
       FunctionTest.testLogs = [];
       m.redraw();
 
-      const executionId = response.headers["X-Execution-Id"];
+      const executionId =
+        response.headers && response.headers["X-Execution-Id"];
       if (executionId) {
         try {
           const logsData = await API.executions.getLogs(executionId);
@@ -163,19 +164,49 @@ export const FunctionTest = {
                   ? m("div", [
                       m(FormGroup, [
                         m(FormLabel, { text: "Status" }),
-                        m("div", [
-                          m(
-                            Badge,
-                            {
-                              variant:
-                                FunctionTest.testResponse.status === 200
-                                  ? BadgeVariant.SUCCESS
-                                  : BadgeVariant.DESTRUCTIVE,
-                              size: BadgeSize.SM,
-                            },
-                            FunctionTest.testResponse.status,
-                          ),
-                        ]),
+                        m(
+                          "div",
+                          {
+                            style:
+                              "display: flex; align-items: center; gap: 0.5rem;",
+                          },
+                          [
+                            m(
+                              Badge,
+                              {
+                                variant:
+                                  FunctionTest.testResponse.status === 200
+                                    ? BadgeVariant.SUCCESS
+                                    : BadgeVariant.DESTRUCTIVE,
+                                size: BadgeSize.SM,
+                              },
+                              FunctionTest.testResponse.status,
+                            ),
+                            FunctionTest.testResponse.headers &&
+                              FunctionTest.testResponse.headers[
+                                "X-Execution-Id"
+                              ] &&
+                              m(
+                                "a",
+                                {
+                                  href: routes.execution(
+                                    FunctionTest.testResponse.headers[
+                                      "X-Execution-Id"
+                                    ],
+                                  ),
+                                  style: "text-decoration: none;",
+                                },
+                                m(
+                                  Badge,
+                                  {
+                                    variant: BadgeVariant.OUTLINE,
+                                    size: BadgeSize.SM,
+                                  },
+                                  "View Execution",
+                                ),
+                              ),
+                          ],
+                        ),
                       ]),
                       m(FormGroup, [
                         m(FormLabel, { text: "Body" }),
