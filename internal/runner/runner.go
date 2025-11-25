@@ -71,26 +71,28 @@ func Run(ctx context.Context, deps Dependencies, req Request) (Response, error) 
 
 	// Load and execute the Lua code
 	if err := L.DoString(req.Code); err != nil {
-		return Response{}, fmt.Errorf("failed to load Lua code: %w", err)
+		enhancedErr := EnhanceError(fmt.Errorf("failed to load Lua code: %w", err), req.Code)
+		return Response{}, enhancedErr
 	}
 
 	// Get the handler function
 	handlerFn := L.GetGlobal("handler")
 	if handlerFn.Type() != lua.LTFunction {
-		return Response{}, fmt.Errorf("handler function not found in Lua code")
+		enhancedErr := EnhanceError(fmt.Errorf("handler function not found in Lua code"), req.Code)
+		return Response{}, enhancedErr
 	}
 
 	// Handle different event types
 	switch req.Event.Type() {
 	case events.EventTypeHTTP:
-		return runHTTPEvent(L, req.Context, req.Event.(events.HTTPEvent))
+		return runHTTPEvent(L, req.Context, req.Event.(events.HTTPEvent), req.Code)
 	default:
 		return Response{}, fmt.Errorf("unsupported event type: %s", req.Event.Type())
 	}
 }
 
 // runHTTPEvent executes the handler for an HTTP event
-func runHTTPEvent(L *lua.LState, execCtx *events.ExecutionContext, event events.HTTPEvent) (Response, error) {
+func runHTTPEvent(L *lua.LState, execCtx *events.ExecutionContext, event events.HTTPEvent, sourceCode string) (Response, error) {
 	// Create context and event Lua tables
 	ctxTable := contextToLuaTable(L, execCtx)
 	eventTable := httpEventToLuaTable(L, event)
@@ -102,7 +104,8 @@ func runHTTPEvent(L *lua.LState, execCtx *events.ExecutionContext, event events.
 		NRet:    1,
 		Protect: true,
 	}, ctxTable, eventTable); err != nil {
-		return Response{}, fmt.Errorf("failed to execute handler: %w", err)
+		enhancedErr := EnhanceError(fmt.Errorf("failed to execute handler: %w", err), sourceCode)
+		return Response{}, enhancedErr
 	}
 
 	// Get the response from the stack
@@ -118,5 +121,6 @@ func runHTTPEvent(L *lua.LState, execCtx *events.ExecutionContext, event events.
 		}, nil
 	}
 
-	return Response{}, fmt.Errorf("handler did not return a table")
+	enhancedErr := EnhanceError(fmt.Errorf("handler did not return a table"), sourceCode)
+	return Response{}, enhancedErr
 }

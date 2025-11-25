@@ -3,6 +3,7 @@ package runner
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -417,8 +418,8 @@ local x = 1 + 1
 	}
 
 	expectedError := "handler function not found in Lua code"
-	if err.Error() != expectedError {
-		t.Errorf("expected error %q, got %q", expectedError, err.Error())
+	if !strings.Contains(err.Error(), expectedError) {
+		t.Errorf("expected error to contain %q, got %q", expectedError, err.Error())
 	}
 }
 

@@ -4,7 +4,12 @@ import { Pagination } from "../components/pagination.js";
 import { formatUnixTimestamp } from "../utils.js";
 import { routes } from "../routes.js";
 import { BackButton } from "../components/button.js";
-import { Card, CardHeader, CardContent } from "../components/card.js";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardVariant,
+} from "../components/card.js";
 import {
   Badge,
   BadgeVariant,
@@ -147,6 +152,22 @@ export const ExecutionDetail = {
       ]),
 
       m(".execution-details-panels", [
+        // Error Details
+        exec.status === "error" &&
+          exec.error_message &&
+          m(Card, { variant: CardVariant.DANGER, style: "margin-bottom: 1.5rem" }, [
+            m(CardHeader, {
+              title: "Execution Error",
+              icon: "exclamationTriangle",
+              variant: CardVariant.DANGER,
+            }),
+            m(CardContent, [
+              m("pre.error-message", {
+                style: "max-height: 500px; overflow-y: auto; white-space: pre-wrap; font-family: monospace; margin: 0; padding: 1rem; background: var(--color-background); border-radius: 6px;"
+              }, exec.error_message),
+            ]),
+          ]),
+
         // Event Data
         exec.event_json &&
           m(Card, { style: "margin-bottom: 1.5rem" }, [
