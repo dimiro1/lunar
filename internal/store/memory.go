@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+var _ DB = (*MemoryDB)(nil)
+
 // MemoryDB is an in-memory implementation of the DB interface
 type MemoryDB struct {
 	mu         sync.RWMutex
@@ -46,7 +48,7 @@ func (db *MemoryDB) GetFunction(_ context.Context, id string) (Function, error) 
 
 	fn, ok := db.functions[id]
 	if !ok {
-		return Function{}, fmt.Errorf("function not found")
+		return Function{}, ErrFunctionNotFound
 	}
 	return fn, nil
 }
@@ -100,7 +102,7 @@ func (db *MemoryDB) UpdateFunction(_ context.Context, id string, updates UpdateF
 
 	fn, ok := db.functions[id]
 	if !ok {
-		return fmt.Errorf("function not found")
+		return ErrFunctionNotFound
 	}
 
 	if updates.Name != nil {
@@ -126,7 +128,7 @@ func (db *MemoryDB) DeleteFunction(_ context.Context, id string) error {
 	defer db.mu.Unlock()
 
 	if _, ok := db.functions[id]; !ok {
-		return fmt.Errorf("function not found")
+		return ErrFunctionNotFound
 	}
 
 	delete(db.functions, id)
@@ -141,7 +143,7 @@ func (db *MemoryDB) CreateVersion(_ context.Context, functionID string, code str
 	defer db.mu.Unlock()
 
 	if _, ok := db.functions[functionID]; !ok {
-		return FunctionVersion{}, fmt.Errorf("function not found")
+		return FunctionVersion{}, ErrFunctionNotFound
 	}
 
 	versions := db.versions[functionID]
@@ -179,7 +181,7 @@ func (db *MemoryDB) GetVersion(_ context.Context, functionID string, version int
 		}
 	}
 
-	return FunctionVersion{}, fmt.Errorf("version not found")
+	return FunctionVersion{}, ErrVersionNotFound
 }
 
 func (db *MemoryDB) GetVersionByID(_ context.Context, versionID string) (FunctionVersion, error) {
@@ -194,7 +196,7 @@ func (db *MemoryDB) GetVersionByID(_ context.Context, versionID string) (Functio
 		}
 	}
 
-	return FunctionVersion{}, fmt.Errorf("version not found")
+	return FunctionVersion{}, ErrVersionNotFound
 }
 
 func (db *MemoryDB) ListVersions(_ context.Context, functionID string, params PaginationParams) ([]FunctionVersion, int64, error) {
@@ -242,7 +244,7 @@ func (db *MemoryDB) GetActiveVersion(_ context.Context, functionID string) (Func
 		}
 	}
 
-	return FunctionVersion{}, fmt.Errorf("no active version found")
+	return FunctionVersion{}, ErrNoActiveVersion
 }
 
 func (db *MemoryDB) ActivateVersion(_ context.Context, functionID string, version int) error {
@@ -262,7 +264,7 @@ func (db *MemoryDB) ActivateVersion(_ context.Context, functionID string, versio
 	}
 
 	if !found {
-		return fmt.Errorf("version not found")
+		return ErrVersionNotFound
 	}
 
 	db.versions[functionID] = versions
@@ -289,7 +291,7 @@ func (db *MemoryDB) GetExecution(_ context.Context, executionID string) (Executi
 
 	exec, ok := db.executions[executionID]
 	if !ok {
-		return Execution{}, fmt.Errorf("execution not found")
+		return Execution{}, ErrExecutionNotFound
 	}
 	return exec, nil
 }
@@ -300,7 +302,7 @@ func (db *MemoryDB) UpdateExecution(_ context.Context, executionID string, statu
 
 	exec, ok := db.executions[executionID]
 	if !ok {
-		return fmt.Errorf("execution not found")
+		return ErrExecutionNotFound
 	}
 
 	exec.Status = status

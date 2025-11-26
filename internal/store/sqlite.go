@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	_ "modernc.org/sqlite" // SQLite driver
+	_ "modernc.org/sqlite"
 )
 
 // SQLiteDB is a SQLite implementation of the DB interface
@@ -53,7 +53,7 @@ func (db *SQLiteDB) GetFunction(ctx context.Context, id string) (Function, error
 		&fn.ID, &fn.Name, &description, &fn.Disabled, &retentionDays, &fn.CreatedAt, &fn.UpdatedAt,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
-		return Function{}, fmt.Errorf("function not found")
+		return Function{}, ErrFunctionNotFound
 	}
 	if err != nil {
 		return Function{}, fmt.Errorf("failed to query function: %w", err)
@@ -159,7 +159,7 @@ func (db *SQLiteDB) UpdateFunction(ctx context.Context, id string, updates Updat
 		return fmt.Errorf("failed to check function existence: %w", err)
 	}
 	if !exists {
-		return fmt.Errorf("function not found")
+		return ErrFunctionNotFound
 	}
 
 	if updates.Name != nil {
@@ -209,7 +209,7 @@ func (db *SQLiteDB) DeleteFunction(ctx context.Context, id string) error {
 	}
 
 	if rows == 0 {
-		return fmt.Errorf("function not found")
+		return ErrFunctionNotFound
 	}
 
 	return nil
@@ -231,7 +231,7 @@ func (db *SQLiteDB) CreateVersion(ctx context.Context, functionID string, code s
 		return FunctionVersion{}, fmt.Errorf("failed to check function existence: %w", err)
 	}
 	if !exists {
-		return FunctionVersion{}, fmt.Errorf("function not found")
+		return FunctionVersion{}, ErrFunctionNotFound
 	}
 
 	// Get next version number
@@ -286,7 +286,7 @@ func (db *SQLiteDB) GetVersion(ctx context.Context, functionID string, version i
 		&v.ID, &v.FunctionID, &v.Version, &v.Code, &v.CreatedAt, &createdBy, &v.IsActive,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
-		return FunctionVersion{}, fmt.Errorf("version not found")
+		return FunctionVersion{}, ErrVersionNotFound
 	}
 	if err != nil {
 		return FunctionVersion{}, fmt.Errorf("failed to query version: %w", err)
@@ -310,7 +310,7 @@ func (db *SQLiteDB) GetVersionByID(ctx context.Context, versionID string) (Funct
 		&v.ID, &v.FunctionID, &v.Version, &v.Code, &v.CreatedAt, &createdBy, &v.IsActive,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
-		return FunctionVersion{}, fmt.Errorf("version not found")
+		return FunctionVersion{}, ErrVersionNotFound
 	}
 	if err != nil {
 		return FunctionVersion{}, fmt.Errorf("failed to query version: %w", err)
@@ -375,7 +375,7 @@ func (db *SQLiteDB) GetActiveVersion(ctx context.Context, functionID string) (Fu
 		&v.ID, &v.FunctionID, &v.Version, &v.Code, &v.CreatedAt, &createdBy, &v.IsActive,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
-		return FunctionVersion{}, fmt.Errorf("no active version found")
+		return FunctionVersion{}, ErrNoActiveVersion
 	}
 	if err != nil {
 		return FunctionVersion{}, fmt.Errorf("failed to query active version: %w", err)
@@ -404,7 +404,7 @@ func (db *SQLiteDB) ActivateVersion(ctx context.Context, functionID string, vers
 		return fmt.Errorf("failed to check version existence: %w", err)
 	}
 	if !exists {
-		return fmt.Errorf("version not found")
+		return ErrVersionNotFound
 	}
 
 	// Deactivate all versions
@@ -455,7 +455,7 @@ func (db *SQLiteDB) GetExecution(ctx context.Context, executionID string) (Execu
 		&exec.Status, &durationMs, &errorMessage, &eventJSON, &exec.CreatedAt,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
-		return Execution{}, fmt.Errorf("execution not found")
+		return Execution{}, ErrExecutionNotFound
 	}
 	if err != nil {
 		return Execution{}, fmt.Errorf("failed to query execution: %w", err)
@@ -488,7 +488,7 @@ func (db *SQLiteDB) UpdateExecution(ctx context.Context, executionID string, sta
 	}
 
 	if rows == 0 {
-		return fmt.Errorf("execution not found")
+		return ErrExecutionNotFound
 	}
 
 	return nil

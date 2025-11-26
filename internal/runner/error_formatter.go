@@ -6,7 +6,17 @@ import (
 	"strings"
 )
 
-// EnhanceError takes a Lua error and adds code context and helpful suggestions
+// EnhanceError transforms a raw Lua error into a user-friendly error message
+// with code context and actionable suggestions.
+//
+// The enhanced error includes:
+//   - The original error message with line number
+//   - Code snippet showing surrounding lines with the error line highlighted
+//   - A column indicator (^) when column information is available
+//   - Pattern-matched suggestions for common Lua errors
+//
+// Returns nil if err is nil. If line number cannot be extracted from the error,
+// only the error message and suggestion (if applicable) are included.
 func EnhanceError(err error, sourceCode string) error {
 	if err == nil {
 		return nil
@@ -246,18 +256,4 @@ func cleanErrorMessage(errMsg string) string {
 	}
 
 	return errMsg
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }
