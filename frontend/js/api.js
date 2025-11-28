@@ -26,24 +26,24 @@
  * @returns {Promise<*>} Response data
  * @throws {Error} API error with message from response
  */
-const apiRequest = (config) => {
-  return m
-    .request({
+const apiRequest = async (config) => {
+  try {
+    return await m.request({
       ...config,
       // Include cookies in requests
       credentials: "same-origin",
-    })
-    .catch((err) => {
-      // Mithril parses JSON responses automatically
-      // On error, err.response contains the parsed JSON body
-      if (err.response && err.response.error) {
-        // Throw a proper Error object with the error message
-        const error = new Error(err.response.error);
-        error.code = err.code;
-        throw error;
-      }
-      throw err;
     });
+  } catch (err) {
+    // Mithril parses JSON responses automatically
+    // On error, err.response contains the parsed JSON body
+    if (err.response && err.response.error) {
+      // Throw a proper Error object with the error message
+      const error = new Error(err.response.error);
+      error.code = err.code;
+      throw error;
+    }
+    throw err;
+  }
 };
 
 // Global error handler for auth failures
@@ -293,10 +293,20 @@ export const API = {
     }
     const url = `/fn/${functionId}${queryString}`;
 
+    // Parse body if it's a JSON string to avoid double-encoding
+    let body;
+    if (request.body) {
+      try {
+        body = JSON.parse(request.body);
+      } catch {
+        body = request.body;
+      }
+    }
+
     return m.request({
       method: request.method || "GET",
       url: url,
-      body: request.body,
+      body: body,
       headers: request.headers,
       /**
        * Extracts response data including execution headers.

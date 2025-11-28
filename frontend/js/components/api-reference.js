@@ -180,6 +180,23 @@ export const LuaAPISections = [
     ],
   },
   {
+    id: "email",
+    name: "Email",
+    description: "Email sending via Resend",
+    groups: [
+      {
+        name: "Send (email)",
+        items: [
+          {
+            name: "email.send(options)",
+            type: "function",
+            description: "Send email via Resend API",
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: "handler",
     name: "Handler",
     description: "Handler function inputs",

@@ -650,13 +650,17 @@ func ExecuteFunctionHandler(deps ExecuteFunctionDeps) http.HandlerFunc {
 		// Calculate duration
 		duration := time.Since(startTime).Milliseconds()
 
-		// Update execution status
+		// Determine execution status
 		var errorMsg *string
 		status := store.ExecutionStatusSuccess
+
 		if runErr != nil {
 			status = store.ExecutionStatusError
 			errStr := runErr.Error()
 			errorMsg = &errStr
+		} else if resp.HTTP != nil && resp.HTTP.StatusCode >= 400 {
+			// Mark as error if the function returns an error status code
+			status = store.ExecutionStatusError
 		}
 
 		if err := deps.DB.UpdateExecution(r.Context(), executionID, status, &duration, errorMsg); err != nil {

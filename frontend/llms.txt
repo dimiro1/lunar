@@ -319,6 +319,54 @@ else
 end
 ```
 
+### Email (email)
+
+Send emails via Resend:
+
+- email.send(options: table): table | nil, error | nil - Send email
+
+Options table:
+```lua
+{
+  from = "sender@yourdomain.com",  -- Required: sender email
+  to = "recipient@example.com",    -- Required: string or table of strings
+  subject = "Hello!",              -- Required: email subject
+  text = "Plain text content",     -- Required if no html
+  html = "<p>HTML content</p>",    -- Required if no text
+  cc = "cc@example.com",           -- Optional: string or table
+  bcc = {"bcc@example.com"},       -- Optional: string or table
+  reply_to = "reply@example.com",  -- Optional: reply-to address
+  headers = {["X-Custom"] = "v"},  -- Optional: custom headers
+  tags = {{name="n", value="v"}},  -- Optional: tracking tags
+  scheduled_at = time.now() + 3600  -- Optional: Unix timestamp or ISO 8601 string
+}
+```
+
+Response table:
+```lua
+{
+  id = "email_123456"  -- Resend email ID
+}
+```
+
+Environment variables (per function):
+- `RESEND_API_KEY` - Required for sending emails
+
+Example:
+```lua
+local result, err = email.send({
+  from = "noreply@yourdomain.com",
+  to = {"user@example.com"},
+  subject = "Welcome!",
+  html = "<h1>Hello!</h1><p>Welcome to our service.</p>"
+})
+if err then
+  log.error("Failed to send email: " .. err)
+else
+  log.info("Email sent with ID: " .. result.id)
+end
+```
+
 ### Random Generation (random)
 
 Cryptographically secure random value generation:
@@ -536,6 +584,47 @@ function handler(ctx, event)
       model = response.model,
       tokens = response.usage.input_tokens + response.usage.output_tokens
     })
+  }
+end
+```
+
+### Send Email Notification
+
+```lua
+function handler(ctx, event)
+  -- Parse request body
+  local data, err = json.decode(event.body)
+  if err then
+    return {
+      statusCode = 400,
+      body = json.encode({ error = "Invalid JSON" })
+    }
+  end
+
+  -- Send welcome email
+  local result, err = email.send({
+    from = "noreply@myapp.com",
+    to = data.email,
+    subject = "Welcome to MyApp!",
+    html = "<h1>Welcome, " .. data.name .. "!</h1><p>Thanks for signing up.</p>",
+    tags = {{name = "type", value = "welcome"}}
+  })
+
+  if err then
+    log.error("Failed to send email: " .. err)
+    return {
+      statusCode = 500,
+      headers = { ["Content-Type"] = "application/json" },
+      body = json.encode({ error = "Failed to send email" })
+    }
+  end
+
+  log.info("Welcome email sent: " .. result.id)
+
+  return {
+    statusCode = 200,
+    headers = { ["Content-Type"] = "application/json" },
+    body = json.encode({ success = true, email_id = result.id })
   }
 end
 ```

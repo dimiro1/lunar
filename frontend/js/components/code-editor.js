@@ -338,6 +338,17 @@ const API_DOCS = {
     description:
       "Send chat completion request to AI provider (openai or anthropic). Returns {content, model, usage}.",
   },
+  "email.send": {
+    signature: "email.send(options: table): table | nil, error | nil",
+    snippet: `email.send({
+\tfrom = "\${1:sender@example.com}",
+\tto = "\${2:recipient@example.com}",
+\tsubject = "\${3:Subject}",
+\ttext = "\${4:Message body}"
+})`,
+    description:
+      "Send email via Resend. Requires RESEND_API_KEY env var. scheduled_at accepts Unix timestamp or ISO 8601 string. Returns {id}.",
+  },
 };
 
 /**

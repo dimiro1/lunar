@@ -224,6 +224,63 @@ function handler(ctx, event)
 end`,
   },
   {
+    id: "email",
+    name: "Send Email",
+    description: "Send emails via Resend API",
+    icon: "mail",
+    code: `-- Send Email
+-- Set RESEND_API_KEY in environment variables
+function handler(ctx, event)
+    -- Parse request body
+    local data, err = json.decode(event.body)
+    if err then
+        return {
+            statusCode = 400,
+            headers = { ["Content-Type"] = "application/json" },
+            body = json.encode({ error = "Invalid JSON" })
+        }
+    end
+
+    -- Validate required fields
+    if not data.to or not data.subject then
+        return {
+            statusCode = 400,
+            headers = { ["Content-Type"] = "application/json" },
+            body = json.encode({ error = "Missing required fields: to, subject" })
+        }
+    end
+
+    -- Send email via Resend
+    local result, err = email.send({
+        from = "noreply@yourdomain.com",  -- Update with your verified domain
+        to = data.to,
+        subject = data.subject,
+        html = data.html or "<p>" .. (data.text or "Hello!") .. "</p>",
+        text = data.text
+    })
+
+    if err then
+        log.error("Email error: " .. err)
+        return {
+            statusCode = 500,
+            headers = { ["Content-Type"] = "application/json" },
+            body = json.encode({ error = err })
+        }
+    end
+
+    log.info("Email sent: " .. result.id)
+
+    return {
+        statusCode = 200,
+        headers = { ["Content-Type"] = "application/json" },
+        body = json.encode({
+            success = true,
+            email_id = result.id
+        })
+    }
+end`,
+  },
+  {
     id: "blank",
     name: "Blank",
     description: "Start with empty template",
