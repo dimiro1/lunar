@@ -2,6 +2,8 @@
 
 A lightweight, self-hosted Function-as-a-Service platform written in Go with Lua scripting.
 
+> **Beta Phase Notice**: This project is currently in beta. New features and changes are actively being developed, but I promise to maintain backward compatibility for all Lua APIs. 
+
 ## Features
 
 * **Simple Lua Functions** - Write serverless functions in Lua
