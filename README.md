@@ -9,6 +9,7 @@ A lightweight, self-hosted Function-as-a-Service platform written in Go with Lua
 * **HTTP Triggers** - Execute functions via HTTP requests
 * **Built-in APIs** - HTTP client, KV store, environment variables, logging, and more
 * **AI Integration** - Chat completions with OpenAI and Anthropic
+* **Email Integration** - Send emails via Resend with scheduling support
 * **Version Control** - Track and manage function versions
 * **Execution History** - Monitor function executions and logs
 * **Beautiful Error Messages** - Human-friendly error messages with code context, line numbers, and actionable suggestions
@@ -105,6 +106,7 @@ end
 * **random** - Random generators
 * **base64** - Base64 encoding/decoding
 * **ai** - AI chat completions (OpenAI, Anthropic)
+* **email** - Send emails via Resend
 
 ### Example: Counter Function
 
@@ -123,6 +125,36 @@ function handler(ctx, event)
     statusCode = 200,
     headers = { ["Content-Type"] = "application/json" },
     body = json.encode({ count = newCount })
+  }
+end
+```
+
+### Example: Send Email
+
+```lua
+-- Requires RESEND_API_KEY environment variable
+function handler(ctx, event)
+  local data = json.decode(event.body)
+
+  local result, err = email.send({
+    from = "noreply@yourdomain.com",
+    to = data.email,
+    subject = "Welcome!",
+    html = "<h1>Hello, " .. data.name .. "!</h1>",
+    scheduled_at = time.now() + 3600  -- Optional: send in 1 hour
+  })
+
+  if err then
+    return {
+      statusCode = 500,
+      body = json.encode({ error = err })
+    }
+  end
+
+  return {
+    statusCode = 200,
+    headers = { ["Content-Type"] = "application/json" },
+    body = json.encode({ email_id = result.id })
   }
 end
 ```
