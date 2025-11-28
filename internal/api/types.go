@@ -119,3 +119,9 @@ type PaginatedAIRequestsResponse struct {
 	AIRequests []store.AIRequest    `json:"ai_requests"`
 	Pagination store.PaginationInfo `json:"pagination"`
 }
+
+// PaginatedEmailRequestsResponse is the paginated response for email requests
+type PaginatedEmailRequestsResponse struct {
+	EmailRequests []store.EmailRequest `json:"email_requests"`
+	Pagination    store.PaginationInfo `json:"pagination"`
+}

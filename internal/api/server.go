@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/dimiro1/faas-go/internal/ai"
+	"github.com/dimiro1/faas-go/internal/email"
 	"github.com/dimiro1/faas-go/internal/env"
 	internalhttp "github.com/dimiro1/faas-go/internal/http"
 	"github.com/dimiro1/faas-go/internal/kv"
@@ -20,6 +21,7 @@ type Server struct {
 	execDeps        *ExecuteFunctionDeps
 	logger          logger.Logger
 	aiTracker       ai.Tracker
+	emailTracker    email.Tracker
 	frontendHandler http.Handler
 	apiKey          string
 	httpServer      *http.Server
@@ -33,6 +35,7 @@ type ServerConfig struct {
 	EnvStore         env.Store
 	HTTPClient       internalhttp.Client
 	AITracker        ai.Tracker
+	EmailTracker     email.Tracker
 	ExecutionTimeout time.Duration
 	FrontendHandler  http.Handler
 	APIKey           string
@@ -49,6 +52,8 @@ func NewServer(config ServerConfig) *Server {
 		HTTPClient:       config.HTTPClient,
 		AIClient:         ai.NewDefaultClient(config.HTTPClient, config.EnvStore),
 		AITracker:        config.AITracker,
+		EmailClient:      email.NewDefaultClient(config.EnvStore),
+		EmailTracker:     config.EmailTracker,
 		ExecutionTimeout: config.ExecutionTimeout,
 		BaseURL:          config.BaseURL,
 	}
@@ -59,6 +64,7 @@ func NewServer(config ServerConfig) *Server {
 		execDeps:        execDeps,
 		logger:          config.Logger,
 		aiTracker:       config.AITracker,
+		emailTracker:    config.EmailTracker,
 		frontendHandler: config.FrontendHandler,
 		apiKey:          config.APIKey,
 	}
@@ -101,6 +107,7 @@ func (s *Server) setupRoutes() {
 	s.mux.Handle("GET /api/executions/{id}", authMiddleware(http.HandlerFunc(GetExecutionHandler(s.db))))
 	s.mux.Handle("GET /api/executions/{id}/logs", authMiddleware(http.HandlerFunc(GetExecutionLogsHandler(s.db, s.logger))))
 	s.mux.Handle("GET /api/executions/{id}/ai-requests", authMiddleware(http.HandlerFunc(GetExecutionAIRequestsHandler(s.db, s.aiTracker))))
+	s.mux.Handle("GET /api/executions/{id}/email-requests", authMiddleware(http.HandlerFunc(GetExecutionEmailRequestsHandler(s.db, s.emailTracker))))
 
 	// Runtime Execution - needs all dependencies (NO AUTH - public endpoint)
 	executeHandler := ExecuteFunctionHandler(*s.execDeps)

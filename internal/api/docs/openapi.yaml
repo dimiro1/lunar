@@ -811,6 +811,61 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /api/executions/{id}/email-requests:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Unique execution identifier
+        schema:
+          type: string
+
+    get:
+      tags:
+        - Executions
+      summary: Get email requests for an execution
+      description: Returns paginated email requests made during function execution (via Resend API)
+      operationId: getExecutionEmailRequests
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of email requests to return (default 20, max 100)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+            example: 20
+        - name: offset
+          in: query
+          description: Number of email requests to skip
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+            example: 0
+      responses:
+        "200":
+          description: Email requests retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEmailRequestsResponse"
+        "404":
+          description: Execution not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /fn/{function_id}:
     parameters:
       - name: function_id
@@ -1544,6 +1599,101 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AIRequest"
+        pagination:
+          $ref: "#/components/schemas/PaginationInfo"
+
+    EmailRequest:
+      type: object
+      required:
+        - id
+        - execution_id
+        - from
+        - to
+        - subject
+        - has_text
+        - has_html
+        - request_json
+        - status
+        - duration_ms
+        - created_at
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the email request
+          example: "emailreq_abc123"
+        execution_id:
+          type: string
+          description: ID of the execution this request belongs to
+          example: "exec_xyz789"
+        from:
+          type: string
+          description: Sender email address
+          example: "noreply@example.com"
+        to:
+          type: array
+          items:
+            type: string
+          description: List of recipient email addresses
+          example: ["user@example.com"]
+        subject:
+          type: string
+          description: Email subject line
+          example: "Welcome to our platform!"
+        has_text:
+          type: boolean
+          description: Whether the email contains plain text content
+          example: true
+        has_html:
+          type: boolean
+          description: Whether the email contains HTML content
+          example: true
+        request_json:
+          type: string
+          description: JSON-encoded request payload (sensitive data masked)
+          example: '{"from":"noreply@example.com","to":["user@example.com"],"subject":"Welcome!"}'
+        response_json:
+          type: string
+          nullable: true
+          description: JSON-encoded response payload
+          example: '{"id":"email_abc123"}'
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Status of the email request
+          example: "success"
+        error_message:
+          type: string
+          nullable: true
+          description: Error message if the request failed
+          example: "Invalid API key"
+        email_id:
+          type: string
+          nullable: true
+          description: ID returned by the email provider (Resend)
+          example: "email_abc123def456"
+        duration_ms:
+          type: integer
+          format: int64
+          description: Request duration in milliseconds
+          example: 234
+        created_at:
+          type: integer
+          format: int64
+          description: Unix timestamp when the request was made
+          example: 1672531200
+
+    ListEmailRequestsResponse:
+      type: object
+      required:
+        - email_requests
+        - pagination
+      properties:
+        email_requests:
+          type: array
+          items:
+            $ref: "#/components/schemas/EmailRequest"
         pagination:
           $ref: "#/components/schemas/PaginationInfo"
 

@@ -284,6 +284,20 @@ export const API = {
         url:
           `/api/executions/${executionId}/ai-requests?limit=${limit}&offset=${offset}`,
       }),
+
+    /**
+     * Gets email requests for an execution.
+     * @param {string} executionId - Execution ID
+     * @param {number} [limit=20] - Maximum number of email requests to return
+     * @param {number} [offset=0] - Number of email requests to skip
+     * @returns {Promise<EmailRequestsResponse>} Paginated list of email requests
+     */
+    getEmailRequests: (executionId, limit = 20, offset = 0) =>
+      apiRequest({
+        method: "GET",
+        url:
+          `/api/executions/${executionId}/email-requests?limit=${limit}&offset=${offset}`,
+      }),
   },
 
   /**

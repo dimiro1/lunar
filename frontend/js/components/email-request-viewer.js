@@ -1,5 +1,5 @@
 /**
- * @fileoverview AI Request viewer component with table structure and expandable rows.
+ * @fileoverview Email Request viewer component with table structure and expandable rows.
  */
 
 import { icons } from "../icons.js";
@@ -17,7 +17,7 @@ import {
 } from "./table.js";
 
 /**
- * @typedef {import('../types.js').AIRequest} AIRequest
+ * @typedef {import('../types.js').EmailRequest} EmailRequest
  */
 
 /**
@@ -27,10 +27,10 @@ import {
 const MAX_JSON_DISPLAY_LENGTH = 5000;
 
 /**
- * AI Request viewer component for displaying AI API requests in a table with expandable details.
+ * Email Request viewer component for displaying email API requests in a table with expandable details.
  * @type {Object}
  */
-export const AIRequestViewer = {
+export const EmailRequestViewer = {
   /**
    * Track which rows are expanded.
    * @type {Set<string>}
@@ -90,10 +90,10 @@ export const AIRequestViewer = {
   },
 
   /**
-   * Renders the AI request viewer component.
+   * Renders the email request viewer component.
    * @param {Object} vnode - Mithril vnode
    * @param {Object} vnode.attrs - Component attributes
-   * @param {AIRequest[]} [vnode.attrs.requests=[]] - Array of AI requests
+   * @param {EmailRequest[]} [vnode.attrs.requests=[]] - Array of email requests
    * @param {string} [vnode.attrs.maxHeight='400px'] - Maximum height
    * @param {boolean} [vnode.attrs.noBorder=false] - Remove border styling
    * @returns {Object} Mithril vnode
@@ -106,18 +106,18 @@ export const AIRequestViewer = {
       return m(Table, [
         m(TableBody, [
           m(TableEmpty, {
-            colspan: 7,
-            icon: "network",
-            message: "No AI requests recorded for this execution.",
+            colspan: 6,
+            icon: "mail",
+            message: "No email requests recorded for this execution.",
           }),
         ]),
       ]);
     }
 
     return m(
-      ".ai-request-viewer",
+      ".email-request-viewer",
       {
-        class: noBorder ? "ai-request-viewer--no-border" : "",
+        class: noBorder ? "email-request-viewer--no-border" : "",
         style: maxHeight ? `max-height: ${maxHeight}; overflow-y: auto` : "",
       },
       [
@@ -125,12 +125,12 @@ export const AIRequestViewer = {
           m(TableHeader, [
             m(TableRow, [
               m(TableHead, { style: "width: 2rem;" }, ""),
-              m(TableHead, { style: "width: 10%;" }, "Provider"),
-              m(TableHead, { style: "width: 25%;" }, "Model"),
+              m(TableHead, { style: "width: 25%;" }, "To"),
+              m(TableHead, { style: "width: 25%;" }, "Subject"),
               m(TableHead, { style: "width: 10%;" }, "Status"),
-              m(TableHead, { style: "width: 20%;" }, "Tokens"),
+              m(TableHead, { style: "width: 10%;" }, "Type"),
               m(TableHead, { style: "width: 15%;" }, "Duration"),
-              m(TableHead, { style: "width: 20%;" }, "Time"),
+              m(TableHead, { style: "width: 15%;" }, "Time"),
             ]),
           ]),
           m(
@@ -143,12 +143,24 @@ export const AIRequestViewer = {
   },
 
   /**
-   * Renders the rows for a single AI request (main row + optional expanded row).
-   * @param {AIRequest} req - The AI request
+   * Renders the rows for a single email request (main row + optional expanded row).
+   * @param {EmailRequest} req - The email request
    * @returns {Object} Mithril fragment with keyed children
    */
   renderRequestRows(req) {
     const isExpanded = this.expandedRows.has(req.id);
+
+    // Format recipients for display
+    const toDisplay = Array.isArray(req.to)
+      ? req.to.length === 1 ? req.to[0] : `${req.to[0]} (+${req.to.length - 1})`
+      : req.to;
+
+    // Determine content type badge
+    const contentType = req.has_html && req.has_text
+      ? "HTML+Text"
+      : req.has_html
+      ? "HTML"
+      : "Text";
 
     const rows = [
       // Main row
@@ -156,8 +168,8 @@ export const AIRequestViewer = {
         TableRow,
         {
           key: req.id,
-          class: "ai-request-viewer__row" +
-            (isExpanded ? " ai-request-viewer__row--expanded" : ""),
+          class: "email-request-viewer__row" +
+            (isExpanded ? " email-request-viewer__row--expanded" : ""),
           onclick: () => this.toggleRow(req.id),
           style: "cursor: pointer;",
         },
@@ -165,30 +177,29 @@ export const AIRequestViewer = {
           // Chevron
           m(TableCell, { style: "width: 2rem; padding-right: 0;" }, [
             m(
-              ".ai-request-viewer__chevron",
+              ".email-request-viewer__chevron",
               {
-                class: isExpanded ? "ai-request-viewer__chevron--expanded" : "",
+                class: isExpanded
+                  ? "email-request-viewer__chevron--expanded"
+                  : "",
               },
               m.trust(icons.chevronRight()),
             ),
           ]),
 
-          // Provider
-          m(TableCell, [
-            m(
-              Badge,
-              {
-                variant: req.provider === "openai"
-                  ? BadgeVariant.DEFAULT
-                  : BadgeVariant.SECONDARY,
-                size: BadgeSize.SM,
-              },
-              req.provider.toUpperCase(),
-            ),
-          ]),
+          // To
+          m(
+            TableCell,
+            { mono: true, style: "overflow: hidden; text-overflow: ellipsis;" },
+            toDisplay,
+          ),
 
-          // Model
-          m(TableCell, { mono: true }, req.model),
+          // Subject
+          m(
+            TableCell,
+            { style: "overflow: hidden; text-overflow: ellipsis;" },
+            req.subject,
+          ),
 
           // Status
           m(TableCell, [
@@ -204,22 +215,17 @@ export const AIRequestViewer = {
             ),
           ]),
 
-          // Tokens
-          m(
-            TableCell,
-            { mono: true },
-            req.input_tokens !== null &&
-              req.input_tokens !== undefined &&
-              req.output_tokens !== null &&
-              req.output_tokens !== undefined
-              ? [
-                m("span", req.input_tokens),
-                m("span.ai-request-viewer__token-label", " in "),
-                m("span", req.output_tokens),
-                m("span.ai-request-viewer__token-label", " out"),
-              ]
-              : "-",
-          ),
+          // Type (HTML/Text)
+          m(TableCell, [
+            m(
+              Badge,
+              {
+                variant: BadgeVariant.SECONDARY,
+                size: BadgeSize.SM,
+              },
+              contentType,
+            ),
+          ]),
 
           // Duration
           m(TableCell, { mono: true }, `${req.duration_ms}ms`),
@@ -241,31 +247,46 @@ export const AIRequestViewer = {
 
       rows.push(
         m(
-          "tr.ai-request-viewer__expanded-row",
+          "tr.email-request-viewer__expanded-row",
           { key: req.id + "-expanded" },
           [
             m("td", { colspan: 7 }, [
-              m(".ai-request-viewer__content", [
+              m(".email-request-viewer__content", [
                 // Error message if present
                 req.error_message
-                  ? m(".ai-request-viewer__error", [
+                  ? m(".email-request-viewer__error", [
                     m("strong", "Error: "),
                     req.error_message,
                   ])
                   : null,
 
-                // Endpoint
-                m(".ai-request-viewer__endpoint", [
-                  m("strong", "Endpoint: "),
-                  m("code", req.endpoint),
+                // Email details
+                m(".email-request-viewer__details", [
+                  m("div", [
+                    m("strong", "From: "),
+                    m("code", req.from),
+                  ]),
+                  m("div", [
+                    m("strong", "To: "),
+                    m(
+                      "code",
+                      Array.isArray(req.to) ? req.to.join(", ") : req.to,
+                    ),
+                  ]),
+                  req.email_id
+                    ? m("div", [
+                      m("strong", "Email ID: "),
+                      m("code", req.email_id),
+                    ])
+                    : null,
                 ]),
 
                 // Request/Response panels
                 m(
-                  ".ai-request-viewer__panels",
+                  ".email-request-viewer__panels",
                   {
                     class: panels.length === 1
-                      ? "ai-request-viewer__panels--single"
+                      ? "email-request-viewer__panels--single"
                       : "",
                   },
                   panels,

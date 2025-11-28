@@ -104,6 +104,30 @@
  */
 
 /**
+ * @typedef {Object} EmailRequest
+ * @property {string} id - Email request ID
+ * @property {string} execution_id - Parent execution ID
+ * @property {string} from - Sender email address
+ * @property {string[]} to - Recipient email addresses
+ * @property {string} subject - Email subject
+ * @property {boolean} has_text - Whether email has text content
+ * @property {boolean} has_html - Whether email has HTML content
+ * @property {string} request_json - Request JSON
+ * @property {string} [response_json] - Response JSON
+ * @property {string} status - Status (success, error)
+ * @property {string} [error_message] - Error message if failed
+ * @property {string} [email_id] - Email ID from provider
+ * @property {number} duration_ms - Duration in milliseconds
+ * @property {number} created_at - Unix timestamp
+ */
+
+/**
+ * @typedef {Object} EmailRequestsResponse
+ * @property {EmailRequest[]} email_requests - List of email requests
+ * @property {Pagination} pagination - Pagination info
+ */
+
+/**
  * @typedef {Object} DiffResponse
  * @property {string} diff - Unified diff string
  * @property {FunctionVersion} version1 - First version

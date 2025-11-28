@@ -24,12 +24,14 @@ import {
 import { LogViewer } from "../components/log-viewer.js";
 import { CodeViewer } from "../components/code-viewer.js";
 import { AIRequestViewer } from "../components/ai-request-viewer.js";
+import { EmailRequestViewer } from "../components/email-request-viewer.js";
 
 /**
  * @typedef {import('../types.js').FaaSFunction} FaaSFunction
  * @typedef {import('../types.js').Execution} Execution
  * @typedef {import('../types.js').ExecutionLog} ExecutionLog
  * @typedef {import('../types.js').AIRequest} AIRequest
+ * @typedef {import('../types.js').EmailRequest} EmailRequest
  */
 
 /**
@@ -105,6 +107,30 @@ export const ExecutionDetail = {
   aiRequestsTotal: 0,
 
   /**
+   * Email requests for this execution.
+   * @type {EmailRequest[]}
+   */
+  emailRequests: [],
+
+  /**
+   * Number of email requests per page.
+   * @type {number}
+   */
+  emailRequestsLimit: 20,
+
+  /**
+   * Current email requests pagination offset.
+   * @type {number}
+   */
+  emailRequestsOffset: 0,
+
+  /**
+   * Total number of email requests.
+   * @type {number}
+   */
+  emailRequestsTotal: 0,
+
+  /**
    * Initializes the view and loads execution data.
    * @param {Object} vnode - Mithril vnode
    */
@@ -120,24 +146,33 @@ export const ExecutionDetail = {
   loadExecution: async (id) => {
     ExecutionDetail.loading = true;
     try {
-      const [execution, logsData, aiRequestsData] = await Promise.all([
-        API.executions.get(id),
-        API.executions.getLogs(
-          id,
-          ExecutionDetail.logsLimit,
-          ExecutionDetail.logsOffset,
-        ),
-        API.executions.getAIRequests(
-          id,
-          ExecutionDetail.aiRequestsLimit,
-          ExecutionDetail.aiRequestsOffset,
-        ),
-      ]);
+      const [execution, logsData, aiRequestsData, emailRequestsData] =
+        await Promise.all([
+          API.executions.get(id),
+          API.executions.getLogs(
+            id,
+            ExecutionDetail.logsLimit,
+            ExecutionDetail.logsOffset,
+          ),
+          API.executions.getAIRequests(
+            id,
+            ExecutionDetail.aiRequestsLimit,
+            ExecutionDetail.aiRequestsOffset,
+          ),
+          API.executions.getEmailRequests(
+            id,
+            ExecutionDetail.emailRequestsLimit,
+            ExecutionDetail.emailRequestsOffset,
+          ),
+        ]);
       ExecutionDetail.execution = execution;
       ExecutionDetail.logs = logsData.logs || [];
       ExecutionDetail.logsTotal = logsData.pagination?.total || 0;
       ExecutionDetail.aiRequests = aiRequestsData.ai_requests || [];
       ExecutionDetail.aiRequestsTotal = aiRequestsData.pagination?.total || 0;
+      ExecutionDetail.emailRequests = emailRequestsData.email_requests || [];
+      ExecutionDetail.emailRequestsTotal =
+        emailRequestsData.pagination?.total || 0;
 
       // Load function details
       ExecutionDetail.func = await API.functions.get(execution.function_id);
@@ -223,6 +258,44 @@ export const ExecutionDetail = {
     ExecutionDetail.aiRequestsLimit = newLimit;
     ExecutionDetail.aiRequestsOffset = 0;
     ExecutionDetail.loadAIRequests();
+  },
+
+  /**
+   * Reloads email requests with current pagination.
+   * @returns {Promise<void>}
+   */
+  loadEmailRequests: async () => {
+    try {
+      const data = await API.executions.getEmailRequests(
+        ExecutionDetail.execution.id,
+        ExecutionDetail.emailRequestsLimit,
+        ExecutionDetail.emailRequestsOffset,
+      );
+      ExecutionDetail.emailRequests = data.email_requests || [];
+      ExecutionDetail.emailRequestsTotal = data.pagination?.total || 0;
+      m.redraw();
+    } catch (e) {
+      console.error("Failed to load email requests:", e);
+    }
+  },
+
+  /**
+   * Handles page change from email requests pagination.
+   * @param {number} newOffset - New pagination offset
+   */
+  handleEmailRequestsPageChange: (newOffset) => {
+    ExecutionDetail.emailRequestsOffset = newOffset;
+    ExecutionDetail.loadEmailRequests();
+  },
+
+  /**
+   * Handles limit change from email requests pagination.
+   * @param {number} newLimit - New items per page limit
+   */
+  handleEmailRequestsLimitChange: (newLimit) => {
+    ExecutionDetail.emailRequestsLimit = newLimit;
+    ExecutionDetail.emailRequestsOffset = 0;
+    ExecutionDetail.loadEmailRequests();
   },
 
   /**
@@ -396,6 +469,32 @@ export const ExecutionDetail = {
             offset: ExecutionDetail.aiRequestsOffset,
             onPageChange: ExecutionDetail.handleAIRequestsPageChange,
             onLimitChange: ExecutionDetail.handleAIRequestsLimitChange,
+          }),
+        ]),
+
+        // Email Requests
+        ExecutionDetail.emailRequestsTotal > 0 &&
+        m(Card, { style: "margin-bottom: 1.5rem" }, [
+          m(CardHeader, {
+            title: "Email Requests",
+            subtitle: `${ExecutionDetail.emailRequestsTotal} emails sent`,
+            icon: "mail",
+          }),
+          m(CardContent, { noPadding: true }, [
+            m(EmailRequestViewer, {
+              requests: ExecutionDetail.emailRequests,
+              maxHeight: "400px",
+              noBorder: true,
+            }),
+          ]),
+          ExecutionDetail.emailRequestsTotal >
+            ExecutionDetail.emailRequestsLimit &&
+          m(Pagination, {
+            total: ExecutionDetail.emailRequestsTotal,
+            limit: ExecutionDetail.emailRequestsLimit,
+            offset: ExecutionDetail.emailRequestsOffset,
+            onPageChange: ExecutionDetail.handleEmailRequestsPageChange,
+            onLimitChange: ExecutionDetail.handleEmailRequestsLimitChange,
           }),
         ]),
 

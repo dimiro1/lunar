@@ -13,6 +13,7 @@ import (
 	"github.com/dimiro1/faas-go/frontend"
 	"github.com/dimiro1/faas-go/internal/ai"
 	"github.com/dimiro1/faas-go/internal/api"
+	"github.com/dimiro1/faas-go/internal/email"
 	"github.com/dimiro1/faas-go/internal/env"
 	"github.com/dimiro1/faas-go/internal/housekeeping"
 	internalhttp "github.com/dimiro1/faas-go/internal/http"
@@ -64,6 +65,7 @@ func main() {
 	envStore := env.NewSQLiteStore(db)
 	appLogger := logger.NewSQLiteLogger(db)
 	aiRequestTracker := ai.NewSQLiteTracker(db)
+	emailRequestTracker := email.NewSQLiteTracker(db)
 	httpClient := internalhttp.NewDefaultClient()
 
 	// Initialize housekeeping scheduler
@@ -80,6 +82,7 @@ func main() {
 		EnvStore:         envStore,
 		HTTPClient:       httpClient,
 		AITracker:        aiRequestTracker,
+		EmailTracker:     emailRequestTracker,
 		ExecutionTimeout: config.ExecutionTimeout,
 		FrontendHandler:  frontend.Handler(),
 		APIKey:           config.APIKey,

@@ -1,16 +1,16 @@
 package runner
 
 import (
-	"net/url"
+	"encoding/json"
 	"time"
 
-	"github.com/dimiro1/faas-go/internal/env"
-	"github.com/resend/resend-go/v3"
+	"github.com/dimiro1/faas-go/internal/email"
+	"github.com/dimiro1/faas-go/internal/store"
 	lua "github.com/yuin/gopher-lua"
 )
 
 // registerEmail creates the global 'email' table with email sending functions
-func registerEmail(L *lua.LState, envStore env.Store, functionID string) {
+func registerEmail(L *lua.LState, emailClient email.Client, functionID string, emailTracker email.Tracker, executionID string) {
 	emailTable := L.NewTable()
 
 	// email.send(options)
@@ -107,12 +107,12 @@ func registerEmail(L *lua.LState, envStore env.Store, functionID string) {
 		}
 
 		// Convert optional tags
-		var tags []resend.Tag
+		var tags []email.Tag
 		tagsLV := options.RawGetString("tags")
 		if tagsLV.Type() == lua.LTTable {
 			tagsLV.(*lua.LTable).ForEach(func(_, v lua.LValue) {
 				if tagTbl, ok := v.(*lua.LTable); ok {
-					tag := resend.Tag{
+					tag := email.Tag{
 						Name:  lua.LVAsString(tagTbl.RawGetString("name")),
 						Value: lua.LVAsString(tagTbl.RawGetString("value")),
 					}
@@ -123,59 +123,76 @@ func registerEmail(L *lua.LState, envStore env.Store, functionID string) {
 			})
 		}
 
-		// Get API key from environment
-		apiKey, err := envStore.Get(functionID, "RESEND_API_KEY")
-		if err != nil || apiKey == "" {
-			L.Push(lua.LNil)
-			L.Push(lua.LString("RESEND_API_KEY not set in function environment"))
-			return 2
+		// Build the send request
+		req := email.SendRequest{
+			From:        from,
+			To:          to,
+			Subject:     subject,
+			Text:        text,
+			HTML:        html,
+			ReplyTo:     replyTo,
+			Cc:          cc,
+			Bcc:         bcc,
+			Headers:     headers,
+			Tags:        tags,
+			ScheduledAt: scheduledAt,
 		}
 
-		// Create Resend client and send email
-		client := resend.NewClient(apiKey)
+		// Send the email
+		startTime := time.Now()
+		resp, err := emailClient.Send(functionID, req)
+		durationMs := time.Since(startTime).Milliseconds()
 
-		// Allow custom base URL for testing (read from function env)
-		if baseURL, err := envStore.Get(functionID, "RESEND_BASE_URL"); err == nil && baseURL != "" {
-			if parsedURL, err := url.Parse(baseURL); err == nil {
-				client.BaseURL = parsedURL
-			}
-		}
-
-		params := &resend.SendEmailRequest{
-			From:    from,
-			To:      to,
-			Subject: subject,
-			Text:    text,
-			Html:    html,
-			ReplyTo: replyTo,
+		// Get request JSON for tracking (available even on error)
+		var requestJSON string
+		if resp != nil {
+			requestJSON = resp.RequestJSON
 		}
 
-		if len(cc) > 0 {
-			params.Cc = cc
-		}
-		if len(bcc) > 0 {
-			params.Bcc = bcc
-		}
-		if len(headers) > 0 {
-			params.Headers = headers
-		}
-		if len(tags) > 0 {
-			params.Tags = tags
-		}
-		if scheduledAt != "" {
-			params.ScheduledAt = scheduledAt
-		}
-
-		sent, err := client.Emails.Send(params)
 		if err != nil {
+			// Track failed request
+			errMsg := err.Error()
+			if emailTracker != nil {
+				emailTracker.Track(executionID, email.TrackRequest{
+					From:         from,
+					To:           to,
+					Subject:      subject,
+					HasText:      text != "",
+					HasHTML:      html != "",
+					RequestJSON:  requestJSON,
+					Status:       store.EmailRequestStatusError,
+					ErrorMessage: &errMsg,
+					DurationMs:   durationMs,
+				})
+			}
 			L.Push(lua.LNil)
 			L.Push(lua.LString(err.Error()))
 			return 2
 		}
 
+		// Build response JSON
+		responseJSON, _ := json.Marshal(map[string]string{"id": resp.ID})
+		responseJSONStr := string(responseJSON)
+
+		// Track successful request
+		if emailTracker != nil {
+			emailTracker.Track(executionID, email.TrackRequest{
+				From:         from,
+				To:           to,
+				Subject:      subject,
+				HasText:      text != "",
+				HasHTML:      html != "",
+				RequestJSON:  requestJSON,
+				ResponseJSON: &responseJSONStr,
+				Status:       store.EmailRequestStatusSuccess,
+				EmailID:      &resp.ID,
+				DurationMs:   durationMs,
+			})
+		}
+
 		// Convert response to Lua table
 		result := L.NewTable()
-		L.SetField(result, "id", lua.LString(sent.Id))
+		L.SetField(result, "id", lua.LString(resp.ID))
 
 		L.Push(result)
 		L.Push(lua.LNil)

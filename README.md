@@ -50,6 +50,9 @@ A lightweight, self-hosted Function-as-a-Service platform written in Go with Lua
 ### AI Request Logs
 ![AI Request Logs](shots/ai-logs.png)
 
+### Email Request Logs
+![Email Request Logs](shots/email-logs.png)
+
 ## Quick Start
 
 ### Building from Source

@@ -65,6 +65,7 @@ import {
   VersionLabels,
 } from "../components/diff-viewer.js";
 import { AIRequestViewer } from "../components/ai-request-viewer.js";
+import { EmailRequestViewer } from "../components/email-request-viewer.js";
 
 /**
  * @typedef {import('../components/env-editor.js').EnvVar} EnvVar
@@ -167,6 +168,7 @@ export const Preview = {
     "request-builder",
     "diff-viewer",
     "ai-request-viewer",
+    "email-request-viewer",
   ],
 
   /**
@@ -246,6 +248,8 @@ export const Preview = {
         return Preview.renderDiffViewer();
       case "ai-request-viewer":
         return Preview.renderAIRequestViewer();
+      case "email-request-viewer":
+        return Preview.renderEmailRequestViewer();
       default:
         return m("p", "Component not found");
     }
@@ -1055,6 +1059,110 @@ end`;
       m(Card, { style: "max-width: 800px;" }, [
         m(CardContent, { noPadding: true }, [
           m(AIRequestViewer, { requests: [], noBorder: true }),
+        ]),
+      ]),
+    ]);
+  },
+
+  /**
+   * Renders email request viewer component previews.
+   * @returns {Object} Mithril vnode
+   */
+  renderEmailRequestViewer: () => {
+    const sampleRequests = [
+      {
+        id: "email-1",
+        execution_id: "exec-123",
+        from: "noreply@example.com",
+        to: ["user@example.com"],
+        subject: "Welcome to our platform!",
+        has_text: true,
+        has_html: true,
+        request_json: JSON.stringify({
+          from: "noreply@example.com",
+          to: ["user@example.com"],
+          subject: "Welcome to our platform!",
+          text: "Welcome! We're excited to have you on board.",
+          html: "<h1>Welcome!</h1><p>We're excited to have you on board.</p>",
+        }),
+        response_json: JSON.stringify({
+          id: "email_abc123def456",
+        }),
+        status: "success",
+        email_id: "email_abc123def456",
+        duration_ms: 234,
+        created_at: Math.floor(Date.now() / 1000) - 120,
+      },
+      {
+        id: "email-2",
+        execution_id: "exec-123",
+        from: "alerts@example.com",
+        to: ["admin@example.com", "ops@example.com"],
+        subject: "System Alert: High CPU Usage",
+        has_text: true,
+        has_html: false,
+        request_json: JSON.stringify({
+          from: "alerts@example.com",
+          to: ["admin@example.com", "ops@example.com"],
+          subject: "System Alert: High CPU Usage",
+          text: "CPU usage exceeded 90% on server-1.",
+          reply_to: "support@example.com",
+        }),
+        response_json: JSON.stringify({
+          id: "email_xyz789ghi012",
+        }),
+        status: "success",
+        email_id: "email_xyz789ghi012",
+        duration_ms: 189,
+        created_at: Math.floor(Date.now() / 1000) - 60,
+      },
+      {
+        id: "email-3",
+        execution_id: "exec-123",
+        from: "newsletter@example.com",
+        to: ["subscriber@example.com"],
+        subject: "Monthly Newsletter - November 2024",
+        has_text: false,
+        has_html: true,
+        request_json: JSON.stringify({
+          from: "newsletter@example.com",
+          to: ["subscriber@example.com"],
+          subject: "Monthly Newsletter - November 2024",
+          html:
+            "<html><body><h1>November Newsletter</h1><p>Lots of exciting updates...</p></body></html>",
+          tags: [{ name: "campaign", value: "november-2024" }],
+        }),
+        response_json: null,
+        status: "error",
+        error_message:
+          "Invalid API key. Please check your RESEND_API_KEY configuration.",
+        email_id: null,
+        duration_ms: 45,
+        created_at: Math.floor(Date.now() / 1000) - 30,
+      },
+    ];
+
+    return m(".preview-section", [
+      m("h3", "Email Request Viewer"),
+      m(Card, { style: "max-width: 900px; margin-bottom: 1rem;" }, [
+        m(CardHeader, {
+          title: "Email Requests",
+          subtitle: "3 emails sent",
+          icon: "mail",
+        }),
+        m(CardContent, { noPadding: true }, [
+          m(EmailRequestViewer, {
+            requests: sampleRequests,
+            maxHeight: "400px",
+            noBorder: true,
+          }),
+        ]),
+      ]),
+
+      m("h3", "Empty State"),
+      m(Card, { style: "max-width: 900px;" }, [
+        m(CardContent, { noPadding: true }, [
+          m(EmailRequestViewer, { requests: [], noBorder: true }),
         ]),
       ]),
     ]);
