@@ -18,6 +18,7 @@ export const CodeViewer = {
    * @param {boolean} [vnode.attrs.noBorder=false] - Remove border styling
    * @param {boolean} [vnode.attrs.padded=false] - Add padding to code block
    * @param {boolean} [vnode.attrs.showHeader=false] - Show language header
+   * @param {boolean} [vnode.attrs.wrap=false] - Enable word wrapping
    * @returns {Object} Mithril vnode
    */
   view(vnode) {
@@ -28,6 +29,7 @@ export const CodeViewer = {
       noBorder = false,
       padded = false,
       showHeader = false,
+      wrap = false,
     } = vnode.attrs;
 
     return m(
@@ -50,7 +52,10 @@ export const CodeViewer = {
             m(
               "pre.code-viewer__pre",
               {
-                class: padded ? "code-viewer__pre--padded" : "",
+                class: [
+                  padded ? "code-viewer__pre--padded" : "",
+                  wrap ? "code-viewer__pre--wrap" : "",
+                ].filter(Boolean).join(" "),
               },
               [
                 m(

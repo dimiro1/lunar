@@ -765,6 +765,9 @@ end`;
     }
 }`;
 
+    const longLineCode =
+      `{"id":"abc123","name":"my-function","description":"This is a very long description that demonstrates how word wrapping works in the code viewer component when the wrap attribute is enabled","status":"active","created_at":"2024-01-15T10:30:00Z"}`;
+
     return m(".preview-section", [
       m("h3", "Lua Code"),
       m(Card, { style: "max-width: 600px; margin-bottom: 1rem;" }, [
@@ -780,13 +783,39 @@ end`;
       ]),
 
       m("h3", "JSON"),
-      m(Card, { style: "max-width: 600px;" }, [
+      m(Card, { style: "max-width: 600px; margin-bottom: 1rem;" }, [
         m(CardContent, { noPadding: true }, [
           m(CodeViewer, {
             code: jsonCode,
             language: "json",
             noBorder: true,
             padded: true,
+          }),
+        ]),
+      ]),
+
+      m("h3", "With Word Wrap"),
+      m(Card, { style: "max-width: 600px; margin-bottom: 1rem;" }, [
+        m(CardContent, { noPadding: true }, [
+          m(CodeViewer, {
+            code: longLineCode,
+            language: "json",
+            noBorder: true,
+            padded: true,
+            wrap: true,
+          }),
+        ]),
+      ]),
+
+      m("h3", "Without Word Wrap (horizontal scroll)"),
+      m(Card, { style: "max-width: 600px;" }, [
+        m(CardContent, { noPadding: true }, [
+          m(CodeViewer, {
+            code: longLineCode,
+            language: "json",
+            noBorder: true,
+            padded: true,
+            wrap: false,
           }),
         ]),
       ]),

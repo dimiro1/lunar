@@ -77,12 +77,19 @@ export const FunctionTest = {
   testLogs: [],
 
   /**
+   * Whether test execution is in progress.
+   * @type {boolean}
+   */
+  executing: false,
+
+  /**
    * Initializes the view and loads the function.
    * @param {Object} vnode - Mithril vnode
    */
   oninit: (vnode) => {
     FunctionTest.testResponse = null;
     FunctionTest.testLogs = [];
+    FunctionTest.executing = false;
     FunctionTest.loadFunction(vnode.attrs.id);
   },
 
@@ -108,6 +115,8 @@ export const FunctionTest = {
    * @returns {Promise<void>}
    */
   executeTest: async () => {
+    FunctionTest.executing = true;
+    m.redraw();
     try {
       const response = await API.execute(
         FunctionTest.func.id,
@@ -131,6 +140,9 @@ export const FunctionTest = {
       }
     } catch (e) {
       Toast.show("Execution failed: " + e.message, "error");
+    } finally {
+      FunctionTest.executing = false;
+      m.redraw();
     }
   },
 
@@ -215,6 +227,7 @@ export const FunctionTest = {
               ) => (FunctionTest.testRequest.query = value),
               onBodyChange: (value) => (FunctionTest.testRequest.body = value),
               onExecute: FunctionTest.executeTest,
+              loading: FunctionTest.executing,
             }),
 
             // Response Viewer
@@ -279,6 +292,7 @@ export const FunctionTest = {
                         code: FunctionTest.testResponse.body || "",
                         language: "json",
                         maxHeight: "300px",
+                        wrap: true,
                       }),
                     ]),
                     FunctionTest.testLogs.length > 0 &&

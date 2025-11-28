@@ -2573,6 +2573,13 @@ pre {
   padding: 1rem;
 }
 
+.code-viewer__pre--wrap,
+.code-viewer__pre--wrap code {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
 .code-viewer__pre code {
   background: transparent;
 }
