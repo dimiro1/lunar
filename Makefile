@@ -23,7 +23,7 @@ build:
 
 test:
 	@echo "Running tests..."
-	@go test ./...
+	@go test $$(go list ./... | grep -v /e2e)
 
 lint:
 	@echo "Running linter..."

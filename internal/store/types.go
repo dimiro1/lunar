@@ -44,6 +44,32 @@ type AIRequest struct {
 	CreatedAt    int64           `json:"created_at"`
 }
 
+// EmailRequestStatus represents the status of an email request
+type EmailRequestStatus string
+
+const (
+	EmailRequestStatusSuccess EmailRequestStatus = "success"
+	EmailRequestStatusError   EmailRequestStatus = "error"
+)
+
+// EmailRequest represents a tracked email send request
+type EmailRequest struct {
+	ID           string             `json:"id"`
+	ExecutionID  string             `json:"execution_id"`
+	From         string             `json:"from"`
+	To           []string           `json:"to"`
+	Subject      string             `json:"subject"`
+	HasText      bool               `json:"has_text"`
+	HasHTML      bool               `json:"has_html"`
+	RequestJSON  string             `json:"request_json"`
+	ResponseJSON *string            `json:"response_json,omitempty"`
+	Status       EmailRequestStatus `json:"status"`
+	ErrorMessage *string            `json:"error_message,omitempty"`
+	EmailID      *string            `json:"email_id,omitempty"`
+	DurationMs   int64              `json:"duration_ms"`
+	CreatedAt    int64              `json:"created_at"`
+}
+
 // Function represents a serverless function
 type Function struct {
 	ID            string            `json:"id"`

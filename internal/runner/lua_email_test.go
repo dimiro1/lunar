@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dimiro1/faas-go/internal/email"
 	"github.com/dimiro1/faas-go/internal/env"
 	"github.com/dimiro1/faas-go/internal/events"
 	internalhttp "github.com/dimiro1/faas-go/internal/http"
@@ -245,6 +246,7 @@ func TestRun_Email_MissingAPIKey(t *testing.T) {
 		KV:     kv.NewMemoryStore(),
 		Env:    envStore,
 		HTTP:   internalhttp.NewDefaultClient(),
+		Email:  email.NewDefaultClient(envStore),
 	}
 
 	execCtx := &events.ExecutionContext{
@@ -454,6 +456,7 @@ func TestRun_Email_Success_MockServer(t *testing.T) {
 		KV:     kv.NewMemoryStore(),
 		Env:    envStore,
 		HTTP:   internalhttp.NewDefaultClient(),
+		Email:  email.NewDefaultClient(envStore),
 	}
 
 	execCtx := &events.ExecutionContext{
@@ -541,6 +544,7 @@ func TestRun_Email_Success_WithScheduledAt(t *testing.T) {
 		KV:     kv.NewMemoryStore(),
 		Env:    envStore,
 		HTTP:   internalhttp.NewDefaultClient(),
+		Email:  email.NewDefaultClient(envStore),
 	}
 
 	execCtx := &events.ExecutionContext{
