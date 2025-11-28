@@ -81,6 +81,29 @@
  */
 
 /**
+ * @typedef {Object} AIRequest
+ * @property {string} id - AI request ID
+ * @property {string} execution_id - Parent execution ID
+ * @property {string} provider - AI provider (openai, anthropic)
+ * @property {string} model - Model name
+ * @property {string} endpoint - API endpoint
+ * @property {string} request_json - Request JSON
+ * @property {string} [response_json] - Response JSON
+ * @property {string} status - Status (success, error)
+ * @property {string} [error_message] - Error message if failed
+ * @property {number} [input_tokens] - Input token count
+ * @property {number} [output_tokens] - Output token count
+ * @property {number} duration_ms - Duration in milliseconds
+ * @property {number} created_at - Unix timestamp
+ */
+
+/**
+ * @typedef {Object} AIRequestsResponse
+ * @property {AIRequest[]} ai_requests - List of AI requests
+ * @property {Pagination} pagination - Pagination info
+ */
+
+/**
  * @typedef {Object} DiffResponse
  * @property {string} diff - Unified diff string
  * @property {FunctionVersion} version1 - First version

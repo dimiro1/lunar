@@ -64,6 +64,7 @@ import {
   LineType,
   VersionLabels,
 } from "../components/diff-viewer.js";
+import { AIRequestViewer } from "../components/ai-request-viewer.js";
 
 /**
  * @typedef {import('../components/env-editor.js').EnvVar} EnvVar
@@ -165,6 +166,7 @@ export const Preview = {
     "env-editor",
     "request-builder",
     "diff-viewer",
+    "ai-request-viewer",
   ],
 
   /**
@@ -242,6 +244,8 @@ export const Preview = {
         return Preview.renderRequestBuilder();
       case "diff-viewer":
         return Preview.renderDiffViewer();
+      case "ai-request-viewer":
+        return Preview.renderAIRequestViewer();
       default:
         return m("p", "Component not found");
     }
@@ -948,5 +952,111 @@ end`;
         }),
       ]),
     ];
+  },
+
+  /**
+   * Renders AI request viewer component previews.
+   * @returns {Object} Mithril vnode
+   */
+  renderAIRequestViewer: () => {
+    const sampleRequests = [
+      {
+        id: "aireq-1",
+        execution_id: "exec-123",
+        provider: "openai",
+        model: "gpt-4",
+        endpoint: "/v1/chat/completions",
+        request_json: JSON.stringify({
+          model: "gpt-4",
+          messages: [
+            { role: "system", content: "You are a helpful assistant." },
+            { role: "user", content: "Hello, how are you?" },
+          ],
+          max_tokens: 100,
+        }),
+        response_json: JSON.stringify({
+          id: "chatcmpl-abc123",
+          choices: [
+            {
+              message: {
+                role: "assistant",
+                content: "I'm doing well, thank you for asking!",
+              },
+            },
+          ],
+          usage: { prompt_tokens: 25, completion_tokens: 12, total_tokens: 37 },
+        }),
+        status: "success",
+        input_tokens: 25,
+        output_tokens: 12,
+        duration_ms: 845,
+        created_at: Math.floor(Date.now() / 1000) - 60,
+      },
+      {
+        id: "aireq-2",
+        execution_id: "exec-123",
+        provider: "anthropic",
+        model: "claude-3-5-sonnet-20241022",
+        endpoint: "/v1/messages",
+        request_json: JSON.stringify({
+          model: "claude-3-5-sonnet-20241022",
+          messages: [{ role: "user", content: "What is 2+2?" }],
+          max_tokens: 50,
+        }),
+        response_json: JSON.stringify({
+          id: "msg_abc123",
+          content: [{ type: "text", text: "2 + 2 equals 4." }],
+          usage: { input_tokens: 15, output_tokens: 8 },
+        }),
+        status: "success",
+        input_tokens: 15,
+        output_tokens: 8,
+        duration_ms: 523,
+        created_at: Math.floor(Date.now() / 1000) - 30,
+      },
+      {
+        id: "aireq-3",
+        execution_id: "exec-123",
+        provider: "openai",
+        model: "gpt-4",
+        endpoint: "/v1/chat/completions",
+        request_json: JSON.stringify({
+          model: "gpt-4",
+          messages: [{ role: "user", content: "Generate a long response." }],
+        }),
+        response_json: null,
+        status: "error",
+        error_message: "Rate limit exceeded. Please retry after 60 seconds.",
+        input_tokens: null,
+        output_tokens: null,
+        duration_ms: 150,
+        created_at: Math.floor(Date.now() / 1000) - 10,
+      },
+    ];
+
+    return m(".preview-section", [
+      m("h3", "AI Request Viewer"),
+      m(Card, { style: "max-width: 800px; margin-bottom: 1rem;" }, [
+        m(CardHeader, {
+          title: "AI Requests",
+          subtitle: "3 API calls",
+          icon: "network",
+        }),
+        m(CardContent, { noPadding: true }, [
+          m(AIRequestViewer, {
+            requests: sampleRequests,
+            maxHeight: "400px",
+            noBorder: true,
+          }),
+        ]),
+      ]),
+
+      m("h3", "Empty State"),
+      m(Card, { style: "max-width: 800px;" }, [
+        m(CardContent, { noPadding: true }, [
+          m(AIRequestViewer, { requests: [], noBorder: true }),
+        ]),
+      ]),
+    ]);
   },
 };

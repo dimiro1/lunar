@@ -270,6 +270,20 @@ export const API = {
         url:
           `/api/executions/${executionId}/logs?limit=${limit}&offset=${offset}`,
       }),
+
+    /**
+     * Gets AI requests for an execution.
+     * @param {string} executionId - Execution ID
+     * @param {number} [limit=20] - Maximum number of AI requests to return
+     * @param {number} [offset=0] - Number of AI requests to skip
+     * @returns {Promise<AIRequestsResponse>} Paginated list of AI requests
+     */
+    getAIRequests: (executionId, limit = 20, offset = 0) =>
+      apiRequest({
+        method: "GET",
+        url:
+          `/api/executions/${executionId}/ai-requests?limit=${limit}&offset=${offset}`,
+      }),
   },
 
   /**

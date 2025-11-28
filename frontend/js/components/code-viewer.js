@@ -3,6 +3,32 @@
  */
 
 /**
+ * Highlights code using highlight.js programmatic API.
+ * This avoids the security warning from highlightElement() which uses innerHTML.
+ * @param {string} code - Code to highlight
+ * @param {string} language - Language for highlighting
+ * @returns {{html: string, highlighted: boolean}} Highlighted HTML string and whether highlighting was applied
+ */
+function highlightCode(code, language) {
+  if (!code || !window.hljs) {
+    return { html: "", highlighted: false };
+  }
+
+  try {
+    if (language && hljs.getLanguage(language)) {
+      return {
+        html: hljs.highlight(code, { language }).value,
+        highlighted: true,
+      };
+    }
+    return { html: hljs.highlightAuto(code).value, highlighted: true };
+  } catch (e) {
+    console.warn("highlight.js error:", e);
+    return { html: "", highlighted: false };
+  }
+}
+
+/**
  * Code viewer component for displaying code with syntax highlighting.
  * Uses highlight.js for syntax highlighting.
  * @type {Object}
@@ -18,7 +44,9 @@ export const CodeViewer = {
    * @param {boolean} [vnode.attrs.noBorder=false] - Remove border styling
    * @param {boolean} [vnode.attrs.padded=false] - Add padding to code block
    * @param {boolean} [vnode.attrs.showHeader=false] - Show language header
+   * @param {string} [vnode.attrs.title=''] - Custom header title (overrides language display)
    * @param {boolean} [vnode.attrs.wrap=false] - Enable word wrapping
+   * @param {*} vnode.children - Child elements to render in header (e.g., action buttons)
    * @returns {Object} Mithril vnode
    */
   view(vnode) {
@@ -29,8 +57,13 @@ export const CodeViewer = {
       noBorder = false,
       padded = false,
       showHeader = false,
+      title = "",
       wrap = false,
     } = vnode.attrs;
+
+    const hasHeader = showHeader || title;
+    const headerTitle = title || (language ? language.toUpperCase() : "");
+    const { html, highlighted } = highlightCode(code, language);
 
     return m(
       ".code-viewer",
@@ -38,10 +71,11 @@ export const CodeViewer = {
         class: noBorder ? "code-viewer--no-border" : "",
       },
       [
-        showHeader &&
-        language &&
+        hasHeader &&
+        headerTitle &&
         m(".code-viewer__header", [
-          m("span.code-viewer__language", language.toUpperCase()),
+          m("span.code-viewer__language", headerTitle),
+          vnode.children,
         ]),
         m(
           ".code-viewer__content",
@@ -61,20 +95,12 @@ export const CodeViewer = {
                 m(
                   "code",
                   {
-                    class: language ? `language-${language}` : "",
-                    oncreate: (vnode) => {
-                      if (window.hljs) {
-                        hljs.highlightElement(vnode.dom);
-                      }
-                    },
-                    onupdate: (vnode) => {
-                      if (window.hljs) {
-                        vnode.dom.removeAttribute("data-highlighted");
-                        hljs.highlightElement(vnode.dom);
-                      }
-                    },
+                    class: [
+                      language ? `language-${language}` : "",
+                      highlighted ? "hljs" : "",
+                    ].filter(Boolean).join(" "),
                   },
-                  code,
+                  highlighted ? m.trust(html) : code,
                 ),
               ],
             ),

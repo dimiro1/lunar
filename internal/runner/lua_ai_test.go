@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dimiro1/faas-go/internal/ai"
 	"github.com/dimiro1/faas-go/internal/env"
 	"github.com/dimiro1/faas-go/internal/events"
 	internalhttp "github.com/dimiro1/faas-go/internal/http"
@@ -73,6 +74,7 @@ func TestRun_AI_OpenAI_Success(t *testing.T) {
 		KV:     kv.NewMemoryStore(),
 		Env:    envStore,
 		HTTP:   internalhttp.NewDefaultClient(),
+		AI:     ai.NewDefaultClient(internalhttp.NewDefaultClient(), envStore),
 	}
 
 	execCtx := &events.ExecutionContext{
@@ -205,6 +207,7 @@ func TestRun_AI_Anthropic_Success(t *testing.T) {
 		KV:     kv.NewMemoryStore(),
 		Env:    envStore,
 		HTTP:   internalhttp.NewDefaultClient(),
+		AI:     ai.NewDefaultClient(internalhttp.NewDefaultClient(), envStore),
 	}
 
 	execCtx := &events.ExecutionContext{
@@ -279,6 +282,7 @@ func TestRun_AI_MissingProvider(t *testing.T) {
 		KV:     kv.NewMemoryStore(),
 		Env:    envStore,
 		HTTP:   internalhttp.NewDefaultClient(),
+		AI:     ai.NewDefaultClient(internalhttp.NewDefaultClient(), envStore),
 	}
 
 	execCtx := &events.ExecutionContext{
@@ -333,6 +337,7 @@ func TestRun_AI_MissingModel(t *testing.T) {
 		KV:     kv.NewMemoryStore(),
 		Env:    envStore,
 		HTTP:   internalhttp.NewDefaultClient(),
+		AI:     ai.NewDefaultClient(internalhttp.NewDefaultClient(), envStore),
 	}
 
 	execCtx := &events.ExecutionContext{
@@ -387,6 +392,7 @@ func TestRun_AI_MissingMessages(t *testing.T) {
 		KV:     kv.NewMemoryStore(),
 		Env:    envStore,
 		HTTP:   internalhttp.NewDefaultClient(),
+		AI:     ai.NewDefaultClient(internalhttp.NewDefaultClient(), envStore),
 	}
 
 	execCtx := &events.ExecutionContext{
@@ -447,6 +453,7 @@ func TestRun_AI_MissingAPIKey(t *testing.T) {
 		KV:     kv.NewMemoryStore(),
 		Env:    envStore,
 		HTTP:   internalhttp.NewDefaultClient(),
+		AI:     ai.NewDefaultClient(internalhttp.NewDefaultClient(), envStore),
 	}
 
 	execCtx := &events.ExecutionContext{
@@ -503,6 +510,7 @@ func TestRun_AI_UnsupportedProvider(t *testing.T) {
 		KV:     kv.NewMemoryStore(),
 		Env:    envStore,
 		HTTP:   internalhttp.NewDefaultClient(),
+		AI:     ai.NewDefaultClient(internalhttp.NewDefaultClient(), envStore),
 	}
 
 	execCtx := &events.ExecutionContext{
@@ -574,6 +582,7 @@ func TestRun_AI_OpenAI_APIError(t *testing.T) {
 		KV:     kv.NewMemoryStore(),
 		Env:    envStore,
 		HTTP:   internalhttp.NewDefaultClient(),
+		AI:     ai.NewDefaultClient(internalhttp.NewDefaultClient(), envStore),
 	}
 
 	execCtx := &events.ExecutionContext{
@@ -647,6 +656,7 @@ func TestRun_AI_Anthropic_APIError(t *testing.T) {
 		KV:     kv.NewMemoryStore(),
 		Env:    envStore,
 		HTTP:   internalhttp.NewDefaultClient(),
+		AI:     ai.NewDefaultClient(internalhttp.NewDefaultClient(), envStore),
 	}
 
 	execCtx := &events.ExecutionContext{
@@ -733,6 +743,7 @@ func TestRun_AI_OpenAI_WithTemperature(t *testing.T) {
 		KV:     kv.NewMemoryStore(),
 		Env:    envStore,
 		HTTP:   internalhttp.NewDefaultClient(),
+		AI:     ai.NewDefaultClient(internalhttp.NewDefaultClient(), envStore),
 	}
 
 	execCtx := &events.ExecutionContext{
@@ -817,6 +828,7 @@ func TestRun_AI_OpenAI_WithMaxTokens(t *testing.T) {
 		KV:     kv.NewMemoryStore(),
 		Env:    envStore,
 		HTTP:   internalhttp.NewDefaultClient(),
+		AI:     ai.NewDefaultClient(internalhttp.NewDefaultClient(), envStore),
 	}
 
 	execCtx := &events.ExecutionContext{
@@ -899,6 +911,7 @@ func TestRun_AI_Anthropic_MultipleContentBlocks(t *testing.T) {
 		KV:     kv.NewMemoryStore(),
 		Env:    envStore,
 		HTTP:   internalhttp.NewDefaultClient(),
+		AI:     ai.NewDefaultClient(internalhttp.NewDefaultClient(), envStore),
 	}
 
 	execCtx := &events.ExecutionContext{
@@ -958,6 +971,7 @@ func TestRun_AI_EmptyMessages(t *testing.T) {
 		KV:     kv.NewMemoryStore(),
 		Env:    envStore,
 		HTTP:   internalhttp.NewDefaultClient(),
+		AI:     ai.NewDefaultClient(internalhttp.NewDefaultClient(), envStore),
 	}
 
 	execCtx := &events.ExecutionContext{

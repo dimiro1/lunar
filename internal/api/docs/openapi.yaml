@@ -756,6 +756,61 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /api/executions/{id}/ai-requests:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Unique execution identifier
+        schema:
+          type: string
+
+    get:
+      tags:
+        - Executions
+      summary: Get AI requests for an execution
+      description: Returns paginated AI API requests made during function execution (OpenAI, Anthropic, etc.)
+      operationId: getExecutionAIRequests
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of AI requests to return (default 20, max 100)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+            example: 20
+        - name: offset
+          in: query
+          description: Number of AI requests to skip
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+            example: 0
+      responses:
+        "200":
+          description: AI requests retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAIRequestsResponse"
+        "404":
+          description: Execution not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /fn/{function_id}:
     parameters:
       - name: function_id
@@ -1400,6 +1455,97 @@ components:
                 $ref: "#/components/schemas/LogEntry"
             pagination:
               $ref: "#/components/schemas/PaginationInfo"
+
+    AIRequest:
+      type: object
+      required:
+        - id
+        - execution_id
+        - provider
+        - model
+        - endpoint
+        - request_json
+        - status
+        - duration_ms
+        - created_at
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the AI request
+          example: "aireq_abc123"
+        execution_id:
+          type: string
+          description: ID of the execution this request belongs to
+          example: "exec_xyz789"
+        provider:
+          type: string
+          description: AI provider name
+          enum:
+            - openai
+            - anthropic
+          example: "openai"
+        model:
+          type: string
+          description: Model name used for the request
+          example: "gpt-4"
+        endpoint:
+          type: string
+          description: API endpoint called
+          example: "/v1/chat/completions"
+        request_json:
+          type: string
+          description: JSON-encoded request payload (sensitive data masked)
+          example: '{"model":"gpt-4","messages":[...]}'
+        response_json:
+          type: string
+          nullable: true
+          description: JSON-encoded response payload (sensitive data masked)
+          example: '{"id":"chatcmpl-...","choices":[...]}'
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Status of the AI request
+          example: "success"
+        error_message:
+          type: string
+          nullable: true
+          description: Error message if the request failed
+          example: "Rate limit exceeded"
+        input_tokens:
+          type: integer
+          nullable: true
+          description: Number of input tokens used
+          example: 150
+        output_tokens:
+          type: integer
+          nullable: true
+          description: Number of output tokens generated
+          example: 75
+        duration_ms:
+          type: integer
+          format: int64
+          description: Request duration in milliseconds
+          example: 1250
+        created_at:
+          type: integer
+          format: int64
+          description: Unix timestamp when the request was made
+          example: 1672531200
+
+    ListAIRequestsResponse:
+      type: object
+      required:
+        - ai_requests
+        - pagination
+      properties:
+        ai_requests:
+          type: array
+          items:
+            $ref: "#/components/schemas/AIRequest"
+        pagination:
+          $ref: "#/components/schemas/PaginationInfo"
 
     VersionDiffResponse:
       type: object

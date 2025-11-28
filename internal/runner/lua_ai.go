@@ -1,22 +1,15 @@
 package runner
 
 import (
-	"encoding/json"
-	"fmt"
+	"time"
 
-	"github.com/dimiro1/faas-go/internal/env"
-	internalhttp "github.com/dimiro1/faas-go/internal/http"
+	"github.com/dimiro1/faas-go/internal/ai"
+	"github.com/dimiro1/faas-go/internal/store"
 	lua "github.com/yuin/gopher-lua"
 )
 
-const (
-	defaultOpenAIEndpoint    = "https://api.openai.com/v1"
-	defaultAnthropicEndpoint = "https://api.anthropic.com"
-	anthropicVersion         = "2023-06-01"
-)
-
 // registerAI creates the global 'ai' table with AI provider functions
-func registerAI(L *lua.LState, httpClient internalhttp.Client, envStore env.Store, functionID string) {
+func registerAI(L *lua.LState, client ai.Client, functionID string, tracker ai.Tracker, executionID string) {
 	aiTable := L.NewTable()
 
 	// ai.chat(options)
@@ -46,7 +39,7 @@ func registerAI(L *lua.LState, httpClient internalhttp.Client, envStore env.Stor
 		}
 
 		// Convert messages from Lua to Go
-		messages := luaMessagesToGo(L, messagesLV.(*lua.LTable))
+		messages := luaMessagesToGo(messagesLV.(*lua.LTable))
 		if len(messages) == 0 {
 			L.Push(lua.LNil)
 			L.Push(lua.LString("messages cannot be empty"))
@@ -63,23 +56,27 @@ func registerAI(L *lua.LState, httpClient internalhttp.Client, envStore env.Stor
 			maxTokens = 1024
 		}
 
-		var response *aiChatResponse
-		var err error
-
-		switch provider {
-		case "openai":
-			response, err = callOpenAI(httpClient, envStore, functionID, endpoint, model, messages, maxTokens, float64(temperature))
-		case "anthropic":
-			response, err = callAnthropic(httpClient, envStore, functionID, endpoint, model, messages, maxTokens, float64(temperature))
-		default:
-			L.Push(lua.LNil)
-			L.Push(lua.LString(fmt.Sprintf("unsupported provider: %s (use openai or anthropic)", provider)))
-			return 2
+		// Build chat request
+		req := ai.ChatRequest{
+			Provider:    provider,
+			Model:       model,
+			Messages:    messages,
+			MaxTokens:   maxTokens,
+			Temperature: float64(temperature),
+			Endpoint:    endpoint,
 		}
 
-		if err != nil {
+		// Execute the request with tracking
+		response, trackReq := executeWithTracking(client, functionID, req)
+
+		// Track the request (success or error)
+		if tracker != nil {
+			tracker.Track(executionID, trackReq)
+		}
+
+		if trackReq.Status == store.AIRequestStatusError {
 			L.Push(lua.LNil)
-			L.Push(lua.LString(err.Error()))
+			L.Push(lua.LString(*trackReq.ErrorMessage))
 			return 2
 		}
 
@@ -92,30 +89,46 @@ func registerAI(L *lua.LState, httpClient internalhttp.Client, envStore env.Stor
 	L.SetGlobal("ai", aiTable)
 }
 
-// aiMessage represents a chat message
-type aiMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
+// executeWithTracking executes an AI chat request and returns tracking info
+func executeWithTracking(client ai.Client, functionID string, req ai.ChatRequest) (*ai.ChatResponse, ai.TrackRequest) {
+	trackReq := ai.TrackRequest{
+		Provider: req.Provider,
+		Model:    req.Model,
+	}
 
-// aiChatResponse represents the unified response from AI providers
-type aiChatResponse struct {
-	Content string
-	Model   string
-	Usage   aiUsage
-}
+	startTime := time.Now()
+	response, err := client.Chat(functionID, req)
+	trackReq.DurationMs = time.Since(startTime).Milliseconds()
 
-type aiUsage struct {
-	InputTokens  int
-	OutputTokens int
+	// Capture tracking info from response even on error (if available)
+	if response != nil {
+		trackReq.Endpoint = response.Endpoint
+		trackReq.RequestJSON = response.RequestJSON
+		if response.ResponseJSON != "" {
+			trackReq.ResponseJSON = &response.ResponseJSON
+		}
+	}
+
+	if err != nil {
+		errMsg := err.Error()
+		trackReq.Status = store.AIRequestStatusError
+		trackReq.ErrorMessage = &errMsg
+		return nil, trackReq
+	}
+
+	trackReq.Status = store.AIRequestStatusSuccess
+	trackReq.InputTokens = &response.Usage.InputTokens
+	trackReq.OutputTokens = &response.Usage.OutputTokens
+
+	return response, trackReq
 }
 
 // luaMessagesToGo converts a Lua table of messages to Go
-func luaMessagesToGo(_ *lua.LState, tbl *lua.LTable) []aiMessage {
-	var messages []aiMessage
+func luaMessagesToGo(tbl *lua.LTable) []ai.Message {
+	var messages []ai.Message
 	tbl.ForEach(func(_, v lua.LValue) {
 		if msgTbl, ok := v.(*lua.LTable); ok {
-			msg := aiMessage{
+			msg := ai.Message{
 				Role:    lua.LVAsString(msgTbl.RawGetString("role")),
 				Content: lua.LVAsString(msgTbl.RawGetString("content")),
 			}
@@ -128,7 +141,7 @@ func luaMessagesToGo(_ *lua.LState, tbl *lua.LTable) []aiMessage {
 }
 
 // aiResponseToLuaTable converts an AI response to a Lua table
-func aiResponseToLuaTable(L *lua.LState, resp *aiChatResponse) *lua.LTable {
+func aiResponseToLuaTable(L *lua.LState, resp *ai.ChatResponse) *lua.LTable {
 	tbl := L.NewTable()
 	L.SetField(tbl, "content", lua.LString(resp.Content))
 	L.SetField(tbl, "model", lua.LString(resp.Model))
@@ -139,214 +152,4 @@ func aiResponseToLuaTable(L *lua.LState, resp *aiChatResponse) *lua.LTable {
 	L.SetField(tbl, "usage", usageTbl)
 
 	return tbl
-}
-
-// OpenAI API structures
-type openAIRequest struct {
-	Model       string      `json:"model"`
-	Messages    []aiMessage `json:"messages"`
-	MaxTokens   int         `json:"max_tokens,omitempty"`
-	Temperature float64     `json:"temperature,omitempty"`
-}
-
-type openAIResponse struct {
-	ID      string `json:"id"`
-	Model   string `json:"model"`
-	Choices []struct {
-		Message struct {
-			Content string `json:"content"`
-		} `json:"message"`
-	} `json:"choices"`
-	Usage struct {
-		PromptTokens     int `json:"prompt_tokens"`
-		CompletionTokens int `json:"completion_tokens"`
-	} `json:"usage"`
-	Error *struct {
-		Message string `json:"message"`
-	} `json:"error"`
-}
-
-func callOpenAI(httpClient internalhttp.Client, envStore env.Store, functionID, endpoint, model string, messages []aiMessage, maxTokens int, temperature float64) (*aiChatResponse, error) {
-	// Get API key from environment
-	apiKey, err := envStore.Get(functionID, "OPENAI_API_KEY")
-	if err != nil || apiKey == "" {
-		return nil, fmt.Errorf("OPENAI_API_KEY not set in function environment")
-	}
-
-	// Determine endpoint
-	if endpoint == "" {
-		endpoint, _ = envStore.Get(functionID, "OPENAI_ENDPOINT")
-		if endpoint == "" {
-			endpoint = defaultOpenAIEndpoint
-		}
-	}
-
-	// Build request
-	reqBody := openAIRequest{
-		Model:     model,
-		Messages:  messages,
-		MaxTokens: maxTokens,
-	}
-	if temperature > 0 {
-		reqBody.Temperature = temperature
-	}
-
-	jsonBody, err := json.Marshal(reqBody)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	// Make HTTP request
-	resp, err := httpClient.Post(internalhttp.Request{
-		URL: endpoint + "/chat/completions",
-		Headers: internalhttp.Headers{
-			"Content-Type":  "application/json",
-			"Authorization": "Bearer " + apiKey,
-		},
-		Body: string(jsonBody),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
-	}
-
-	// Parse response
-	var openAIResp openAIResponse
-	if err := json.Unmarshal([]byte(resp.Body), &openAIResp); err != nil {
-		return nil, fmt.Errorf("failed to parse response: %w", err)
-	}
-
-	// Check for API error
-	if openAIResp.Error != nil {
-		return nil, fmt.Errorf("OpenAI API error: %s", openAIResp.Error.Message)
-	}
-
-	// Check for valid response
-	if len(openAIResp.Choices) == 0 {
-		return nil, fmt.Errorf("no response from OpenAI")
-	}
-
-	return &aiChatResponse{
-		Content: openAIResp.Choices[0].Message.Content,
-		Model:   openAIResp.Model,
-		Usage: aiUsage{
-			InputTokens:  openAIResp.Usage.PromptTokens,
-			OutputTokens: openAIResp.Usage.CompletionTokens,
-		},
-	}, nil
-}
-
-// Anthropic API structures
-type anthropicRequest struct {
-	Model       string      `json:"model"`
-	MaxTokens   int         `json:"max_tokens"`
-	System      string      `json:"system,omitempty"`
-	Messages    []aiMessage `json:"messages"`
-	Temperature float64     `json:"temperature,omitempty"`
-}
-
-type anthropicResponse struct {
-	ID      string `json:"id"`
-	Model   string `json:"model"`
-	Content []struct {
-		Type string `json:"type"`
-		Text string `json:"text"`
-	} `json:"content"`
-	Usage struct {
-		InputTokens  int `json:"input_tokens"`
-		OutputTokens int `json:"output_tokens"`
-	} `json:"usage"`
-	Error *struct {
-		Type    string `json:"type"`
-		Message string `json:"message"`
-	} `json:"error"`
-}
-
-func callAnthropic(httpClient internalhttp.Client, envStore env.Store, functionID, endpoint, model string, messages []aiMessage, maxTokens int, temperature float64) (*aiChatResponse, error) {
-	// Get API key from environment
-	apiKey, err := envStore.Get(functionID, "ANTHROPIC_API_KEY")
-	if err != nil || apiKey == "" {
-		return nil, fmt.Errorf("ANTHROPIC_API_KEY not set in function environment")
-	}
-
-	// Determine endpoint
-	if endpoint == "" {
-		endpoint, _ = envStore.Get(functionID, "ANTHROPIC_ENDPOINT")
-		if endpoint == "" {
-			endpoint = defaultAnthropicEndpoint
-		}
-	}
-
-	// Extract system message if present (Anthropic handles it differently)
-	var systemPrompt string
-	var userMessages []aiMessage
-	for _, msg := range messages {
-		if msg.Role == "system" {
-			systemPrompt = msg.Content
-		} else {
-			userMessages = append(userMessages, msg)
-		}
-	}
-
-	// Build request
-	reqBody := anthropicRequest{
-		Model:     model,
-		MaxTokens: maxTokens,
-		System:    systemPrompt,
-		Messages:  userMessages,
-	}
-	if temperature > 0 {
-		reqBody.Temperature = temperature
-	}
-
-	jsonBody, err := json.Marshal(reqBody)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	// Make HTTP request
-	resp, err := httpClient.Post(internalhttp.Request{
-		URL: endpoint + "/v1/messages",
-		Headers: internalhttp.Headers{
-			"Content-Type":      "application/json",
-			"x-api-key":         apiKey,
-			"anthropic-version": anthropicVersion,
-		},
-		Body: string(jsonBody),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
-	}
-
-	// Parse response
-	var anthropicResp anthropicResponse
-	if err := json.Unmarshal([]byte(resp.Body), &anthropicResp); err != nil {
-		return nil, fmt.Errorf("failed to parse response: %w", err)
-	}
-
-	// Check for API error
-	if anthropicResp.Error != nil {
-		return nil, fmt.Errorf("anthropic API error: %s", anthropicResp.Error.Message)
-	}
-
-	// Check for valid response
-	if len(anthropicResp.Content) == 0 {
-		return nil, fmt.Errorf("no response from Anthropic")
-	}
-
-	// Concatenate all text content
-	var content string
-	for _, c := range anthropicResp.Content {
-		if c.Type == "text" {
-			content += c.Text
-		}
-	}
-
-	return &aiChatResponse{
-		Content: content,
-		Model:   anthropicResp.Model,
-		Usage: aiUsage{
-			InputTokens:  anthropicResp.Usage.InputTokens,
-			OutputTokens: anthropicResp.Usage.OutputTokens,
-		},
-	}, nil
 }

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/dimiro1/faas-go/frontend"
+	"github.com/dimiro1/faas-go/internal/ai"
 	"github.com/dimiro1/faas-go/internal/api"
 	"github.com/dimiro1/faas-go/internal/env"
 	"github.com/dimiro1/faas-go/internal/housekeeping"
@@ -62,6 +63,7 @@ func main() {
 	kvStore := kv.NewSQLiteStore(db)
 	envStore := env.NewSQLiteStore(db)
 	appLogger := logger.NewSQLiteLogger(db)
+	aiRequestTracker := ai.NewSQLiteTracker(db)
 	httpClient := internalhttp.NewDefaultClient()
 
 	// Initialize housekeeping scheduler
@@ -77,6 +79,7 @@ func main() {
 		KVStore:          kvStore,
 		EnvStore:         envStore,
 		HTTPClient:       httpClient,
+		AITracker:        aiRequestTracker,
 		ExecutionTimeout: config.ExecutionTimeout,
 		FrontendHandler:  frontend.Handler(),
 		APIKey:           config.APIKey,

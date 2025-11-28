@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/dimiro1/faas-go/internal/ai"
 	"github.com/dimiro1/faas-go/internal/diff"
 	"github.com/dimiro1/faas-go/internal/env"
 	"github.com/dimiro1/faas-go/internal/events"
@@ -27,6 +28,8 @@ type ExecuteFunctionDeps struct {
 	KVStore          kv.Store
 	EnvStore         env.Store
 	HTTPClient       internalhttp.Client
+	AIClient         ai.Client
+	AITracker        ai.Tracker
 	ExecutionTimeout time.Duration
 	BaseURL          string
 }
@@ -537,6 +540,36 @@ func GetExecutionLogsHandler(database store.DB, appLogger logger.Logger) http.Ha
 	}
 }
 
+// GetExecutionAIRequestsHandler returns a handler for getting AI requests for an execution
+func GetExecutionAIRequestsHandler(database store.DB, aiTracker ai.Tracker) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		params := parsePaginationParams(r)
+
+		// Verify execution exists
+		_, err := database.GetExecution(r.Context(), id)
+		if err != nil {
+			writeError(w, http.StatusNotFound, "Execution not found")
+			return
+		}
+
+		// Get AI requests for this execution
+		params = params.Normalize()
+		aiRequests, total := aiTracker.RequestsPaginated(id, params.Limit, params.Offset)
+
+		resp := PaginatedAIRequestsResponse{
+			AIRequests: aiRequests,
+			Pagination: store.PaginationInfo{
+				Total:  total,
+				Limit:  params.Limit,
+				Offset: params.Offset,
+			},
+		}
+
+		writeJSON(w, http.StatusOK, resp)
+	}
+}
+
 // ExecuteFunctionHandler returns a handler for executing functions
 func ExecuteFunctionHandler(deps ExecuteFunctionDeps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -631,11 +664,13 @@ func ExecuteFunctionHandler(deps ExecuteFunctionDeps) http.HandlerFunc {
 
 		// Prepare runner dependencies
 		runnerDeps := runner.Dependencies{
-			Logger:  deps.Logger,
-			KV:      deps.KVStore,
-			Env:     deps.EnvStore,
-			HTTP:    deps.HTTPClient,
-			Timeout: deps.ExecutionTimeout,
+			Logger:    deps.Logger,
+			KV:        deps.KVStore,
+			Env:       deps.EnvStore,
+			HTTP:      deps.HTTPClient,
+			AI:        deps.AIClient,
+			AITracker: deps.AITracker,
+			Timeout:   deps.ExecutionTimeout,
 		}
 
 		// Execute the function

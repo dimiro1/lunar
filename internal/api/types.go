@@ -113,3 +113,9 @@ type PaginatedExecutionWithLogs struct {
 	Logs       []LogEntry           `json:"logs"`
 	Pagination store.PaginationInfo `json:"pagination"`
 }
+
+// PaginatedAIRequestsResponse is the paginated response for AI requests
+type PaginatedAIRequestsResponse struct {
+	AIRequests []store.AIRequest    `json:"ai_requests"`
+	Pagination store.PaginationInfo `json:"pagination"`
+}

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/dimiro1/faas-go/internal/ai"
 	"github.com/dimiro1/faas-go/internal/env"
 	internalhttp "github.com/dimiro1/faas-go/internal/http"
 	"github.com/dimiro1/faas-go/internal/kv"
@@ -18,6 +19,7 @@ type Server struct {
 	db              store.DB
 	execDeps        *ExecuteFunctionDeps
 	logger          logger.Logger
+	aiTracker       ai.Tracker
 	frontendHandler http.Handler
 	apiKey          string
 	httpServer      *http.Server
@@ -30,6 +32,7 @@ type ServerConfig struct {
 	KVStore          kv.Store
 	EnvStore         env.Store
 	HTTPClient       internalhttp.Client
+	AITracker        ai.Tracker
 	ExecutionTimeout time.Duration
 	FrontendHandler  http.Handler
 	APIKey           string
@@ -44,6 +47,8 @@ func NewServer(config ServerConfig) *Server {
 		KVStore:          config.KVStore,
 		EnvStore:         config.EnvStore,
 		HTTPClient:       config.HTTPClient,
+		AIClient:         ai.NewDefaultClient(config.HTTPClient, config.EnvStore),
+		AITracker:        config.AITracker,
 		ExecutionTimeout: config.ExecutionTimeout,
 		BaseURL:          config.BaseURL,
 	}
@@ -53,6 +58,7 @@ func NewServer(config ServerConfig) *Server {
 		db:              config.DB,
 		execDeps:        execDeps,
 		logger:          config.Logger,
+		aiTracker:       config.AITracker,
 		frontendHandler: config.FrontendHandler,
 		apiKey:          config.APIKey,
 	}
@@ -94,6 +100,7 @@ func (s *Server) setupRoutes() {
 	s.mux.Handle("GET /api/functions/{id}/executions", authMiddleware(http.HandlerFunc(ListExecutionsHandler(s.db))))
 	s.mux.Handle("GET /api/executions/{id}", authMiddleware(http.HandlerFunc(GetExecutionHandler(s.db))))
 	s.mux.Handle("GET /api/executions/{id}/logs", authMiddleware(http.HandlerFunc(GetExecutionLogsHandler(s.db, s.logger))))
+	s.mux.Handle("GET /api/executions/{id}/ai-requests", authMiddleware(http.HandlerFunc(GetExecutionAIRequestsHandler(s.db, s.aiTracker))))
 
 	// Runtime Execution - needs all dependencies (NO AUTH - public endpoint)
 	executeHandler := ExecuteFunctionHandler(*s.execDeps)

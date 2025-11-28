@@ -23,11 +23,13 @@ import {
 } from "../components/badge.js";
 import { LogViewer } from "../components/log-viewer.js";
 import { CodeViewer } from "../components/code-viewer.js";
+import { AIRequestViewer } from "../components/ai-request-viewer.js";
 
 /**
  * @typedef {import('../types.js').FaaSFunction} FaaSFunction
  * @typedef {import('../types.js').Execution} Execution
  * @typedef {import('../types.js').ExecutionLog} ExecutionLog
+ * @typedef {import('../types.js').AIRequest} AIRequest
  */
 
 /**
@@ -79,6 +81,30 @@ export const ExecutionDetail = {
   logsTotal: 0,
 
   /**
+   * AI requests for this execution.
+   * @type {AIRequest[]}
+   */
+  aiRequests: [],
+
+  /**
+   * Number of AI requests per page.
+   * @type {number}
+   */
+  aiRequestsLimit: 20,
+
+  /**
+   * Current AI requests pagination offset.
+   * @type {number}
+   */
+  aiRequestsOffset: 0,
+
+  /**
+   * Total number of AI requests.
+   * @type {number}
+   */
+  aiRequestsTotal: 0,
+
+  /**
    * Initializes the view and loads execution data.
    * @param {Object} vnode - Mithril vnode
    */
@@ -94,17 +120,24 @@ export const ExecutionDetail = {
   loadExecution: async (id) => {
     ExecutionDetail.loading = true;
     try {
-      const [execution, logsData] = await Promise.all([
+      const [execution, logsData, aiRequestsData] = await Promise.all([
         API.executions.get(id),
         API.executions.getLogs(
           id,
           ExecutionDetail.logsLimit,
           ExecutionDetail.logsOffset,
         ),
+        API.executions.getAIRequests(
+          id,
+          ExecutionDetail.aiRequestsLimit,
+          ExecutionDetail.aiRequestsOffset,
+        ),
       ]);
       ExecutionDetail.execution = execution;
       ExecutionDetail.logs = logsData.logs || [];
       ExecutionDetail.logsTotal = logsData.pagination?.total || 0;
+      ExecutionDetail.aiRequests = aiRequestsData.ai_requests || [];
+      ExecutionDetail.aiRequestsTotal = aiRequestsData.pagination?.total || 0;
 
       // Load function details
       ExecutionDetail.func = await API.functions.get(execution.function_id);
@@ -152,6 +185,44 @@ export const ExecutionDetail = {
     ExecutionDetail.logsLimit = newLimit;
     ExecutionDetail.logsOffset = 0;
     ExecutionDetail.loadLogs();
+  },
+
+  /**
+   * Reloads AI requests with current pagination.
+   * @returns {Promise<void>}
+   */
+  loadAIRequests: async () => {
+    try {
+      const data = await API.executions.getAIRequests(
+        ExecutionDetail.execution.id,
+        ExecutionDetail.aiRequestsLimit,
+        ExecutionDetail.aiRequestsOffset,
+      );
+      ExecutionDetail.aiRequests = data.ai_requests || [];
+      ExecutionDetail.aiRequestsTotal = data.pagination?.total || 0;
+      m.redraw();
+    } catch (e) {
+      console.error("Failed to load AI requests:", e);
+    }
+  },
+
+  /**
+   * Handles page change from AI requests pagination.
+   * @param {number} newOffset - New pagination offset
+   */
+  handleAIRequestsPageChange: (newOffset) => {
+    ExecutionDetail.aiRequestsOffset = newOffset;
+    ExecutionDetail.loadAIRequests();
+  },
+
+  /**
+   * Handles limit change from AI requests pagination.
+   * @param {number} newLimit - New items per page limit
+   */
+  handleAIRequestsLimitChange: (newLimit) => {
+    ExecutionDetail.aiRequestsLimit = newLimit;
+    ExecutionDetail.aiRequestsOffset = 0;
+    ExecutionDetail.loadAIRequests();
   },
 
   /**
@@ -301,6 +372,31 @@ export const ExecutionDetail = {
               padded: true,
             }),
           ]),
+        ]),
+
+        // AI Requests
+        ExecutionDetail.aiRequestsTotal > 0 &&
+        m(Card, { style: "margin-bottom: 1.5rem" }, [
+          m(CardHeader, {
+            title: "AI Requests",
+            subtitle: `${ExecutionDetail.aiRequestsTotal} API calls`,
+            icon: "network",
+          }),
+          m(CardContent, { noPadding: true }, [
+            m(AIRequestViewer, {
+              requests: ExecutionDetail.aiRequests,
+              maxHeight: "400px",
+              noBorder: true,
+            }),
+          ]),
+          ExecutionDetail.aiRequestsTotal > ExecutionDetail.aiRequestsLimit &&
+          m(Pagination, {
+            total: ExecutionDetail.aiRequestsTotal,
+            limit: ExecutionDetail.aiRequestsLimit,
+            offset: ExecutionDetail.aiRequestsOffset,
+            onPageChange: ExecutionDetail.handleAIRequestsPageChange,
+            onLimitChange: ExecutionDetail.handleAIRequestsLimitChange,
+          }),
         ]),
 
         // Execution Logs

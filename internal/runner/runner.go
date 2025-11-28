@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/dimiro1/faas-go/internal/ai"
 	"github.com/dimiro1/faas-go/internal/env"
 	"github.com/dimiro1/faas-go/internal/events"
 	internalhttp "github.com/dimiro1/faas-go/internal/http"
@@ -22,11 +23,13 @@ type Response struct {
 
 // Dependencies holds all the dependencies needed to run a Lua function
 type Dependencies struct {
-	Logger  logger.Logger
-	KV      kv.Store
-	Env     env.Store
-	HTTP    internalhttp.Client
-	Timeout time.Duration // Execution timeout (defaults to 5 minutes if not set)
+	Logger    logger.Logger
+	KV        kv.Store
+	Env       env.Store
+	HTTP      internalhttp.Client
+	AI        ai.Client
+	AITracker ai.Tracker
+	Timeout   time.Duration // Execution timeout (defaults to 5 minutes if not set)
 }
 
 // Request represents a function execution request
@@ -70,7 +73,7 @@ func Run(ctx context.Context, deps Dependencies, req Request) (Response, error) 
 	registerRandom(L)
 
 	// Register AI module
-	registerAI(L, deps.HTTP, deps.Env, req.Context.FunctionID)
+	registerAI(L, deps.AI, req.Context.FunctionID, deps.AITracker, req.Context.ExecutionID)
 
 	// Register Email module
 	registerEmail(L, deps.Env, req.Context.FunctionID)

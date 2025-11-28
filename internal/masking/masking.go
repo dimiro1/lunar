@@ -37,6 +37,7 @@ var sensitiveQueryParams = []string{
 }
 
 // Sensitive JSON body field patterns (case-insensitive)
+// These are exact matches or prefix matches (e.g., "token" matches "token" but not "completion_tokens")
 var sensitiveBodyFields = []string{
 	"password",
 	"secret",
@@ -47,6 +48,10 @@ var sensitiveBodyFields = []string{
 	"client_secret",
 	"token",
 	"auth",
+	"authorization",
+	"bearer",
+	"credential",
+	"credentials",
 }
 
 // Regex patterns for detecting sensitive data in log messages
@@ -88,10 +93,16 @@ func IsSensitiveQueryParam(key string) bool {
 }
 
 // IsSensitiveBodyField checks if a JSON body field name suggests it contains sensitive data
+// Uses exact match or prefix match to avoid false positives (e.g., "completion_tokens" should not match "token")
 func IsSensitiveBodyField(key string) bool {
 	lowerKey := strings.ToLower(key)
 	for _, pattern := range sensitiveBodyFields {
-		if strings.Contains(lowerKey, pattern) {
+		// Exact match
+		if lowerKey == pattern {
+			return true
+		}
+		// Prefix match with underscore or dash separator (e.g., "auth_token", "api-key")
+		if strings.HasPrefix(lowerKey, pattern+"_") || strings.HasPrefix(lowerKey, pattern+"-") {
 			return true
 		}
 	}

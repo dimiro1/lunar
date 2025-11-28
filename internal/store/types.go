@@ -19,6 +19,31 @@ const (
 	ExecutionStatusError   ExecutionStatus = "error"
 )
 
+// AIRequestStatus represents the status of an AI API request
+type AIRequestStatus string
+
+const (
+	AIRequestStatusSuccess AIRequestStatus = "success"
+	AIRequestStatusError   AIRequestStatus = "error"
+)
+
+// AIRequest represents a tracked AI API request
+type AIRequest struct {
+	ID           string          `json:"id"`
+	ExecutionID  string          `json:"execution_id"`
+	Provider     string          `json:"provider"`
+	Model        string          `json:"model"`
+	Endpoint     string          `json:"endpoint"`
+	RequestJSON  string          `json:"request_json"`
+	ResponseJSON *string         `json:"response_json,omitempty"`
+	Status       AIRequestStatus `json:"status"`
+	ErrorMessage *string         `json:"error_message,omitempty"`
+	InputTokens  *int            `json:"input_tokens,omitempty"`
+	OutputTokens *int            `json:"output_tokens,omitempty"`
+	DurationMs   int64           `json:"duration_ms"`
+	CreatedAt    int64           `json:"created_at"`
+}
+
 // Function represents a serverless function
 type Function struct {
 	ID            string            `json:"id"`
