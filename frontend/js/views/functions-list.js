@@ -4,6 +4,7 @@
 
 import { icons } from "../icons.js";
 import { API } from "../api.js";
+import { t } from "../i18n/index.js";
 import { Pagination } from "../components/pagination.js";
 import { Button, ButtonVariant } from "../components/button.js";
 import { Card, CardContent, CardHeader } from "../components/card.js";
@@ -117,7 +118,7 @@ export const FunctionsList = {
     if (FunctionsList.loading) {
       return m(".loading", [
         m.trust(icons.spinner()),
-        m("p", "Loading functions..."),
+        m("p", t("functions.loadingFunctions")),
       ]);
     }
 
@@ -125,8 +126,8 @@ export const FunctionsList = {
       m(".page-header", [
         m(".page-header__title", [
           m("div", [
-            m("h1", "Functions"),
-            m(".page-header__subtitle", "Manage your serverless functions"),
+            m("h1", t("functions.title")),
+            m(".page-header__subtitle", t("functions.subtitle")),
           ]),
           m(
             Button,
@@ -135,15 +136,15 @@ export const FunctionsList = {
               href: "#!/functions/new",
               icon: "plus",
             },
-            "New Function",
+            t("functions.newFunction"),
           ),
         ]),
       ]),
 
       m(Card, [
         m(CardHeader, {
-          title: "All Functions",
-          subtitle: `${FunctionsList.total} functions total`,
+          title: t("functions.allFunctions"),
+          subtitle: t("functions.totalCount", { count: FunctionsList.total }),
         }),
 
         FunctionsList.functions.length === 0
@@ -152,7 +153,7 @@ export const FunctionsList = {
               m(".table__empty-icon", m.trust(icons.inbox())),
               m(
                 "p.table__empty-message",
-                "No functions yet. Create your first function to get started.",
+                t("functions.emptyState"),
               ),
             ]),
           ])
@@ -160,10 +161,10 @@ export const FunctionsList = {
             m(Table, [
               m(TableHeader, [
                 m(TableRow, [
-                  m(TableHead, "Name"),
-                  m(TableHead, "Description"),
-                  m(TableHead, "Status"),
-                  m(TableHead, "Version"),
+                  m(TableHead, t("functions.columns.name")),
+                  m(TableHead, t("functions.columns.description")),
+                  m(TableHead, t("functions.columns.status")),
+                  m(TableHead, t("functions.columns.version")),
                 ]),
               ]),
               m(
@@ -180,7 +181,7 @@ export const FunctionsList = {
                       m(
                         TableCell,
                         func.description ||
-                          m("span.text-muted", "No description"),
+                          m("span.text-muted", t("common.noDescription")),
                       ),
                       m(
                         TableCell,

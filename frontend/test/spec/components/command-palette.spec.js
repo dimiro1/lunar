@@ -97,9 +97,9 @@ describe("CommandPalette", () => {
       CommandPalette.query = "Create";
       CommandPalette.updateResults();
 
-      // Should include "Create Function" nav item
+      // Should include nav item with description containing "Create"
       const createItem = CommandPalette.results.find((r) =>
-        r.label === "Create Function" || r.description?.includes("Create")
+        r.description?.toLowerCase().includes("create")
       );
       expect(createItem).toBeTruthy();
     });

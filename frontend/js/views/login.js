@@ -3,6 +3,7 @@
  */
 
 import { API } from "../api.js";
+import { t } from "../i18n/index.js";
 import { Button, ButtonVariant } from "../components/button.js";
 import { Card, CardContent } from "../components/card.js";
 import {
@@ -57,7 +58,7 @@ export const Login = {
       } else if (typeof err === "string") {
         Login.error = err;
       } else {
-        Login.error = "Invalid API key";
+        Login.error = t("login.invalidKey");
       }
     } finally {
       Login.loading = false;
@@ -75,8 +76,8 @@ export const Login = {
         m(Card, [
           m(CardContent, { large: true }, [
             m(".login-header", [
-              m("h1.login-title", "Lunar"),
-              m("p.login-subtitle", "Enter your API key to continue"),
+              m("h1.login-title", t("login.title")),
+              m("p.login-subtitle", t("login.subtitle")),
             ]),
 
             m(
@@ -88,12 +89,12 @@ export const Login = {
                 m(FormGroup, [
                   m(FormLabel, {
                     for: "api-key",
-                    text: "API Key",
+                    text: t("login.apiKeyLabel"),
                     required: true,
                   }),
                   m(PasswordInput, {
                     id: "api-key",
-                    placeholder: "Enter your API key",
+                    placeholder: t("login.apiKeyPlaceholder"),
                     value: Login.apiKey,
                     required: true,
                     error: Login.error !== "",
@@ -119,14 +120,14 @@ export const Login = {
                     disabled: Login.loading || !Login.apiKey,
                     loading: Login.loading,
                   },
-                  Login.loading ? "Logging in..." : "Login",
+                  Login.loading ? t("login.loggingIn") : t("login.loginButton"),
                 ),
               ],
             ),
 
             m(
               "p.login-footer",
-              "Check the server logs for your API key if this is the first run.",
+              t("login.footer"),
             ),
           ]),
         ]),

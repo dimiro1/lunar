@@ -11,6 +11,7 @@ import {
   MethodBadges,
   StatusBadge,
 } from "../../../js/components/badge.js";
+import { t } from "../../../js/i18n/index.js";
 
 describe("Badge", () => {
   describe("view()", () => {
@@ -143,7 +144,7 @@ describe("StatusBadge", () => {
       expect(result.attrs.variant).toBe(BadgeVariant.SUCCESS);
       expect(result.attrs.dot).toBe(true);
       expect(result.attrs.uppercase).toBe(true);
-      expect(result.children).toContain("Enabled");
+      expect(result.children).toContain(t("badge.enabled"));
     });
 
     it("renders disabled state correctly", () => {
@@ -152,7 +153,7 @@ describe("StatusBadge", () => {
 
       expect(result.tag).toBe(Badge);
       expect(result.attrs.variant).toBe(BadgeVariant.WARNING);
-      expect(result.children).toContain("Disabled");
+      expect(result.children).toContain(t("badge.disabled"));
     });
 
     it("applies glow effect when glow is true and enabled", () => {

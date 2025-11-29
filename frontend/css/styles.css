@@ -3211,3 +3211,118 @@ pre {
     grid-template-columns: 1fr;
   }
 }
+
+/* ============================================
+   LANGUAGE SELECTOR
+   ============================================ */
+
+.language-selector {
+  position: relative;
+}
+
+.language-selector__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--color-subtle);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.language-selector__toggle:hover {
+  color: var(--color-text);
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.language-selector__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+}
+
+.language-selector__icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.language-selector__label {
+  font-weight: 500;
+}
+
+.language-selector__chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.75rem;
+  height: 0.75rem;
+  opacity: 0.5;
+}
+
+.language-selector__chevron svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.language-selector__dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.25rem;
+  min-width: 160px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.language-selector__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: background-color 0.15s;
+  text-align: left;
+}
+
+.language-selector__option:hover {
+  background: var(--color-background);
+}
+
+.language-selector__option--active {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--color-accent);
+}
+
+.language-selector__option--active:hover {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.language-selector__check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-accent);
+}
+
+.language-selector__check svg {
+  width: 1rem;
+  height: 1rem;
+}

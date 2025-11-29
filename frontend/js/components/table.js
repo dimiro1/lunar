@@ -3,6 +3,7 @@
  */
 
 import { icons } from "../icons.js";
+import { t } from "../i18n/index.js";
 
 /**
  * @typedef {import('../types.js').IconName} IconName
@@ -235,7 +236,7 @@ export const TableEmpty = {
   view(vnode) {
     const {
       colspan = 1,
-      message = "No data available",
+      message = t("table.noData"),
       icon = "inbox",
       class: className = "",
     } = vnode.attrs;

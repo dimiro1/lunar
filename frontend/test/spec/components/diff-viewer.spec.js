@@ -7,6 +7,7 @@ import {
   LineType,
   VersionLabels,
 } from "../../../js/components/diff-viewer.js";
+import { t } from "../../../js/i18n/index.js";
 
 /**
  * Check if vnode has a specific class (handles both tag selector and attrs.class)
@@ -180,6 +181,6 @@ describe("DiffViewer", () => {
     const result = DiffViewer.view(vnode);
 
     expect(result.attrs.role).toBe("region");
-    expect(result.attrs["aria-label"]).toBe("Code diff");
+    expect(result.attrs["aria-label"]).toBe(t("diff.codeDiff"));
   });
 });

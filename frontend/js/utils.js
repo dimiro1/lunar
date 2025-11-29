@@ -3,6 +3,7 @@
  */
 
 import { routes } from "./routes.js";
+import { i18n, t } from "./i18n/index.js";
 
 /**
  * @typedef {import('./types.js').TabItem} TabItem
@@ -17,15 +18,23 @@ import { routes } from "./routes.js";
  * // Returns tabs for Code, Versions, Executions, Settings, Test
  */
 export const getFunctionTabs = (funcId) => [
-  { id: "code", label: "Code", href: routes.functionCode(funcId) },
-  { id: "versions", label: "Versions", href: routes.functionVersions(funcId) },
+  { id: "code", label: t("tabs.code"), href: routes.functionCode(funcId) },
+  {
+    id: "versions",
+    label: t("tabs.versions"),
+    href: routes.functionVersions(funcId),
+  },
   {
     id: "executions",
-    label: "Executions",
+    label: t("tabs.executions"),
     href: routes.functionExecutions(funcId),
   },
-  { id: "settings", label: "Settings", href: routes.functionSettings(funcId) },
-  { id: "test", label: "Test", href: routes.functionTest(funcId) },
+  {
+    id: "settings",
+    label: t("tabs.settings"),
+    href: routes.functionSettings(funcId),
+  },
+  { id: "test", label: t("tabs.test"), href: routes.functionTest(funcId) },
 ];
 
 /**
@@ -46,22 +55,24 @@ export const getFunctionTabs = (funcId) => [
  */
 export const formatUnixTimestamp = (timestamp, format = "datetime") => {
   if (!timestamp || timestamp === 0) {
-    return "N/A";
+    return t("common.na");
   }
 
   const date = new Date(timestamp * 1000);
 
   if (isNaN(date.getTime())) {
-    return "Invalid Date";
+    return t("common.invalidDate");
   }
+
+  const locale = i18n.getLocale();
 
   switch (format) {
     case "time":
-      return date.toLocaleTimeString();
+      return date.toLocaleTimeString(locale);
     case "date":
-      return date.toLocaleDateString();
+      return date.toLocaleDateString(locale);
     case "datetime":
     default:
-      return date.toLocaleString();
+      return date.toLocaleString(locale);
   }
 };

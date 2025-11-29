@@ -86,11 +86,35 @@
           },
         });
       });
+
+      // Global i18n locale management - will be initialized after i18n module loads
+      window.__originalLocale = null;
+    </script>
+
+    <!-- Global i18n setup (runs after i18n module is available) -->
+    <script type="module">
+      import { i18n } from "../js/i18n/index.js";
+
+      // Store original locale once at startup
+      window.__originalLocale = i18n.getLocale();
+
+      // Global beforeEach to reset locale to English
+      beforeEach(function () {
+        i18n.locale = "en";
+      });
+
+      // Global afterEach to restore original locale
+      afterEach(function () {
+        if (window.__originalLocale) {
+          i18n.locale = window.__originalLocale;
+        }
+      });
     </script>
 
     <!-- Spec files (ES modules) -->
     <script type="module" src="spec/routes.spec.js"></script>
     <script type="module" src="spec/utils.spec.js"></script>
+    <script type="module" src="spec/i18n.spec.js"></script>
     <script type="module" src="spec/components/badge.spec.js"></script>
     <script type="module" src="spec/components/button.spec.js"></script>
     <script type="module" src="spec/components/card.spec.js"></script>
@@ -130,6 +154,10 @@
     <script
       type="module"
       src="spec/components/ai-request-viewer.spec.js"
+    ></script>
+    <script
+      type="module"
+      src="spec/components/language-selector.spec.js"
     ></script>
   </head>
   <body></body>

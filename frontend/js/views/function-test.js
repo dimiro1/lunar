@@ -4,6 +4,7 @@
 
 import { icons } from "../icons.js";
 import { API } from "../api.js";
+import { t } from "../i18n/index.js";
 import { Toast } from "../components/toast.js";
 import { BackButton } from "../components/button.js";
 import { Card, CardContent, CardHeader } from "../components/card.js";
@@ -139,7 +140,7 @@ export const FunctionTest = {
         }
       }
     } catch (e) {
-      Toast.show("Execution failed: " + e.message, "error");
+      Toast.show(t("toast.executionFailed") + ": " + e.message, "error");
     } finally {
       FunctionTest.executing = false;
       m.redraw();
@@ -155,12 +156,15 @@ export const FunctionTest = {
     if (FunctionTest.loading) {
       return m(".loading", [
         m.trust(icons.spinner()),
-        m("p", "Loading function..."),
+        m("p", t("functions.loadingFunction")),
       ]);
     }
 
     if (!FunctionTest.func) {
-      return m(".fade-in", m(Card, m(CardContent, "Function not found")));
+      return m(
+        ".fade-in",
+        m(Card, m(CardContent, t("common.functionNotFound"))),
+      );
     }
 
     const func = FunctionTest.func;
@@ -187,7 +191,7 @@ export const FunctionTest = {
             ]),
             m(
               "p.function-details-description",
-              func.description || "No description",
+              func.description || t("common.noDescription"),
             ),
           ]),
         ]),
@@ -233,16 +237,16 @@ export const FunctionTest = {
             // Response Viewer
             m(Card, { class: "response-viewer" }, [
               m(CardHeader, {
-                title: "Response",
+                title: t("test.response"),
                 subtitle: FunctionTest.testResponse
-                  ? `Status: ${FunctionTest.testResponse.status}`
+                  ? `${t("test.status")}: ${FunctionTest.testResponse.status}`
                   : null,
               }),
               m(CardContent, [
                 FunctionTest.testResponse
                   ? m("div", [
                     m(FormGroup, [
-                      m(FormLabel, { text: "Status" }),
+                      m(FormLabel, { text: t("test.status") }),
                       m(
                         "div",
                         {
@@ -280,14 +284,14 @@ export const FunctionTest = {
                                 variant: BadgeVariant.OUTLINE,
                                 size: BadgeSize.SM,
                               },
-                              "View Execution",
+                              t("test.viewExecution"),
                             ),
                           ),
                         ],
                       ),
                     ]),
                     m(FormGroup, [
-                      m(FormLabel, { text: "Body" }),
+                      m(FormLabel, { text: t("test.body") }),
                       m(CodeViewer, {
                         code: FunctionTest.testResponse.body || "",
                         language: "json",
@@ -297,7 +301,7 @@ export const FunctionTest = {
                     ]),
                     FunctionTest.testLogs.length > 0 &&
                     m(FormGroup, [
-                      m(FormLabel, { text: "Logs" }),
+                      m(FormLabel, { text: t("test.logs") }),
                       m(LogViewer, {
                         logs: FunctionTest.testLogs,
                         maxHeight: "200px",
@@ -305,10 +309,10 @@ export const FunctionTest = {
                     ]),
                   ])
                   : m(".no-response", [
-                    m("p", "No response yet"),
+                    m("p", t("test.noResponse")),
                     m(
                       "p.text-muted",
-                      "Execute a request to see the response",
+                      t("test.executeHint"),
                     ),
                   ]),
               ]),

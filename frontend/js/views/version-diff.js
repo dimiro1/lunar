@@ -19,6 +19,7 @@ import {
   LineType,
   VersionLabels,
 } from "../components/diff-viewer.js";
+import { t } from "../i18n/index.js";
 
 /**
  * @typedef {import('../types.js').LunarFunction} LunarFunction
@@ -93,12 +94,15 @@ export const VersionDiff = {
     if (VersionDiff.loading) {
       return m(".loading", [
         m.trust(icons.spinner()),
-        m("p", "Loading diff..."),
+        m("p", t("versionDiff.loadingDiff")),
       ]);
     }
 
     if (!VersionDiff.func || !VersionDiff.diffData) {
-      return m(".fade-in", m(Card, m(CardContent, "Diff not found")));
+      return m(
+        ".fade-in",
+        m(Card, m(CardContent, t("versionDiff.diffNotFound"))),
+      );
     }
 
     const func = VersionDiff.func;
@@ -125,7 +129,7 @@ export const VersionDiff = {
             ]),
             m(
               "p.function-details-description",
-              func.description || "No description",
+              func.description || t("common.noDescription"),
             ),
           ]),
         ]),
@@ -138,7 +142,7 @@ export const VersionDiff = {
         m(
           CardHeader,
           {
-            title: "Code Changes",
+            title: t("versionDiff.codeChanges"),
           },
           [
             m(VersionLabels, {

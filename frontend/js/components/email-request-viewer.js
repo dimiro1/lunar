@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "./table.js";
+import { t } from "../i18n/index.js";
 
 /**
  * @typedef {import('../types.js').EmailRequest} EmailRequest
@@ -66,7 +67,7 @@ export const EmailRequestViewer = {
       if (truncate && formatted.length > MAX_JSON_DISPLAY_LENGTH) {
         return {
           formatted: formatted.substring(0, MAX_JSON_DISPLAY_LENGTH) +
-            "\n\n... (truncated)",
+            "\n\n" + t("emailRequestViewer.truncated"),
           truncated: true,
         };
       }
@@ -79,7 +80,7 @@ export const EmailRequestViewer = {
       if (truncate && formatted.length > MAX_JSON_DISPLAY_LENGTH) {
         return {
           formatted: formatted.substring(0, MAX_JSON_DISPLAY_LENGTH) +
-            "\n\n... (truncated)",
+            "\n\n" + t("emailRequestViewer.truncated"),
           truncated: true,
         };
       }
@@ -108,7 +109,7 @@ export const EmailRequestViewer = {
           m(TableEmpty, {
             colspan: 6,
             icon: "mail",
-            message: "No email requests recorded for this execution.",
+            message: t("emailRequestViewer.noRequests"),
           }),
         ]),
       ]);
@@ -125,12 +126,36 @@ export const EmailRequestViewer = {
           m(TableHeader, [
             m(TableRow, [
               m(TableHead, { style: "width: 2rem;" }, ""),
-              m(TableHead, { style: "width: 25%;" }, "To"),
-              m(TableHead, { style: "width: 25%;" }, "Subject"),
-              m(TableHead, { style: "width: 10%;" }, "Status"),
-              m(TableHead, { style: "width: 10%;" }, "Type"),
-              m(TableHead, { style: "width: 15%;" }, "Duration"),
-              m(TableHead, { style: "width: 15%;" }, "Time"),
+              m(
+                TableHead,
+                { style: "width: 25%;" },
+                t("emailRequestViewer.to"),
+              ),
+              m(
+                TableHead,
+                { style: "width: 25%;" },
+                t("emailRequestViewer.subject"),
+              ),
+              m(
+                TableHead,
+                { style: "width: 10%;" },
+                t("emailRequestViewer.status"),
+              ),
+              m(
+                TableHead,
+                { style: "width: 10%;" },
+                t("emailRequestViewer.type"),
+              ),
+              m(
+                TableHead,
+                { style: "width: 15%;" },
+                t("emailRequestViewer.duration"),
+              ),
+              m(
+                TableHead,
+                { style: "width: 15%;" },
+                t("emailRequestViewer.time"),
+              ),
             ]),
           ]),
           m(
@@ -211,7 +236,7 @@ export const EmailRequestViewer = {
                   : BadgeVariant.DESTRUCTIVE,
                 size: BadgeSize.SM,
               },
-              req.status.toUpperCase(),
+              t(`common.status.${req.status}`),
             ),
           ]),
 
@@ -239,10 +264,15 @@ export const EmailRequestViewer = {
     // Add expanded content row if expanded
     if (isExpanded) {
       const panels = [
-        this.renderJSONPanel("Request", req.request_json),
+        this.renderJSONPanel(t("emailRequestViewer.request"), req.request_json),
       ];
       if (req.response_json) {
-        panels.push(this.renderJSONPanel("Response", req.response_json));
+        panels.push(
+          this.renderJSONPanel(
+            t("emailRequestViewer.response"),
+            req.response_json,
+          ),
+        );
       }
 
       rows.push(
@@ -255,7 +285,7 @@ export const EmailRequestViewer = {
                 // Error message if present
                 req.error_message
                   ? m(".email-request-viewer__error", [
-                    m("strong", "Error: "),
+                    m("strong", t("emailRequestViewer.error") + ": "),
                     req.error_message,
                   ])
                   : null,
@@ -263,11 +293,11 @@ export const EmailRequestViewer = {
                 // Email details
                 m(".email-request-viewer__details", [
                   m("div", [
-                    m("strong", "From: "),
+                    m("strong", t("emailRequestViewer.from") + ": "),
                     m("code", req.from),
                   ]),
                   m("div", [
-                    m("strong", "To: "),
+                    m("strong", t("emailRequestViewer.to") + ": "),
                     m(
                       "code",
                       Array.isArray(req.to) ? req.to.join(", ") : req.to,
@@ -275,7 +305,7 @@ export const EmailRequestViewer = {
                   ]),
                   req.email_id
                     ? m("div", [
-                      m("strong", "Email ID: "),
+                      m("strong", t("emailRequestViewer.emailId") + ": "),
                       m("code", req.email_id),
                     ])
                     : null,

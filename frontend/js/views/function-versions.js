@@ -37,6 +37,7 @@ import {
   TableRow,
 } from "../components/table.js";
 import { TabContent, Tabs } from "../components/tabs.js";
+import { t } from "../i18n/index.js";
 
 /**
  * @typedef {import('../types.js').LunarFunction} LunarFunction
@@ -190,13 +191,13 @@ export const FunctionVersions = {
    * @returns {Promise<void>}
    */
   activateVersion: async (version) => {
-    if (!confirm(`Activate version ${version}?`)) return;
+    if (!confirm(t("versionsPage.activateConfirm", { version }))) return;
     try {
       await API.versions.activate(FunctionVersions.func.id, version);
-      Toast.show(`Version ${version} activated`, "success");
+      Toast.show(t("versionsPage.versionActivated", { version }), "success");
       await FunctionVersions.loadData(FunctionVersions.func.id);
     } catch (e) {
-      Toast.show("Failed to activate version", "error");
+      Toast.show(t("versionsPage.failedToActivate"), "error");
     }
   },
 
@@ -218,12 +219,15 @@ export const FunctionVersions = {
     if (FunctionVersions.loading) {
       return m(".loading", [
         m.trust(icons.spinner()),
-        m("p", "Loading function..."),
+        m("p", t("functions.loadingFunction")),
       ]);
     }
 
     if (!FunctionVersions.func) {
-      return m(".fade-in", m(Card, m(CardContent, "Function not found")));
+      return m(
+        ".fade-in",
+        m(Card, m(CardContent, t("common.functionNotFound"))),
+      );
     }
 
     const func = FunctionVersions.func;
@@ -250,7 +254,7 @@ export const FunctionVersions = {
             ]),
             m(
               "p.function-details-description",
-              func.description || "No description",
+              func.description || t("common.noDescription"),
             ),
           ]),
         ]),
@@ -271,14 +275,16 @@ export const FunctionVersions = {
           // Version List
           m(Card, { style: "margin-bottom: 1.5rem" }, [
             m(CardHeader, {
-              title: "Version History",
-              subtitle: `${FunctionVersions.versionsTotal} versions`,
+              title: t("versions.title"),
+              subtitle: t("versionsPage.versionsCount", {
+                count: FunctionVersions.versionsTotal,
+              }),
             }),
             FunctionVersions.versions.length === 0
               ? m(CardContent, [
                 m(TableEmpty, {
                   icon: "inbox",
-                  message: "No versions yet.",
+                  message: t("versions.emptyState"),
                 }),
               ])
               : [
@@ -286,9 +292,9 @@ export const FunctionVersions = {
                   m(TableHeader, [
                     m(TableRow, [
                       m(TableHead, { style: "width: 40px" }, ""),
-                      m(TableHead, "Version"),
-                      m(TableHead, "Created"),
-                      m(TableHead, "Actions"),
+                      m(TableHead, t("versions.columns.version")),
+                      m(TableHead, t("versions.columns.createdAt")),
+                      m(TableHead, t("versions.columns.actions")),
                     ]),
                   ]),
                   m(
@@ -333,7 +339,7 @@ export const FunctionVersions = {
                                 variant: BadgeVariant.SUCCESS,
                                 size: BadgeSize.SM,
                               },
-                              "ACTIVE",
+                              t("versionsPage.active"),
                             ),
                           ]),
                           m(TableCell, formatUnixTimestamp(ver.created_at)),
@@ -351,7 +357,7 @@ export const FunctionVersions = {
                                   );
                                 },
                               },
-                              "Activate",
+                              t("versionsPage.activate"),
                             ),
                           ]),
                         ],
@@ -376,10 +382,11 @@ export const FunctionVersions = {
                   disabled: FunctionVersions.selectedVersions.length !== 2,
                 },
                 FunctionVersions.selectedVersions.length === 2
-                  ? `Compare v${FunctionVersions.selectedVersions[0]} and v${
-                    FunctionVersions.selectedVersions[1]
-                  }`
-                  : "Select 2 versions to compare",
+                  ? t("versionsPage.compareVersions", {
+                    v1: FunctionVersions.selectedVersions[0],
+                    v2: FunctionVersions.selectedVersions[1],
+                  })
+                  : t("versionsPage.selectToCompare"),
               ),
             ]),
           ]),

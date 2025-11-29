@@ -3,6 +3,7 @@
  */
 
 import { icons } from "../icons.js";
+import { t } from "../i18n/index.js";
 
 /**
  * Enum for diff line types.
@@ -52,12 +53,16 @@ export const VersionLabels = {
         additions > 0 &&
         m("span.diff-stats-added", [
           m.trust(icons.plusSmall()),
-          ` ${additions} addition${additions !== 1 ? "s" : ""} `,
+          ` ${additions} ${
+            t(additions !== 1 ? "diff.additions" : "diff.addition")
+          } `,
         ]),
         deletions > 0 &&
         m("span.diff-stats-removed", [
           m.trust(icons.minusSmall()),
-          ` ${deletions} deletion${deletions !== 1 ? "s" : ""}`,
+          ` ${deletions} ${
+            t(deletions !== 1 ? "diff.deletions" : "diff.deletion")
+          }`,
         ]),
       ]),
     ]);
@@ -88,7 +93,7 @@ export const DiffViewer = {
       {
         class: noBorder ? "diff-container--no-border" : "",
         role: "region",
-        "aria-label": "Code diff",
+        "aria-label": t("diff.codeDiff"),
       },
       [
         m(
@@ -147,10 +152,10 @@ const DiffLine = {
 function getTypeAriaLabel(type) {
   switch (type) {
     case LineType.ADDED:
-      return "Line added";
+      return t("diff.lineAdded");
     case LineType.REMOVED:
-      return "Line removed";
+      return t("diff.lineRemoved");
     default:
-      return "Unchanged line";
+      return t("diff.unchangedLine");
   }
 }

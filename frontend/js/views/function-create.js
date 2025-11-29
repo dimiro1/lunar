@@ -3,6 +3,7 @@
  */
 
 import { API } from "../api.js";
+import { t } from "../i18n/index.js";
 import { Toast } from "../components/toast.js";
 import { BackButton, Button, ButtonVariant } from "../components/button.js";
 import {
@@ -13,6 +14,8 @@ import {
 } from "../components/form.js";
 import {
   FunctionTemplates,
+  getTemplateDescription,
+  getTemplateName,
   TemplateCard,
   TemplateCards,
 } from "../components/template-card.js";
@@ -122,7 +125,7 @@ export const FunctionCreate = {
         FunctionCreate.errors[error.field] = error.message;
         m.redraw();
       } else {
-        Toast.show("Failed to create function: " + e.message, "error");
+        Toast.show(t("create.failedToCreate") + ": " + e.message, "error");
       }
     }
   },
@@ -135,20 +138,23 @@ export const FunctionCreate = {
     return m(".create-function-page.fade-in", [
       m(".create-function-header", [
         m(".create-function-back", [m(BackButton, { href: "#!/functions" })]),
-        m("h1.create-function-title", "Create New Function"),
+        m("h1.create-function-title", t("create.title")),
         m(
           "p.create-function-subtitle",
-          "Initialize a new serverless function using Lua.",
+          t("create.subtitle"),
         ),
       ]),
 
       m(".create-function-form", [
         // Function Name
         m(FormGroup, [
-          m(FormLabel, { text: "Function Name", for: "function-name" }),
+          m(FormLabel, {
+            text: t("create.functionName"),
+            for: "function-name",
+          }),
           m(FormInput, {
             id: "function-name",
-            placeholder: "e.g., payment-webhook",
+            placeholder: t("create.functionNamePlaceholder"),
             value: FunctionCreate.formData.name,
             error: !!FunctionCreate.errors.name,
             mono: true,
@@ -163,14 +169,14 @@ export const FunctionCreate = {
 
         // Starter Template
         m(FormGroup, [
-          m(FormLabel, { text: "Starter Template" }),
+          m(FormLabel, { text: t("create.starterTemplate") }),
           m(
             TemplateCards,
             FunctionTemplates.map((template) =>
               m(TemplateCard, {
                 key: template.id,
-                name: template.name,
-                description: template.description,
+                name: getTemplateName(template.id),
+                description: getTemplateDescription(template.id),
                 icon: template.icon,
                 selected: FunctionCreate.selectedTemplate === template.id,
                 onclick: () => FunctionCreate.selectTemplate(template.id),
@@ -187,7 +193,7 @@ export const FunctionCreate = {
               variant: ButtonVariant.GHOST,
               href: "#!/functions",
             },
-            "Cancel",
+            t("common.cancel"),
           ),
           m(
             Button,
@@ -195,7 +201,7 @@ export const FunctionCreate = {
               variant: ButtonVariant.PRIMARY,
               onclick: FunctionCreate.createFunction,
             },
-            "Create Function",
+            t("create.createButton"),
           ),
         ]),
       ]),
