@@ -4,6 +4,8 @@
 
 import { icons } from "../icons.js";
 import { Kbd } from "./kbd.js";
+import { LanguageSelector } from "./language-selector.js";
+import { t } from "../i18n/index.js";
 
 /**
  * @typedef {import('../types.js').IconName} IconName
@@ -271,7 +273,7 @@ export const Header = {
 
     return m(Navbar, [
       m(NavbarSection, [
-        m(NavbarBrand, { name: "Dashboard", href: "#!/" }),
+        m(NavbarBrand, { name: t("nav.dashboard"), href: "#!/" }),
         breadcrumb &&
         m(
           "span.navbar__breadcrumb-separator",
@@ -285,13 +287,15 @@ export const Header = {
       ]),
       m(NavbarSection, [
         m(NavbarSearch, {
-          placeholder: "Search",
+          placeholder: t("nav.search"),
           shortcut: "⌘K",
           onclick: onSearch,
         }),
         m(NavbarDivider),
+        m(LanguageSelector),
+        m(NavbarDivider),
         m(NavbarAction, {
-          label: "Logout",
+          label: t("nav.logout"),
           onclick: onLogout,
         }),
       ]),

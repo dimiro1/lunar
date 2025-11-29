@@ -26,6 +26,7 @@ import {
   TableRow,
 } from "../components/table.js";
 import { TabContent, Tabs } from "../components/tabs.js";
+import { t } from "../i18n/index.js";
 
 /**
  * @typedef {import('../types.js').LunarFunction} lunarFunction
@@ -156,12 +157,15 @@ export const FunctionExecutions = {
     if (FunctionExecutions.loading) {
       return m(".loading", [
         m.trust(icons.spinner()),
-        m("p", "Loading function..."),
+        m("p", t("functions.loadingFunction")),
       ]);
     }
 
     if (!FunctionExecutions.func) {
-      return m(".fade-in", m(Card, m(CardContent, "Function not found")));
+      return m(
+        ".fade-in",
+        m(Card, m(CardContent, t("common.functionNotFound"))),
+      );
     }
 
     const func = FunctionExecutions.func;
@@ -188,7 +192,7 @@ export const FunctionExecutions = {
             ]),
             m(
               "p.function-details-description",
-              func.description || "No description",
+              func.description || t("common.noDescription"),
             ),
           ]),
         ]),
@@ -208,26 +212,26 @@ export const FunctionExecutions = {
         m(".executions-tab-container", [
           m(Card, [
             m(CardHeader, {
-              title: "Execution History",
-              subtitle:
-                `${FunctionExecutions.executionsTotal} total executions`,
+              title: t("executions.title"),
+              subtitle: t("executions.totalCount", {
+                count: FunctionExecutions.executionsTotal,
+              }),
             }),
             FunctionExecutions.executions.length === 0
               ? m(CardContent, [
                 m(TableEmpty, {
                   icon: "inbox",
-                  message:
-                    "No executions yet. Test your function to see execution history.",
+                  message: t("executions.emptyState"),
                 }),
               ])
               : [
                 m(Table, [
                   m(TableHeader, [
                     m(TableRow, [
-                      m(TableHead, "Execution ID"),
-                      m(TableHead, "Status"),
-                      m(TableHead, "Duration"),
-                      m(TableHead, "Time"),
+                      m(TableHead, t("executions.columns.id")),
+                      m(TableHead, t("executions.columns.status")),
+                      m(TableHead, t("executions.columns.duration")),
+                      m(TableHead, t("executions.columns.time")),
                     ]),
                   ]),
                   m(
@@ -251,13 +255,15 @@ export const FunctionExecutions = {
                                   : BadgeVariant.DESTRUCTIVE,
                                 size: BadgeSize.SM,
                               },
-                              exec.status.toUpperCase(),
+                              t(`common.status.${exec.status}`),
                             ),
                           ),
                           m(
                             TableCell,
                             { mono: true },
-                            exec.duration_ms ? `${exec.duration_ms}ms` : "N/A",
+                            exec.duration_ms
+                              ? `${exec.duration_ms}ms`
+                              : t("common.na"),
                           ),
                           m(TableCell, formatUnixTimestamp(exec.created_at)),
                         ],

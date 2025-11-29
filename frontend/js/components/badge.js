@@ -3,6 +3,7 @@
  */
 
 import { icons } from "../icons.js";
+import { t } from "../i18n/index.js";
 
 /**
  * @typedef {import('../types.js').IconName} IconName
@@ -153,7 +154,7 @@ export const StatusBadge = {
         uppercase: true,
         mono: true,
       },
-      enabled ? "Enabled" : "Disabled",
+      enabled ? t("badge.enabled") : t("badge.disabled"),
     );
   },
 };

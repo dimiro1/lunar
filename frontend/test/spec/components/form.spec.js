@@ -9,6 +9,7 @@ import {
   FormSelect,
   PasswordInput,
 } from "../../../js/components/form.js";
+import { t } from "../../../js/i18n/index.js";
 
 /**
  * Helper to find a vnode in children by predicate
@@ -129,7 +130,7 @@ describe("CopyInput", () => {
         c.tag === "button" &&
         getVnodeClass(c).includes("form-copy-button"),
     );
-    expect(button.attrs.title).toBe("Copied!");
+    expect(button.attrs.title).toBe(t("form.copied"));
   });
 
   it("clicking copy button calls clipboard API", async () => {

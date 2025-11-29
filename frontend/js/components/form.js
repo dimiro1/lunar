@@ -3,6 +3,7 @@
  */
 
 import { icons } from "../icons.js";
+import { t } from "../i18n/index.js";
 
 /**
  * @typedef {import('../types.js').IconName} IconName
@@ -242,7 +243,9 @@ export const PasswordInput = {
         "button.form-password-toggle",
         {
           type: "button",
-          title: vnode.state.visible ? "Hide password" : "Show password",
+          title: vnode.state.visible
+            ? t("form.hidePassword")
+            : t("form.showPassword"),
           onclick: () => {
             vnode.state.visible = !vnode.state.visible;
           },
@@ -338,8 +341,10 @@ export const CopyInput = {
         "button.form-copy-button",
         {
           type: "button",
-          title: vnode.state.copied ? "Copied!" : "Copy to clipboard",
-          "aria-label": "Copy to clipboard",
+          title: vnode.state.copied
+            ? t("form.copied")
+            : t("form.copyToClipboard"),
+          "aria-label": t("form.copyToClipboard"),
           onclick: handleCopy,
         },
         [

@@ -3,8 +3,12 @@
  * Defines the Layout component and application routes.
  */
 
+import { i18n, t } from "./i18n/index.js";
 import { Toast } from "./components/toast.js";
 import { Header } from "./components/navbar.js";
+
+// Initialize i18n before rendering
+i18n.init();
 import { CommandPalette } from "./components/command-palette.js";
 import { Login } from "./views/login.js";
 import { FunctionsList } from "./views/functions-list.js";
@@ -44,11 +48,14 @@ const Layout = {
    * @param {Object} vnode - Mithril vnode
    * @param {Object} vnode.attrs - Component attributes
    * @param {string} [vnode.attrs.breadcrumb] - Breadcrumb text for the current page
+   * @param {string} [vnode.attrs.breadcrumbKey] - Translation key for breadcrumb
    * @param {Object} vnode.children - Child components to render in the main area
    * @returns {Object[]} Array of Mithril vnodes
    */
   view: (vnode) => {
-    const breadcrumb = vnode.attrs.breadcrumb;
+    const breadcrumb = vnode.attrs.breadcrumbKey
+      ? t(vnode.attrs.breadcrumbKey)
+      : vnode.attrs.breadcrumb;
 
     return [
       m(Header, {
@@ -71,13 +78,14 @@ m.route(document.getElementById("app"), "/functions", {
     render: () => m(Layout, m(FunctionsList)),
   },
   "/functions/new": {
-    render: () => m(Layout, { breadcrumb: "New Function" }, m(FunctionCreate)),
+    render: () =>
+      m(Layout, { breadcrumbKey: "functions.newFunction" }, m(FunctionCreate)),
   },
   "/functions/:id": {
     render: (vnode) =>
       m(
         Layout,
-        { breadcrumb: "Code" },
+        { breadcrumbKey: "tabs.code" },
         m(FunctionCode, { ...vnode.attrs, key: vnode.attrs.id }),
       ),
   },
@@ -85,7 +93,7 @@ m.route(document.getElementById("app"), "/functions", {
     render: (vnode) =>
       m(
         Layout,
-        { breadcrumb: "Versions" },
+        { breadcrumbKey: "tabs.versions" },
         m(FunctionVersions, { ...vnode.attrs, key: vnode.attrs.id }),
       ),
   },
@@ -93,7 +101,7 @@ m.route(document.getElementById("app"), "/functions", {
     render: (vnode) =>
       m(
         Layout,
-        { breadcrumb: "Executions" },
+        { breadcrumbKey: "tabs.executions" },
         m(FunctionExecutions, { ...vnode.attrs, key: vnode.attrs.id }),
       ),
   },
@@ -101,7 +109,7 @@ m.route(document.getElementById("app"), "/functions", {
     render: (vnode) =>
       m(
         Layout,
-        { breadcrumb: "Settings" },
+        { breadcrumbKey: "tabs.settings" },
         m(FunctionSettings, { ...vnode.attrs, key: vnode.attrs.id }),
       ),
   },
@@ -109,7 +117,7 @@ m.route(document.getElementById("app"), "/functions", {
     render: (vnode) =>
       m(
         Layout,
-        { breadcrumb: "Test" },
+        { breadcrumbKey: "tabs.test" },
         m(FunctionTest, { ...vnode.attrs, key: vnode.attrs.id }),
       ),
   },
@@ -117,7 +125,7 @@ m.route(document.getElementById("app"), "/functions", {
     render: (vnode) =>
       m(
         Layout,
-        { breadcrumb: "Version Diff" },
+        { breadcrumbKey: "diff.title" },
         m(VersionDiff, {
           ...vnode.attrs,
           key: `${vnode.attrs.id}-${vnode.attrs.v1}-${vnode.attrs.v2}`,

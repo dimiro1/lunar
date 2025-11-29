@@ -3,6 +3,7 @@
  */
 
 import { icons } from "../icons.js";
+import { t } from "../i18n/index.js";
 
 /**
  * @typedef {Object} FunctionTemplate
@@ -103,15 +104,32 @@ export const TemplateCards = {
 };
 
 /**
+ * Gets the localized name for a template.
+ * @param {string} id - Template ID
+ * @returns {string} Localized template name
+ */
+export function getTemplateName(id) {
+  return t(`templates.${id}.name`);
+}
+
+/**
+ * Gets the localized description for a template.
+ * @param {string} id - Template ID
+ * @returns {string} Localized template description
+ */
+export function getTemplateDescription(id) {
+  return t(`templates.${id}.description`);
+}
+
+/**
  * Pre-defined templates for function creation.
  * Each template includes sample Lua code for common use cases.
+ * Use getTemplateName() and getTemplateDescription() for localized strings.
  * @type {FunctionTemplate[]}
  */
 export const FunctionTemplates = [
   {
     id: "http",
-    name: "HTTP Template",
-    description: "Handle HTTP requests with custom logic",
     icon: "globe",
     code: `-- HTTP Handler
 function handler(ctx, event)
@@ -133,8 +151,6 @@ end`,
   },
   {
     id: "api",
-    name: "REST API",
-    description: "Build RESTful API endpoints",
     icon: "server",
     code: `-- REST API Endpoint
 function handler(ctx, event)
@@ -171,9 +187,7 @@ function handler(ctx, event)
 end`,
   },
   {
-    id: "ai-chat",
-    name: "AI Chatbot",
-    description: "Chat completion with OpenAI or Anthropic",
+    id: "aiChat",
     icon: "sparkles",
     code: `-- AI Chatbot
 -- Set OPENAI_API_KEY or ANTHROPIC_API_KEY in environment variables
@@ -225,8 +239,6 @@ end`,
   },
   {
     id: "email",
-    name: "Send Email",
-    description: "Send emails via Resend API",
     icon: "mail",
     code: `-- Send Email
 -- Set RESEND_API_KEY in environment variables
@@ -282,8 +294,6 @@ end`,
   },
   {
     id: "blank",
-    name: "Blank",
-    description: "Start with empty template",
     icon: "document",
     code: `-- Your function code here
 function handler(ctx, event)

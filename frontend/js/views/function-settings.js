@@ -4,6 +4,7 @@
 
 import { icons } from "../icons.js";
 import { API } from "../api.js";
+import { t } from "../i18n/index.js";
 import { Toast } from "../components/toast.js";
 import { BackButton, Button, ButtonVariant } from "../components/button.js";
 import {
@@ -175,7 +176,7 @@ export const FunctionSettings = {
       });
 
       await API.functions.updateEnv(FunctionSettings.func.id, env_vars);
-      Toast.show("Environment variables updated", "success");
+      Toast.show(t("toast.envVarsUpdated"), "success");
       await FunctionSettings.loadFunction(FunctionSettings.func.id);
     } catch (e) {
       FunctionSettings.envErrors.general = e.message;
@@ -215,10 +216,10 @@ export const FunctionSettings = {
       }
 
       await API.functions.update(FunctionSettings.func.id, updates);
-      Toast.show("Settings saved successfully", "success");
+      Toast.show(t("toast.settingsSaved"), "success");
       await FunctionSettings.loadFunction(FunctionSettings.func.id);
     } catch (e) {
-      Toast.show("Failed to save settings: " + e.message, "error");
+      Toast.show(t("toast.failedToSave") + ": " + e.message, "error");
     }
   },
 
@@ -229,7 +230,7 @@ export const FunctionSettings = {
   deleteFunction: async () => {
     if (
       !confirm(
-        `Are you sure you want to delete "${FunctionSettings.func.name}"? This action cannot be undone.`,
+        t("settings.deleteConfirm", { name: FunctionSettings.func.name }),
       )
     ) {
       return;
@@ -237,10 +238,10 @@ export const FunctionSettings = {
 
     try {
       await API.functions.delete(FunctionSettings.func.id);
-      Toast.show("Function deleted successfully", "success");
+      Toast.show(t("toast.functionDeleted"), "success");
       m.route.set(paths.functions());
     } catch (e) {
-      Toast.show("Failed to delete function: " + e.message, "error");
+      Toast.show(t("toast.failedToDelete") + ": " + e.message, "error");
     }
   },
 
@@ -263,11 +264,13 @@ export const FunctionSettings = {
       await API.functions.update(FunctionSettings.func.id, {
         disabled: FunctionSettings.editedDisabled,
       });
-      const action = FunctionSettings.editedDisabled ? "disabled" : "enabled";
-      Toast.show(`Function ${action} successfully`, "success");
+      const toastKey = FunctionSettings.editedDisabled
+        ? "toast.functionDisabled"
+        : "toast.functionEnabled";
+      Toast.show(t(toastKey), "success");
       await FunctionSettings.loadFunction(FunctionSettings.func.id);
     } catch (e) {
-      Toast.show("Failed to update status: " + e.message, "error");
+      Toast.show(t("toast.failedToUpdate") + ": " + e.message, "error");
     }
   },
 
@@ -280,12 +283,15 @@ export const FunctionSettings = {
     if (FunctionSettings.loading) {
       return m(".loading", [
         m.trust(icons.spinner()),
-        m("p", "Loading function..."),
+        m("p", t("functions.loadingFunction")),
       ]);
     }
 
     if (!FunctionSettings.func) {
-      return m(".fade-in", m(Card, m(CardContent, "Function not found")));
+      return m(
+        ".fade-in",
+        m(Card, m(CardContent, t("common.functionNotFound"))),
+      );
     }
 
     const func = FunctionSettings.func;
@@ -312,7 +318,7 @@ export const FunctionSettings = {
             ]),
             m(
               "p.function-details-description",
-              func.description || "No description",
+              func.description || t("common.noDescription"),
             ),
           ]),
         ]),
@@ -332,10 +338,10 @@ export const FunctionSettings = {
         m(".settings-tab-container", [
           // General Settings
           m(Card, { style: "margin-bottom: 1.5rem" }, [
-            m(CardHeader, { title: "General Configuration" }),
+            m(CardHeader, { title: t("settings.generalConfig") }),
             m(CardContent, [
               m(FormGroup, [
-                m(FormLabel, { text: "Function Name" }),
+                m(FormLabel, { text: t("settings.functionName") }),
                 m(FormInput, {
                   value: FunctionSettings.editedName !== null
                     ? FunctionSettings.editedName
@@ -352,7 +358,7 @@ export const FunctionSettings = {
                 }),
               ]),
               m(FormGroup, [
-                m(FormLabel, { text: "Description" }),
+                m(FormLabel, { text: t("settings.description") }),
                 m(FormTextarea, {
                   value: FunctionSettings.editedDescription !== null
                     ? FunctionSettings.editedDescription
@@ -369,7 +375,7 @@ export const FunctionSettings = {
                 }),
               ]),
               m(FormGroup, [
-                m(FormLabel, { text: "Log Retention Period" }),
+                m(FormLabel, { text: t("settings.logRetention") }),
                 m(
                   "select.form-select",
                   {
@@ -386,15 +392,14 @@ export const FunctionSettings = {
                     },
                   },
                   [
-                    m("option", { value: 7 }, "7 days"),
-                    m("option", { value: 15 }, "15 days"),
-                    m("option", { value: 30 }, "30 days"),
-                    m("option", { value: 365 }, "1 year"),
+                    m("option", { value: 7 }, t("settings.retention.days7")),
+                    m("option", { value: 15 }, t("settings.retention.days15")),
+                    m("option", { value: 30 }, t("settings.retention.days30")),
+                    m("option", { value: 365 }, t("settings.retention.year1")),
                   ],
                 ),
                 m(FormHelp, {
-                  text:
-                    "Executions older than this will be automatically deleted",
+                  text: t("settings.retentionHelp"),
                 }),
               ]),
             ]),
@@ -406,7 +411,7 @@ export const FunctionSettings = {
                   onclick: FunctionSettings.saveGeneralSettings,
                   disabled: !FunctionSettings.hasGeneralChanges(),
                 },
-                "Save Changes",
+                t("common.saveChanges"),
               ),
             ]),
           ]),
@@ -414,11 +419,12 @@ export const FunctionSettings = {
           // Environment Variables
           m(Card, { style: "margin-bottom: 1.5rem" }, [
             m(CardHeader, {
-              title: "Environment Variables",
-              subtitle: `${
-                FunctionSettings.envVars.filter((v) => v.state !== "removed")
-                  .length
-              } variables`,
+              title: t("settings.envVars"),
+              subtitle: t("settings.variablesCount", {
+                count: FunctionSettings.envVars.filter((v) =>
+                  v.state !== "removed"
+                ).length,
+              }),
             }),
             m(CardContent, [
               FunctionSettings.envErrors.general &&
@@ -467,24 +473,24 @@ export const FunctionSettings = {
                   onclick: FunctionSettings.saveEnvVars,
                   disabled: !FunctionSettings.hasEnvChanges(),
                 },
-                "Save Changes",
+                t("common.saveChanges"),
               ),
             ]),
           ]),
 
           // Network & Triggers
           m(Card, { style: "margin-bottom: 1.5rem" }, [
-            m(CardHeader, { title: "Network & Triggers" }),
+            m(CardHeader, { title: t("settings.network") }),
             m(CardContent, [
               m(FormGroup, [
-                m(FormLabel, { text: "Invocation URL" }),
+                m(FormLabel, { text: t("settings.invocationUrl") }),
                 m(CopyInput, {
                   value: `${window.location.origin}/fn/${func.id}`,
                   mono: true,
                 }),
               ]),
               m(FormGroup, [
-                m(FormLabel, { text: "Supported Methods" }),
+                m(FormLabel, { text: t("settings.supportedMethods") }),
                 m(MethodBadges, {
                   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
                 }),
@@ -494,13 +500,12 @@ export const FunctionSettings = {
 
           // Function Status
           m(Card, { variant: "warning", style: "margin-bottom: 1.5rem" }, [
-            m(CardHeader, { title: "Function Status" }),
+            m(CardHeader, { title: t("settings.functionStatus") }),
             m(CardContent, [
               m(FormCheckbox, {
                 id: "enable-function",
-                label: "Enable Function",
-                description:
-                  "Disabling will stop all incoming requests to this function.",
+                label: t("settings.enableFunction"),
+                description: t("settings.disableWarning"),
                 checked: FunctionSettings.editedDisabled !== null
                   ? !FunctionSettings.editedDisabled
                   : !func.disabled,
@@ -524,21 +529,21 @@ export const FunctionSettings = {
                   onclick: FunctionSettings.saveStatusSettings,
                   disabled: !FunctionSettings.hasStatusChanges(),
                 },
-                "Save Changes",
+                t("common.saveChanges"),
               ),
             ]),
           ]),
 
           // Danger Zone
           m(Card, { variant: "danger" }, [
-            m(CardHeader, { title: "Danger Zone" }),
+            m(CardHeader, { title: t("settings.dangerZone") }),
             m(CardContent, [
               m(".danger-zone-item", [
                 m(".danger-zone-info", [
-                  m("p.danger-zone-title", "Delete Function"),
+                  m("p.danger-zone-title", t("settings.deleteFunction")),
                   m(
                     "p.danger-zone-description",
-                    "Once deleted, this function cannot be recovered.",
+                    t("settings.deleteWarning"),
                   ),
                 ]),
                 m(
@@ -547,7 +552,7 @@ export const FunctionSettings = {
                     variant: ButtonVariant.DESTRUCTIVE,
                     onclick: FunctionSettings.deleteFunction,
                   },
-                  "Delete",
+                  t("common.delete"),
                 ),
               ]),
             ]),

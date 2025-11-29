@@ -52,10 +52,15 @@ import { Toast } from "../components/toast.js";
 import { Kbd, Separator } from "../components/kbd.js";
 import {
   FunctionTemplates,
+  getTemplateDescription,
+  getTemplateName,
   TemplateCard,
   TemplateCards,
 } from "../components/template-card.js";
-import { APIReference, LuaAPISections } from "../components/api-reference.js";
+import {
+  APIReference,
+  getLuaAPISections,
+} from "../components/api-reference.js";
 import { LogViewer } from "../components/log-viewer.js";
 import { CodeViewer } from "../components/code-viewer.js";
 import { EnvEditor } from "../components/env-editor.js";
@@ -670,8 +675,8 @@ export const Preview = {
         FunctionTemplates.map((template) =>
           m(TemplateCard, {
             key: template.id,
-            name: template.name,
-            description: template.description,
+            name: getTemplateName(template.id),
+            description: getTemplateDescription(template.id),
             icon: template.icon,
             selected: Preview.demoState.selectedTemplate === template.id,
             onclick: () => (Preview.demoState.selectedTemplate = template.id),
@@ -690,7 +695,7 @@ export const Preview = {
       m("h3", "API Reference"),
       m(".preview-api-reference", { style: "max-width: 400px;" }, [
         m(APIReference, {
-          sections: LuaAPISections,
+          sections: getLuaAPISections(),
           activeSection: Preview.demoState.apiSection,
           onSectionChange: (id) => {
             Preview.demoState.apiSection = id;

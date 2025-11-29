@@ -4,6 +4,7 @@
 
 import { Card, CardContent, CardHeader } from "./card.js";
 import { icons } from "../icons.js";
+import { t } from "../i18n/index.js";
 
 /**
  * @typedef {('curl'|'javascript'|'python'|'go')} SupportedLanguage
@@ -151,8 +152,8 @@ func main() {
       m(
         CardHeader,
         {
-          title: "Code Examples",
-          subtitle: "Call this function from your application",
+          title: t("codeExamples.title"),
+          subtitle: t("codeExamples.subtitle"),
         },
         [
           m(
@@ -179,7 +180,9 @@ func main() {
             "button.form-copy-button",
             {
               type: "button",
-              title: CodeExamples.copied ? "Copied!" : "Copy to clipboard",
+              title: CodeExamples.copied
+                ? t("codeExamples.copied")
+                : t("codeExamples.copyToClipboard"),
               style: "position: absolute; top: 2rem; right: 1rem; z-index: 10;",
               onclick: () => {
                 const code = CodeExamples.generateCodeExample(

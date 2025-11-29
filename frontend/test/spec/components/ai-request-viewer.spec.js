@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "../../../js/components/table.js";
 import { CodeViewer } from "../../../js/components/code-viewer.js";
+import { t } from "../../../js/i18n/index.js";
 
 describe("AIRequestViewer", () => {
   // Reset expanded rows before each test
@@ -28,9 +29,7 @@ describe("AIRequestViewer", () => {
       const emptyRow = tableBody.children[0];
       expect(emptyRow.tag).toBe(TableEmpty);
       expect(emptyRow.attrs.colspan).toBe(7);
-      expect(emptyRow.attrs.message).toBe(
-        "No AI requests recorded for this execution.",
-      );
+      expect(emptyRow.attrs.message).toBe(t("aiRequestViewer.noRequests"));
     });
 
     it("renders table with requests", () => {
@@ -146,7 +145,7 @@ describe("AIRequestViewer", () => {
       const { formatted, truncated } = AIRequestViewer.formatJSON(input, true);
 
       expect(truncated).toBe(true);
-      expect(formatted).toContain("... (truncated)");
+      expect(formatted).toContain(t("aiRequestViewer.truncated"));
       expect(formatted.length).toBeLessThan(input.length);
     });
 

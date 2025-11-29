@@ -5,6 +5,7 @@
 import { icons } from "../icons.js";
 import { API } from "../api.js";
 import { paths } from "../routes.js";
+import { t } from "../i18n/index.js";
 
 /**
  * @typedef {import('../types.js').LunarFunction} lunarFunction
@@ -123,15 +124,15 @@ export const CommandPalette = {
     const navItems = [
       {
         type: "nav",
-        label: "Functions",
-        description: "View all functions",
+        label: t("functions.title"),
+        description: t("commandPalette.actions.viewFunctions"),
         path: paths.functions(),
         icon: "bolt",
       },
       {
         type: "nav",
-        label: "Create Function",
-        description: "Create a new function",
+        label: t("functions.newFunction"),
+        description: t("commandPalette.actions.createFunction"),
         path: paths.functionCreate(),
         icon: "plus",
       },
@@ -144,7 +145,7 @@ export const CommandPalette = {
       functionItems.push({
         type: "function",
         label: func.name,
-        description: "Go to Code",
+        description: t("commandPalette.actions.goToCode"),
         path: paths.functionCode(func.id),
         icon: "code",
         id: func.id,
@@ -153,8 +154,8 @@ export const CommandPalette = {
       // Additional actions for each function
       functionItems.push({
         type: "action",
-        label: `${func.name} → Versions`,
-        description: "View version history",
+        label: `${func.name} → ${t("tabs.versions")}`,
+        description: t("commandPalette.actions.viewVersions"),
         path: paths.functionVersions(func.id),
         icon: "listBullet",
         id: func.id,
@@ -162,8 +163,8 @@ export const CommandPalette = {
       });
       functionItems.push({
         type: "action",
-        label: `${func.name} → Executions`,
-        description: "View execution logs",
+        label: `${func.name} → ${t("tabs.executions")}`,
+        description: t("commandPalette.actions.viewExecutions"),
         path: paths.functionExecutions(func.id),
         icon: "chartBar",
         id: func.id,
@@ -171,8 +172,8 @@ export const CommandPalette = {
       });
       functionItems.push({
         type: "action",
-        label: `${func.name} → Settings`,
-        description: "Configure function",
+        label: `${func.name} → ${t("tabs.settings")}`,
+        description: t("commandPalette.actions.configureFunction"),
         path: paths.functionSettings(func.id),
         icon: "cog",
         id: func.id,
@@ -180,8 +181,8 @@ export const CommandPalette = {
       });
       functionItems.push({
         type: "action",
-        label: `${func.name} → Test`,
-        description: "Test function",
+        label: `${func.name} → ${t("tabs.test")}`,
+        description: t("commandPalette.actions.testFunction"),
         path: paths.functionTest(func.id),
         icon: "beaker",
         id: func.id,
@@ -306,7 +307,7 @@ export const CommandPalette = {
               m("span.command-palette__search-icon", m.trust(icons.search())),
               m("input.command-palette__input", {
                 type: "text",
-                placeholder: "Search functions...",
+                placeholder: t("commandPalette.searchPlaceholder"),
                 value: CommandPalette.query,
                 oninput: (e) => {
                   CommandPalette.query = e.target.value;
@@ -321,10 +322,10 @@ export const CommandPalette = {
             CommandPalette.loading
               ? m(".command-palette__loading", [
                 m.trust(icons.spinner()),
-                " Loading...",
+                " " + t("commandPalette.loading"),
               ])
               : CommandPalette.results.length === 0
-              ? m(".command-palette__empty", "No results found")
+              ? m(".command-palette__empty", t("commandPalette.noResults"))
               : CommandPalette.results.map((item, index) =>
                 m(
                   ".command-palette__item",
@@ -358,15 +359,24 @@ export const CommandPalette = {
                     ]),
                     item.type === "function" &&
                     item.disabled &&
-                    m("span.command-palette__item-badge", "Disabled"),
+                    m("span.command-palette__item-badge", t("common.disabled")),
                   ],
                 )
               ),
           ]),
           m(".command-palette__footer", [
-            m("span.command-palette__hint", [m("kbd", "↑↓"), " to navigate"]),
-            m("span.command-palette__hint", [m("kbd", "↵"), " to select"]),
-            m("span.command-palette__hint", [m("kbd", "esc"), " to close"]),
+            m("span.command-palette__hint", [
+              m("kbd", "↑↓"),
+              " " + t("commandPalette.toNavigate"),
+            ]),
+            m("span.command-palette__hint", [
+              m("kbd", "↵"),
+              " " + t("commandPalette.toSelect"),
+            ]),
+            m("span.command-palette__hint", [
+              m("kbd", "esc"),
+              " " + t("commandPalette.toClose"),
+            ]),
           ]),
         ]),
       ],

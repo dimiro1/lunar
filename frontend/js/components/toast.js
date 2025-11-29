@@ -3,6 +3,7 @@
  */
 
 import { icons } from "../icons.js";
+import { t } from "../i18n/index.js";
 
 /**
  * @typedef {import('../types.js').ToastMessage} ToastMessage
@@ -82,7 +83,7 @@ export const Toast = {
               "button.toast__close",
               {
                 onclick: () => Toast.remove(msg.id),
-                "aria-label": "Close notification",
+                "aria-label": t("toast.closeNotification"),
               },
               m.trust(icons.xMark()),
             ),

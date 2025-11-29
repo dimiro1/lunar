@@ -16,6 +16,8 @@ import {
   TableRow,
 } from "./table.js";
 
+import { t } from "../i18n/index.js";
+
 /**
  * @typedef {import('../types.js').AIRequest} AIRequest
  */
@@ -66,7 +68,8 @@ export const AIRequestViewer = {
       if (truncate && formatted.length > MAX_JSON_DISPLAY_LENGTH) {
         return {
           formatted: formatted.substring(0, MAX_JSON_DISPLAY_LENGTH) +
-            "\n\n... (truncated)",
+            "\n\n" +
+            t("aiRequestViewer.truncated"),
           truncated: true,
         };
       }
@@ -79,7 +82,8 @@ export const AIRequestViewer = {
       if (truncate && formatted.length > MAX_JSON_DISPLAY_LENGTH) {
         return {
           formatted: formatted.substring(0, MAX_JSON_DISPLAY_LENGTH) +
-            "\n\n... (truncated)",
+            "\n\n" +
+            t("aiRequestViewer.truncated"),
           truncated: true,
         };
       }
@@ -99,8 +103,11 @@ export const AIRequestViewer = {
    * @returns {Object} Mithril vnode
    */
   view(vnode) {
-    const { requests = [], maxHeight = "400px", noBorder = false } =
-      vnode.attrs;
+    const {
+      requests = [],
+      maxHeight = "400px",
+      noBorder = false,
+    } = vnode.attrs;
 
     if (requests.length === 0) {
       return m(Table, [
@@ -108,7 +115,7 @@ export const AIRequestViewer = {
           m(TableEmpty, {
             colspan: 7,
             icon: "network",
-            message: "No AI requests recorded for this execution.",
+            message: t("aiRequestViewer.noRequests"),
           }),
         ]),
       ]);
@@ -125,12 +132,32 @@ export const AIRequestViewer = {
           m(TableHeader, [
             m(TableRow, [
               m(TableHead, { style: "width: 2rem;" }, ""),
-              m(TableHead, { style: "width: 10%;" }, "Provider"),
-              m(TableHead, { style: "width: 25%;" }, "Model"),
-              m(TableHead, { style: "width: 10%;" }, "Status"),
-              m(TableHead, { style: "width: 20%;" }, "Tokens"),
-              m(TableHead, { style: "width: 15%;" }, "Duration"),
-              m(TableHead, { style: "width: 20%;" }, "Time"),
+              m(
+                TableHead,
+                { style: "width: 10%;" },
+                t("aiRequestViewer.provider"),
+              ),
+              m(
+                TableHead,
+                { style: "width: 25%;" },
+                t("aiRequestViewer.model"),
+              ),
+              m(
+                TableHead,
+                { style: "width: 10%;" },
+                t("aiRequestViewer.status"),
+              ),
+              m(
+                TableHead,
+                { style: "width: 20%;" },
+                t("aiRequestViewer.tokens"),
+              ),
+              m(
+                TableHead,
+                { style: "width: 15%;" },
+                t("aiRequestViewer.duration"),
+              ),
+              m(TableHead, { style: "width: 20%;" }, t("aiRequestViewer.time")),
             ]),
           ]),
           m(
@@ -200,7 +227,7 @@ export const AIRequestViewer = {
                   : BadgeVariant.DESTRUCTIVE,
                 size: BadgeSize.SM,
               },
-              req.status.toUpperCase(),
+              t(`common.status.${req.status}`),
             ),
           ]),
 
@@ -214,9 +241,15 @@ export const AIRequestViewer = {
               req.output_tokens !== undefined
               ? [
                 m("span", req.input_tokens),
-                m("span.ai-request-viewer__token-label", " in "),
+                m(
+                  "span.ai-request-viewer__token-label",
+                  ` ${t("aiRequestViewer.in")} `,
+                ),
                 m("span", req.output_tokens),
-                m("span.ai-request-viewer__token-label", " out"),
+                m(
+                  "span.ai-request-viewer__token-label",
+                  ` ${t("aiRequestViewer.out")}`,
+                ),
               ]
               : "-",
           ),
@@ -233,47 +266,48 @@ export const AIRequestViewer = {
     // Add expanded content row if expanded
     if (isExpanded) {
       const panels = [
-        this.renderJSONPanel("Request", req.request_json),
+        this.renderJSONPanel(t("aiRequestViewer.request"), req.request_json),
       ];
       if (req.response_json) {
-        panels.push(this.renderJSONPanel("Response", req.response_json));
+        panels.push(
+          this.renderJSONPanel(
+            t("aiRequestViewer.response"),
+            req.response_json,
+          ),
+        );
       }
 
       rows.push(
-        m(
-          "tr.ai-request-viewer__expanded-row",
-          { key: req.id + "-expanded" },
-          [
-            m("td", { colspan: 7 }, [
-              m(".ai-request-viewer__content", [
-                // Error message if present
-                req.error_message
-                  ? m(".ai-request-viewer__error", [
-                    m("strong", "Error: "),
-                    req.error_message,
-                  ])
-                  : null,
+        m("tr.ai-request-viewer__expanded-row", { key: req.id + "-expanded" }, [
+          m("td", { colspan: 7 }, [
+            m(".ai-request-viewer__content", [
+              // Error message if present
+              req.error_message
+                ? m(".ai-request-viewer__error", [
+                  m("strong", t("aiRequestViewer.error") + ": "),
+                  req.error_message,
+                ])
+                : null,
 
-                // Endpoint
-                m(".ai-request-viewer__endpoint", [
-                  m("strong", "Endpoint: "),
-                  m("code", req.endpoint),
-                ]),
-
-                // Request/Response panels
-                m(
-                  ".ai-request-viewer__panels",
-                  {
-                    class: panels.length === 1
-                      ? "ai-request-viewer__panels--single"
-                      : "",
-                  },
-                  panels,
-                ),
+              // Endpoint
+              m(".ai-request-viewer__endpoint", [
+                m("strong", t("aiRequestViewer.endpoint") + ": "),
+                m("code", req.endpoint),
               ]),
+
+              // Request/Response panels
+              m(
+                ".ai-request-viewer__panels",
+                {
+                  class: panels.length === 1
+                    ? "ai-request-viewer__panels--single"
+                    : "",
+                },
+                panels,
+              ),
             ]),
-          ],
-        ),
+          ]),
+        ]),
       );
     }
 

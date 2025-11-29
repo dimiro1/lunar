@@ -25,6 +25,7 @@ import { LogViewer } from "../components/log-viewer.js";
 import { CodeViewer } from "../components/code-viewer.js";
 import { AIRequestViewer } from "../components/ai-request-viewer.js";
 import { EmailRequestViewer } from "../components/email-request-viewer.js";
+import { t } from "../i18n/index.js";
 
 /**
  * @typedef {import('../types.js').LunarFunction} LunarFunction
@@ -306,12 +307,15 @@ export const ExecutionDetail = {
     if (ExecutionDetail.loading) {
       return m(".loading", [
         m.trust(icons.spinner()),
-        m("p", "Loading execution..."),
+        m("p", t("execution.loadingExecution")),
       ]);
     }
 
     if (!ExecutionDetail.execution) {
-      return m(".fade-in", m(Card, m(CardContent, "Execution not found")));
+      return m(
+        ".fade-in",
+        m(Card, m(CardContent, t("execution.executionNotFound"))),
+      );
     }
 
     const exec = ExecutionDetail.execution;
@@ -344,7 +348,7 @@ export const ExecutionDetail = {
                     : BadgeVariant.DESTRUCTIVE,
                   size: BadgeSize.SM,
                 },
-                exec.status.toUpperCase(),
+                t(`common.status.${exec.status}`),
               ),
               exec.duration_ms &&
               m(
@@ -389,7 +393,7 @@ export const ExecutionDetail = {
             { variant: CardVariant.DANGER, style: "margin-bottom: 1.5rem" },
             [
               m(CardHeader, {
-                title: "Execution Error",
+                title: t("execution.executionError"),
                 icon: "exclamationTriangle",
                 variant: CardVariant.DANGER,
               }),
@@ -435,7 +439,7 @@ export const ExecutionDetail = {
         // Event Data
         exec.event_json &&
         m(Card, { style: "margin-bottom: 1.5rem" }, [
-          m(CardHeader, { title: "Input Event (JSON)" }),
+          m(CardHeader, { title: t("execution.inputEvent") }),
           m(CardContent, { noPadding: true }, [
             m(CodeViewer, {
               code: JSON.stringify(JSON.parse(exec.event_json), null, 2),
@@ -451,8 +455,10 @@ export const ExecutionDetail = {
         ExecutionDetail.aiRequestsTotal > 0 &&
         m(Card, { style: "margin-bottom: 1.5rem" }, [
           m(CardHeader, {
-            title: "AI Requests",
-            subtitle: `${ExecutionDetail.aiRequestsTotal} API calls`,
+            title: t("execution.aiRequests"),
+            subtitle: t("execution.aiRequestsCount", {
+              count: ExecutionDetail.aiRequestsTotal,
+            }),
             icon: "network",
           }),
           m(CardContent, { noPadding: true }, [
@@ -476,8 +482,10 @@ export const ExecutionDetail = {
         ExecutionDetail.emailRequestsTotal > 0 &&
         m(Card, { style: "margin-bottom: 1.5rem" }, [
           m(CardHeader, {
-            title: "Email Requests",
-            subtitle: `${ExecutionDetail.emailRequestsTotal} emails sent`,
+            title: t("execution.emailRequests"),
+            subtitle: t("execution.emailsSent", {
+              count: ExecutionDetail.emailRequestsTotal,
+            }),
             icon: "mail",
           }),
           m(CardContent, { noPadding: true }, [
@@ -501,8 +509,10 @@ export const ExecutionDetail = {
         // Execution Logs
         m(Card, [
           m(CardHeader, {
-            title: "Execution Logs",
-            subtitle: `${ExecutionDetail.logsTotal} log entries`,
+            title: t("execution.executionLogs"),
+            subtitle: t("execution.logEntries", {
+              count: ExecutionDetail.logsTotal,
+            }),
           }),
           m(CardContent, { noPadding: true }, [
             m(LogViewer, {

@@ -12,6 +12,7 @@ import {
   TableHeaderRow,
   TableRow,
 } from "../../../js/components/table.js";
+import { t } from "../../../js/i18n/index.js";
 
 describe("Table", () => {
   describe("view()", () => {
@@ -224,7 +225,7 @@ describe("TableEmpty", () => {
       const text = Array.isArray(message.children)
         ? (message.children[0]?.children || message.children[0])
         : message.children;
-      expect(text).toBe("No data available");
+      expect(text).toBe(t("table.noData"));
     });
 
     it("displays custom message", () => {

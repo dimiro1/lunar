@@ -3,6 +3,7 @@
  */
 
 import { icons } from "../icons.js";
+import { t } from "../i18n/index.js";
 
 /**
  * @typedef {import('../types.js').IconName} IconName
@@ -222,7 +223,7 @@ export const CardMaximizeBtn = {
       "button.card-maximize-btn",
       {
         onclick: vnode.attrs.onclick,
-        title: "Maximize",
+        title: t("card.maximize"),
       },
       m.trust(icons.arrowsPointingOut()),
     );
@@ -345,7 +346,7 @@ export const MaximizableCard = {
               "button.card-maximized__close",
               {
                 onclick: closeMaximized,
-                title: "Minimize",
+                title: t("card.minimize"),
               },
               m.trust(icons.arrowsPointingIn()),
             ),

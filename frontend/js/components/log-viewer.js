@@ -2,6 +2,8 @@
  * @fileoverview Log viewer component for displaying execution logs.
  */
 
+import { t } from "../i18n/index.js";
+
 /**
  * @typedef {Object} LogEntry
  * @property {string} [id] - Unique log entry ID
@@ -35,7 +37,7 @@ export const LogViewer = {
       },
       [
         logs.length === 0
-          ? m(".log-viewer__empty", "No logs available")
+          ? m(".log-viewer__empty", t("logViewer.noLogs"))
           : logs.map((log, i) =>
             m(
               ".log-viewer__entry",

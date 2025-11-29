@@ -3,6 +3,7 @@
  */
 
 import { icons } from "../icons.js";
+import { t } from "../i18n/index.js";
 
 /**
  * @typedef {import('../types.js').IconName} IconName
@@ -143,6 +144,9 @@ export const BackButton = {
   view(vnode) {
     const { href = "#!/" } = vnode.attrs;
 
-    return m("a.back-btn", { href }, [m.trust(icons.chevronLeft()), "Back"]);
+    return m("a.back-btn", { href }, [
+      m.trust(icons.chevronLeft()),
+      t("common.back"),
+    ]);
   },
 };

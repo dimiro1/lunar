@@ -4,6 +4,7 @@
 
 import { Button, ButtonSize, ButtonVariant } from "./button.js";
 import { FormInput, PasswordInput } from "./form.js";
+import { t } from "../i18n/index.js";
 
 /**
  * @typedef {('original'|'added'|'removed')} EnvVarState
@@ -42,7 +43,7 @@ export const EnvEditor = {
         envVars.length === 0
           ? m(
             ".env-editor__empty",
-            'No environment variables. Click "Add Variable" to add one.',
+            t("envVars.noVariables"),
           )
           : envVars.map((envVar, i) =>
             m(EnvRow, {
@@ -62,7 +63,7 @@ export const EnvEditor = {
             icon: "plus",
             onclick: onAdd,
           },
-          "Add Variable",
+          t("envVars.addVariable"),
         ),
       ]),
     ]);
@@ -104,7 +105,7 @@ const EnvRow = {
           m(".env-editor__key", [
             m(FormInput, {
               value: envVar.key,
-              placeholder: "KEY",
+              placeholder: t("envVars.keyPlaceholder"),
               mono: true,
               disabled: isRemoved,
               oninput: (e) => onChange(e.target.value, envVar.value),
@@ -113,7 +114,7 @@ const EnvRow = {
           m(".env-editor__value", [
             m(PasswordInput, {
               value: envVar.value,
-              placeholder: "Value",
+              placeholder: t("envVars.valuePlaceholder"),
               mono: true,
               disabled: isRemoved,
               oninput: (e) => onChange(envVar.key, e.target.value),
@@ -124,7 +125,7 @@ const EnvRow = {
           variant: ButtonVariant.GHOST,
           size: ButtonSize.ICON,
           icon: isRemoved ? "undo" : "trash",
-          title: isRemoved ? "Restore" : "Remove",
+          title: isRemoved ? t("envVars.restore") : t("envVars.remove"),
           onclick: onToggleRemove,
         }),
       ],

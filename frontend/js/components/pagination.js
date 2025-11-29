@@ -2,6 +2,8 @@
  * @fileoverview Pagination components for navigating through paginated data.
  */
 
+import { t } from "../i18n/index.js";
+
 /**
  * Full pagination component with info text and per-page selector.
  * @type {Object}
@@ -49,13 +51,13 @@ export const Pagination = {
       { role: "navigation", "aria-label": "Pagination" },
       [
         m(".pagination__info", [
-          "Showing ",
+          t("pagination.showing") + " ",
           m("span.pagination__highlight", start),
-          " to ",
+          " " + t("pagination.to") + " ",
           m("span.pagination__highlight", end),
-          " of ",
+          " " + t("pagination.of") + " ",
           m("span.pagination__highlight", total),
-          " results",
+          " " + t("pagination.results"),
         ]),
 
         m(".pagination__controls", [
@@ -71,7 +73,7 @@ export const Pagination = {
               m(
                 "option",
                 { value: opt, selected: opt === limit },
-                `${opt} per page`,
+                t("pagination.perPage", { count: opt }),
               )
             ),
           ),
@@ -84,7 +86,7 @@ export const Pagination = {
                 onclick: () => hasPrev && onPageChange(offset - limit),
                 "aria-label": "Go to previous page",
               },
-              "Previous",
+              t("pagination.previous"),
             ),
             m(
               "button.pagination__btn",
@@ -93,7 +95,7 @@ export const Pagination = {
                 onclick: () => hasNext && onPageChange(offset + limit),
                 "aria-label": "Go to next page",
               },
-              "Next",
+              t("pagination.next"),
             ),
           ]),
         ]),
@@ -129,7 +131,7 @@ export const SimplePagination = {
             onclick: () => hasPrev && onPrev(),
             "aria-label": "Go to previous page",
           },
-          "Previous",
+          t("pagination.previous"),
         ),
         m(
           "button.pagination__btn",
@@ -138,7 +140,7 @@ export const SimplePagination = {
             onclick: () => hasNext && onNext(),
             "aria-label": "Go to next page",
           },
-          "Next",
+          t("pagination.next"),
         ),
       ]),
     ]);

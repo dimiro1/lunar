@@ -12,6 +12,7 @@ import {
   FormSelect,
   FormTextarea,
 } from "./form.js";
+import { t } from "../i18n/index.js";
 
 /**
  * @typedef {Object} HttpMethod
@@ -74,7 +75,7 @@ export const RequestBuilder = {
     ];
 
     return m(Card, [
-      m(CardHeader, { title: "Request Builder" }),
+      m(CardHeader, { title: t("requestBuilder.request") }),
       m(CardContent, [
         // URL display with method selector
         m(".request-builder__url", [
@@ -91,7 +92,7 @@ export const RequestBuilder = {
 
         // Query params
         m(FormGroup, [
-          m(FormLabel, { text: "Query Params" }),
+          m(FormLabel, { text: t("requestBuilder.queryParams") }),
           m(FormInput, {
             value: query,
             placeholder: "key=value&other=value",
@@ -102,7 +103,7 @@ export const RequestBuilder = {
 
         // Headers
         m(FormGroup, [
-          m(FormLabel, { text: "Headers (JSON)" }),
+          m(FormLabel, { text: t("requestBuilder.headers") }),
           m(FormTextarea, {
             value: headers,
             rows: 2,
@@ -113,7 +114,7 @@ export const RequestBuilder = {
 
         // Body
         m(FormGroup, [
-          m(FormLabel, { text: "Body" }),
+          m(FormLabel, { text: t("requestBuilder.requestBody") }),
           m(FormTextarea, {
             value: body,
             rows: 4,
@@ -133,7 +134,7 @@ export const RequestBuilder = {
             disabled: loading,
             loading: loading,
           },
-          loading ? "Sending..." : "Send Request",
+          loading ? t("requestBuilder.executing") : t("requestBuilder.execute"),
         ),
       ]),
     ]);

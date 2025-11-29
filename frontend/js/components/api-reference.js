@@ -2,6 +2,8 @@
  * @fileoverview API Reference component for displaying Lua API documentation.
  */
 
+import { t } from "../i18n/index.js";
+
 /**
  * @typedef {Object} DocItemDef
  * @property {string} name - Item name/signature
@@ -99,7 +101,7 @@ export const APIReference = {
             target: "_blank",
             rel: "noopener noreferrer",
           },
-          "LLM Documentation",
+          t("apiReference.llmDocumentation"),
         ),
       ]),
     ]);
@@ -127,7 +129,11 @@ const DocItem = {
     return m(".api-doc-item", [
       m(".api-doc-item__header", [
         m("span.api-doc-item__name", item.name),
-        m("span.api-doc-item__type", { class: typeClass }, item.type),
+        m(
+          "span.api-doc-item__type",
+          { class: typeClass },
+          getLocalizedType(item.type),
+        ),
       ]),
       m("p.api-doc-item__description", item.description),
     ]);
@@ -157,352 +163,374 @@ function getTypeClass(type) {
 }
 
 /**
- * Default API sections for Lua functions.
+ * Gets the localized display name for a type.
+ * @param {string} type - The type name
+ * @returns {string} Localized type name
+ */
+function getLocalizedType(type) {
+  return t(`luaApi.types.${type}`);
+}
+
+/**
+ * Gets localized API sections for Lua functions.
  * Contains documentation for handler inputs, I/O, data transformation, and utilities.
+ * @returns {APISection[]} Localized API sections
+ */
+export function getLuaAPISections() {
+  return [
+    {
+      id: "ai",
+      name: t("luaApi.ai.name"),
+      description: t("luaApi.ai.description"),
+      groups: [
+        {
+          name: t("luaApi.ai.groups.chat"),
+          items: [
+            {
+              name: "ai.chat(options)",
+              type: "function",
+              description: t("luaApi.ai.items.chat"),
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "email",
+      name: t("luaApi.email.name"),
+      description: t("luaApi.email.description"),
+      groups: [
+        {
+          name: t("luaApi.email.groups.send"),
+          items: [
+            {
+              name: "email.send(options)",
+              type: "function",
+              description: t("luaApi.email.items.send"),
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "handler",
+      name: t("luaApi.handler.name"),
+      description: t("luaApi.handler.description"),
+      groups: [
+        {
+          name: t("luaApi.handler.groups.context"),
+          items: [
+            {
+              name: "ctx.executionId",
+              type: "string",
+              description: t("luaApi.handler.items.executionId"),
+            },
+            {
+              name: "ctx.functionId",
+              type: "string",
+              description: t("luaApi.handler.items.functionId"),
+            },
+            {
+              name: "ctx.functionName",
+              type: "string",
+              description: t("luaApi.handler.items.functionName"),
+            },
+            {
+              name: "ctx.version",
+              type: "string",
+              description: t("luaApi.handler.items.version"),
+            },
+            {
+              name: "ctx.requestId",
+              type: "string",
+              description: t("luaApi.handler.items.requestId"),
+            },
+            {
+              name: "ctx.startedAt",
+              type: "number",
+              description: t("luaApi.handler.items.startedAt"),
+            },
+            {
+              name: "ctx.baseUrl",
+              type: "string",
+              description: t("luaApi.handler.items.baseUrl"),
+            },
+          ],
+        },
+        {
+          name: t("luaApi.handler.groups.event"),
+          items: [
+            {
+              name: "event.method",
+              type: "string",
+              description: t("luaApi.handler.items.method"),
+            },
+            {
+              name: "event.path",
+              type: "string",
+              description: t("luaApi.handler.items.path"),
+            },
+            {
+              name: "event.body",
+              type: "string",
+              description: t("luaApi.handler.items.body"),
+            },
+            {
+              name: "event.headers",
+              type: "table",
+              description: t("luaApi.handler.items.headers"),
+            },
+            {
+              name: "event.query",
+              type: "table",
+              description: t("luaApi.handler.items.query"),
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "io",
+      name: t("luaApi.io.name"),
+      description: t("luaApi.io.description"),
+      groups: [
+        {
+          name: t("luaApi.io.groups.logging"),
+          items: [
+            {
+              name: "log.info(msg)",
+              type: "function",
+              description: t("luaApi.io.items.logInfo"),
+            },
+            {
+              name: "log.debug(msg)",
+              type: "function",
+              description: t("luaApi.io.items.logDebug"),
+            },
+            {
+              name: "log.warn(msg)",
+              type: "function",
+              description: t("luaApi.io.items.logWarn"),
+            },
+            {
+              name: "log.error(msg)",
+              type: "function",
+              description: t("luaApi.io.items.logError"),
+            },
+          ],
+        },
+        {
+          name: t("luaApi.io.groups.kv"),
+          items: [
+            {
+              name: "kv.get(key)",
+              type: "function",
+              description: t("luaApi.io.items.kvGet"),
+            },
+            {
+              name: "kv.set(key, value)",
+              type: "function",
+              description: t("luaApi.io.items.kvSet"),
+            },
+            {
+              name: "kv.delete(key)",
+              type: "function",
+              description: t("luaApi.io.items.kvDelete"),
+            },
+          ],
+        },
+        {
+          name: t("luaApi.io.groups.env"),
+          items: [
+            {
+              name: "env.get(key)",
+              type: "function",
+              description: t("luaApi.io.items.envGet"),
+            },
+          ],
+        },
+        {
+          name: t("luaApi.io.groups.http"),
+          items: [
+            {
+              name: "http.get(url)",
+              type: "function",
+              description: t("luaApi.io.items.httpGet"),
+            },
+            {
+              name: "http.post(url, body)",
+              type: "function",
+              description: t("luaApi.io.items.httpPost"),
+            },
+            {
+              name: "http.put(url, body)",
+              type: "function",
+              description: t("luaApi.io.items.httpPut"),
+            },
+            {
+              name: "http.delete(url)",
+              type: "function",
+              description: t("luaApi.io.items.httpDelete"),
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "data",
+      name: t("luaApi.data.name"),
+      description: t("luaApi.data.description"),
+      groups: [
+        {
+          name: t("luaApi.data.groups.json"),
+          items: [
+            {
+              name: "json.encode(table)",
+              type: "function",
+              description: t("luaApi.data.items.jsonEncode"),
+            },
+            {
+              name: "json.decode(str)",
+              type: "function",
+              description: t("luaApi.data.items.jsonDecode"),
+            },
+          ],
+        },
+        {
+          name: t("luaApi.data.groups.base64"),
+          items: [
+            {
+              name: "base64.encode(str)",
+              type: "function",
+              description: t("luaApi.data.items.base64Encode"),
+            },
+            {
+              name: "base64.decode(str)",
+              type: "function",
+              description: t("luaApi.data.items.base64Decode"),
+            },
+          ],
+        },
+        {
+          name: t("luaApi.data.groups.crypto"),
+          items: [
+            {
+              name: "crypto.md5(str)",
+              type: "function",
+              description: t("luaApi.data.items.md5"),
+            },
+            {
+              name: "crypto.sha256(str)",
+              type: "function",
+              description: t("luaApi.data.items.sha256"),
+            },
+            {
+              name: "crypto.hmac_sha256(msg, key)",
+              type: "function",
+              description: t("luaApi.data.items.hmacSha256"),
+            },
+            {
+              name: "crypto.uuid()",
+              type: "function",
+              description: t("luaApi.data.items.uuid"),
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "utils",
+      name: t("luaApi.utils.name"),
+      description: t("luaApi.utils.description"),
+      groups: [
+        {
+          name: t("luaApi.utils.groups.time"),
+          items: [
+            {
+              name: "time.now()",
+              type: "function",
+              description: t("luaApi.utils.items.timeNow"),
+            },
+            {
+              name: "time.format(ts, layout)",
+              type: "function",
+              description: t("luaApi.utils.items.timeFormat"),
+            },
+            {
+              name: "time.parse(str, layout)",
+              type: "function",
+              description: t("luaApi.utils.items.timeParse"),
+            },
+            {
+              name: "time.sleep(ms)",
+              type: "function",
+              description: t("luaApi.utils.items.timeSleep"),
+            },
+          ],
+        },
+        {
+          name: t("luaApi.utils.groups.strings"),
+          items: [
+            {
+              name: "strings.trim(str)",
+              type: "function",
+              description: t("luaApi.utils.items.trim"),
+            },
+            {
+              name: "strings.split(str, sep)",
+              type: "function",
+              description: t("luaApi.utils.items.split"),
+            },
+            {
+              name: "strings.join(arr, sep)",
+              type: "function",
+              description: t("luaApi.utils.items.join"),
+            },
+            {
+              name: "strings.contains(str, sub)",
+              type: "function",
+              description: t("luaApi.utils.items.contains"),
+            },
+            {
+              name: "strings.replace(str, old, new)",
+              type: "function",
+              description: t("luaApi.utils.items.replace"),
+            },
+          ],
+        },
+        {
+          name: t("luaApi.utils.groups.random"),
+          items: [
+            {
+              name: "random.int(min, max)",
+              type: "function",
+              description: t("luaApi.utils.items.randomInt"),
+            },
+            {
+              name: "random.float()",
+              type: "function",
+              description: t("luaApi.utils.items.randomFloat"),
+            },
+            {
+              name: "random.string(len)",
+              type: "function",
+              description: t("luaApi.utils.items.randomString"),
+            },
+            {
+              name: "random.id()",
+              type: "function",
+              description: t("luaApi.utils.items.randomId"),
+            },
+          ],
+        },
+      ],
+    },
+  ];
+}
+
+/**
+ * Legacy export for backwards compatibility.
+ * @deprecated Use getLuaAPISections() instead
  * @type {APISection[]}
  */
-export const LuaAPISections = [
-  {
-    id: "ai",
-    name: "AI",
-    description: "AI provider integrations",
-    groups: [
-      {
-        name: "Chat (ai)",
-        items: [
-          {
-            name: "ai.chat(options)",
-            type: "function",
-            description: "Chat completion with OpenAI or Anthropic",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "email",
-    name: "Email",
-    description: "Email sending via Resend",
-    groups: [
-      {
-        name: "Send (email)",
-        items: [
-          {
-            name: "email.send(options)",
-            type: "function",
-            description: "Send email via Resend API",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "handler",
-    name: "Handler",
-    description: "Handler function inputs",
-    groups: [
-      {
-        name: "Context (ctx)",
-        items: [
-          {
-            name: "ctx.executionId",
-            type: "string",
-            description: "Unique execution identifier",
-          },
-          {
-            name: "ctx.functionId",
-            type: "string",
-            description: "Function identifier",
-          },
-          {
-            name: "ctx.functionName",
-            type: "string",
-            description: "Function name",
-          },
-          {
-            name: "ctx.version",
-            type: "string",
-            description: "Function version",
-          },
-          {
-            name: "ctx.requestId",
-            type: "string",
-            description: "HTTP request identifier",
-          },
-          {
-            name: "ctx.startedAt",
-            type: "number",
-            description: "Start timestamp (Unix)",
-          },
-          {
-            name: "ctx.baseUrl",
-            type: "string",
-            description: "Server base URL",
-          },
-        ],
-      },
-      {
-        name: "Event (event)",
-        items: [
-          {
-            name: "event.method",
-            type: "string",
-            description: "HTTP method (GET, POST, etc.)",
-          },
-          { name: "event.path", type: "string", description: "Request path" },
-          {
-            name: "event.body",
-            type: "string",
-            description: "Request body as string",
-          },
-          {
-            name: "event.headers",
-            type: "table",
-            description: "Request headers table",
-          },
-          {
-            name: "event.query",
-            type: "table",
-            description: "Query parameters table",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "io",
-    name: "I/O",
-    description: "Input/output operations",
-    groups: [
-      {
-        name: "Logging (log)",
-        items: [
-          {
-            name: "log.info(msg)",
-            type: "function",
-            description: "Log info message",
-          },
-          {
-            name: "log.debug(msg)",
-            type: "function",
-            description: "Log debug message",
-          },
-          {
-            name: "log.warn(msg)",
-            type: "function",
-            description: "Log warning message",
-          },
-          {
-            name: "log.error(msg)",
-            type: "function",
-            description: "Log error message",
-          },
-        ],
-      },
-      {
-        name: "Key-Value Store (kv)",
-        items: [
-          {
-            name: "kv.get(key)",
-            type: "function",
-            description: "Get value from store",
-          },
-          {
-            name: "kv.set(key, value)",
-            type: "function",
-            description: "Set key-value pair",
-          },
-          {
-            name: "kv.delete(key)",
-            type: "function",
-            description: "Delete key from store",
-          },
-        ],
-      },
-      {
-        name: "Environment (env)",
-        items: [
-          {
-            name: "env.get(key)",
-            type: "function",
-            description: "Get environment variable",
-          },
-        ],
-      },
-      {
-        name: "HTTP Client (http)",
-        items: [
-          {
-            name: "http.get(url)",
-            type: "function",
-            description: "GET request",
-          },
-          {
-            name: "http.post(url, body)",
-            type: "function",
-            description: "POST request",
-          },
-          {
-            name: "http.put(url, body)",
-            type: "function",
-            description: "PUT request",
-          },
-          {
-            name: "http.delete(url)",
-            type: "function",
-            description: "DELETE request",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "data",
-    name: "Data",
-    description: "Data transformation",
-    groups: [
-      {
-        name: "JSON (json)",
-        items: [
-          {
-            name: "json.encode(table)",
-            type: "function",
-            description: "Encode table to JSON",
-          },
-          {
-            name: "json.decode(str)",
-            type: "function",
-            description: "Decode JSON to table",
-          },
-        ],
-      },
-      {
-        name: "Base64 (base64)",
-        items: [
-          {
-            name: "base64.encode(str)",
-            type: "function",
-            description: "Encode to base64",
-          },
-          {
-            name: "base64.decode(str)",
-            type: "function",
-            description: "Decode from base64",
-          },
-        ],
-      },
-      {
-        name: "Crypto (crypto)",
-        items: [
-          {
-            name: "crypto.md5(str)",
-            type: "function",
-            description: "MD5 hash (hex)",
-          },
-          {
-            name: "crypto.sha256(str)",
-            type: "function",
-            description: "SHA256 hash (hex)",
-          },
-          {
-            name: "crypto.hmac_sha256(msg, key)",
-            type: "function",
-            description: "HMAC-SHA256 (hex)",
-          },
-          {
-            name: "crypto.uuid()",
-            type: "function",
-            description: "Generate UUID v4",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "utils",
-    name: "Utils",
-    description: "Utility functions",
-    groups: [
-      {
-        name: "Time (time)",
-        items: [
-          {
-            name: "time.now()",
-            type: "function",
-            description: "Current Unix timestamp",
-          },
-          {
-            name: "time.format(ts, layout)",
-            type: "function",
-            description: "Format timestamp",
-          },
-          {
-            name: "time.parse(str, layout)",
-            type: "function",
-            description: "Parse time string",
-          },
-          {
-            name: "time.sleep(ms)",
-            type: "function",
-            description: "Sleep milliseconds",
-          },
-        ],
-      },
-      {
-        name: "Strings (strings)",
-        items: [
-          {
-            name: "strings.trim(str)",
-            type: "function",
-            description: "Trim whitespace",
-          },
-          {
-            name: "strings.split(str, sep)",
-            type: "function",
-            description: "Split by separator",
-          },
-          {
-            name: "strings.join(arr, sep)",
-            type: "function",
-            description: "Join with separator",
-          },
-          {
-            name: "strings.contains(str, sub)",
-            type: "function",
-            description: "Contains substring",
-          },
-          {
-            name: "strings.replace(str, old, new)",
-            type: "function",
-            description: "Replace in string",
-          },
-        ],
-      },
-      {
-        name: "Random (random)",
-        items: [
-          {
-            name: "random.int(min, max)",
-            type: "function",
-            description: "Random integer",
-          },
-          {
-            name: "random.float()",
-            type: "function",
-            description: "Random float 0.0-1.0",
-          },
-          {
-            name: "random.string(len)",
-            type: "function",
-            description: "Random alphanumeric",
-          },
-          {
-            name: "random.id()",
-            type: "function",
-            description: "Unique sortable ID",
-          },
-        ],
-      },
-    ],
-  },
-];
+export const LuaAPISections = getLuaAPISections();

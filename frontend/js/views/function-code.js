@@ -23,7 +23,11 @@ import {
 import { TabContent, Tabs } from "../components/tabs.js";
 import { getFunctionTabs } from "../utils.js";
 import { routes } from "../routes.js";
-import { APIReference, LuaAPISections } from "../components/api-reference.js";
+import {
+  APIReference,
+  getLuaAPISections,
+} from "../components/api-reference.js";
+import { t } from "../i18n/index.js";
 
 /**
  * @typedef {import('../types.js').LunarFunction} lunarFunction
@@ -96,11 +100,11 @@ export const FunctionCode = {
       await API.functions.update(FunctionCode.func.id, {
         code: FunctionCode.editedCode,
       });
-      Toast.show("Code saved successfully", "success");
+      Toast.show(t("code.codeSaved"), "success");
       FunctionCode.editedCode = null;
       await FunctionCode.loadFunction(FunctionCode.func.id);
     } catch (e) {
-      Toast.show("Failed to save code: " + e.message, "error");
+      Toast.show(t("code.failedToSave") + ": " + e.message, "error");
     }
   },
 
@@ -113,12 +117,15 @@ export const FunctionCode = {
     if (FunctionCode.loading) {
       return m(".loading", [
         m.trust(icons.spinner()),
-        m("p", "Loading function..."),
+        m("p", t("functions.loadingFunction")),
       ]);
     }
 
     if (!FunctionCode.func) {
-      return m(".fade-in", m(Card, m(CardContent, "Function not found")));
+      return m(
+        ".fade-in",
+        m(Card, m(CardContent, t("common.functionNotFound"))),
+      );
     }
 
     const func = FunctionCode.func;
@@ -145,7 +152,7 @@ export const FunctionCode = {
             ]),
             m(
               "p.function-details-description",
-              func.description || "No description",
+              func.description || t("common.noDescription"),
             ),
           ]),
         ]),
@@ -159,7 +166,7 @@ export const FunctionCode = {
               onclick: FunctionCode.saveCode,
               disabled: FunctionCode.editedCode === null,
             },
-            "Save Changes",
+            t("common.saveChanges"),
           ),
         ]),
       ]),
@@ -199,7 +206,7 @@ export const FunctionCode = {
           ),
           m(".api-reference-sidebar", [
             m(APIReference, {
-              sections: LuaAPISections,
+              sections: getLuaAPISections(),
               activeSection: FunctionCode.activeApiSection,
               onSectionChange: (id) => {
                 FunctionCode.activeApiSection = id;
