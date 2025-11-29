@@ -375,13 +375,13 @@ const registerGitHubDarkTheme = () => {
     ],
     colors: {
       "editor.background": "#0d1117",
-    "editor.foreground": "#c9d1d9",
-    "editor.lineHighlightBackground": "#161b22",
-    "editor.selectionBackground": "#264f78",
-    "editorCursor.foreground": "#c9d1d9",
-    "editorLineNumber.foreground": "#7d8590",      
-    "editorLineNumber.activeForeground": "#c9d1d9",
-    "editorGutter.background": "#0d1117" 
+      "editor.foreground": "#c9d1d9",
+      "editor.lineHighlightBackground": "#161b22",
+      "editor.selectionBackground": "#264f78",
+      "editorCursor.foreground": "#c9d1d9",
+      "editorLineNumber.foreground": "#7d8590",
+      "editorLineNumber.activeForeground": "#c9d1d9",
+      "editorGutter.background": "#0d1117",
     },
   });
 };
