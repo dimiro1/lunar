@@ -70,7 +70,21 @@ make build
 ### Running
 
 ```bash
-./lunar
+./build/lunar
+```
+
+Another option:
+
+Run the following command once to install all required tools:
+
+```bash
+make install-tools
+```
+
+Then start the development environment with:
+
+```bash
+make dev
 ```
 
 The API will be available at `http://localhost:3000` and the dashboard at `http://localhost:3000/`.
