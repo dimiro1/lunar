@@ -369,6 +369,7 @@ export default {
     hidePassword: "Ocultar senha",
     copied: "Copiado!",
     copyToClipboard: "Copiar para área de transferência",
+    checkbox: "checkbox"
   },
 
   // Log viewer

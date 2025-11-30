@@ -366,6 +366,7 @@ export default {
     hidePassword: "Hide password",
     copied: "Copied!",
     copyToClipboard: "Copy to clipboard",
+    checkBox: "checkbox"
   },
 
   // Log viewer

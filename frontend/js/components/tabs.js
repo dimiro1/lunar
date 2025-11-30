@@ -67,7 +67,7 @@ export const Tabs = {
               .join(" "),
             role: "tab",
             "aria-selected": isActive ? "true" : "false",
-            "aria-controls": `tab-${tabId}`,
+            "aria-label": `tab-${tabLabel}`,
             "aria-disabled": isDisabled || undefined,
             tabindex: isDisabled ? -1 : undefined,
             "data-tab": "true",
