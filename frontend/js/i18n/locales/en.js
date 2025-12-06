@@ -342,6 +342,7 @@ export default {
     subtitle: "Call this function from your application",
     copied: "Copied!",
     copyToClipboard: "Copy to clipboard",
+    selectLanguage: "the selected language is"
   },
 
   // Email request viewer
