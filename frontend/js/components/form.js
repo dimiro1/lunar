@@ -226,37 +226,40 @@ export const PasswordInput = {
       .filter(Boolean)
       .join(" ");
 
-    return m(".form-password-wrapper", [
-      m("input", {
-        type: vnode.state.visible ? "text" : "password",
-        id,
-        name,
-        placeholder,
-        value,
-        class: inputClasses,
-        disabled,
-        required,
-        oninput,
-        ...attrs,
-      }),
-      m(
-        "button.form-password-toggle",
-        {
-          type: "button",
-          title: vnode.state.visible
-            ? t("form.hidePassword")
-            : t("form.showPassword"),
-          onclick: () => {
-            vnode.state.visible = !vnode.state.visible;
+    return m(
+      ".form-password-wrapper",
+      [
+        m("input", {
+          type: vnode.state.visible ? "text" : "password",
+          id,
+          name,
+          placeholder,
+          value,
+          class: inputClasses,
+          disabled,
+          required,
+          oninput,
+          ...attrs,
+        }),
+        m(
+          "button.form-password-toggle",
+          {
+            type: "button",
+            title: vnode.state.visible
+              ? t("form.hidePassword")
+              : t("form.showPassword"),
+            onclick: () => {
+              vnode.state.visible = !vnode.state.visible;
+            },
           },
-        },
-        [
-          vnode.state.visible
-            ? m.trust(icons.eyeSlash())
-            : m.trust(icons.eye()),
-        ],
-      ),
-    ]);
+          [
+            vnode.state.visible
+              ? m.trust(icons.eyeSlash())
+              : m.trust(icons.eye()),
+          ],
+        ),
+      ],
+    );
   },
 };
 

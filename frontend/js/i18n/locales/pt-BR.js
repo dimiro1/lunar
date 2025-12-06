@@ -369,7 +369,10 @@ export default {
     hidePassword: "Ocultar senha",
     copied: "Copiado!",
     copyToClipboard: "Copiar para área de transferência",
-    checkbox: "checkbox"
+    checkBox: "checkbox",
+    functionName: "nome da função",
+    functionDescriprion: "descrição da função",
+    invocationURL: "URL de Invocação",
   },
 
   // Log viewer

@@ -119,6 +119,7 @@ export default {
     variablesCount: "{{count}} variables",
     network: "Network & Triggers",
     invocationUrl: "Invocation URL",
+    functionDescriprion: "function descriprion",
     supportedMethods: "Supported Methods",
     functionStatus: "Function Status",
     enableFunction: "Enable Function",
@@ -366,7 +367,7 @@ export default {
     hidePassword: "Hide password",
     copied: "Copied!",
     copyToClipboard: "Copy to clipboard",
-    checkBox: "checkbox"
+    checkBox: "checkbox",
   },
 
   // Log viewer
