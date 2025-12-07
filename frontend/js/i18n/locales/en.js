@@ -119,6 +119,7 @@ export default {
     variablesCount: "{{count}} variables",
     network: "Network & Triggers",
     invocationUrl: "Invocation URL",
+    functionDescriprion: "function descriprion",
     supportedMethods: "Supported Methods",
     functionStatus: "Function Status",
     enableFunction: "Enable Function",
@@ -341,6 +342,7 @@ export default {
     subtitle: "Call this function from your application",
     copied: "Copied!",
     copyToClipboard: "Copy to clipboard",
+    selectLanguage: "the selected language is",
   },
 
   // Email request viewer
@@ -366,7 +368,7 @@ export default {
     hidePassword: "Hide password",
     copied: "Copied!",
     copyToClipboard: "Copy to clipboard",
-    checkBox: "checkbox"
+    checkBox: "checkbox",
   },
 
   // Log viewer

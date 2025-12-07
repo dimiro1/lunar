@@ -113,6 +113,7 @@ export default {
   settings: {
     generalConfig: "Configuração Geral",
     functionName: "Nome da Função",
+    functionDescriprion: "descrição da função",
     description: "Descrição",
     logRetention: "Período de Retenção de Logs",
     retentionHelp:
@@ -344,6 +345,7 @@ export default {
     subtitle: "Chame esta função a partir da sua aplicação",
     copied: "Copiado!",
     copyToClipboard: "Copiar para área de transferência",
+    selectLanguage: "a linguagem seleciona é",
   },
 
   // Email request viewer
@@ -369,7 +371,7 @@ export default {
     hidePassword: "Ocultar senha",
     copied: "Copiado!",
     copyToClipboard: "Copiar para área de transferência",
-    checkbox: "checkbox"
+    checkBox: "checkbox",
   },
 
   // Log viewer

@@ -313,7 +313,7 @@ export const FunctionVersions = {
                         [
                           m(TableCell, [
                             m("input[type=checkbox]", {
-                             ["aria-label"]: t("form.checkBox"),
+                              ["aria-label"]: t("form.checkBox"),
                               checked: FunctionVersions.selectedVersions
                                 .includes(
                                   ver.version,

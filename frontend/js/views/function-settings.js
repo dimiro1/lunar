@@ -347,6 +347,7 @@ export const FunctionSettings = {
                     ? FunctionSettings.editedName
                     : func.name,
                   mono: true,
+                  "aria-label": t("settings.functionName"),
                   oninput: (e) => {
                     const value = e.target.value;
                     if (value !== func.name) {
@@ -360,6 +361,7 @@ export const FunctionSettings = {
               m(FormGroup, [
                 m(FormLabel, { text: t("settings.description") }),
                 m(FormTextarea, {
+                  "aria-label": t("settings.description"),
                   value: FunctionSettings.editedDescription !== null
                     ? FunctionSettings.editedDescription
                     : func.description || "",
@@ -379,6 +381,8 @@ export const FunctionSettings = {
                 m(
                   "select.form-select",
                   {
+                    id: "logRetention",
+                    "aria-label": t("settings.logRetention"),
                     value: FunctionSettings.editedRetentionDays !== null
                       ? FunctionSettings.editedRetentionDays
                       : func.retention_days || 7,
@@ -487,6 +491,7 @@ export const FunctionSettings = {
                 m(CopyInput, {
                   value: `${window.location.origin}/fn/${func.id}`,
                   mono: true,
+                  "aria-label": t("settings.invocationUrl"),
                 }),
               ]),
               m(FormGroup, [
