@@ -8,63 +8,38 @@
       rel="icon"
       href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='%233b82f6'><path stroke-linecap='round' stroke-linejoin='round' d='M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z'/></svg>"
     />
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
-      rel="stylesheet"
-    />
     <!-- Styles -->
     <link rel="stylesheet" href="/css/styles.css" />
     <link
       rel="stylesheet"
       data-name="vs/editor/editor.main"
-      href="https://unpkg.com/monaco-editor@0.54.0/min/vs/editor/editor.main.css"
+      href="/vendor/monaco-editor/min/vs/editor/editor.main.css"
     />
     <link
       rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css"
+      href="/vendor/highlight.js/styles/github-dark.min.css"
     />
   </head>
   <body>
     <div id="app"></div>
 
-    <script src="https://unpkg.com/mithril@2.3.7/mithril.min.js"></script>
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"
-    ></script>
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/lua.min.js"
-    ></script>
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/bash.min.js"
-    ></script>
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/javascript.min.js"
-    ></script>
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/python.min.js"
-    ></script>
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/go.min.js"
-    ></script>
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/json.min.js"
-    ></script>
+    <script src="/vendor/mithril/mithril.min.js"></script>
+    <script src="/vendor/highlight.js/highlight.min.js"></script>
+    <script src="/vendor/highlight.js/languages/lua.min.js"></script>
+    <script src="/vendor/highlight.js/languages/bash.min.js"></script>
+    <script src="/vendor/highlight.js/languages/javascript.min.js"></script>
+    <script src="/vendor/highlight.js/languages/python.min.js"></script>
+    <script src="/vendor/highlight.js/languages/go.min.js"></script>
+    <script src="/vendor/highlight.js/languages/json.min.js"></script>
     <script>
       var require = {
         paths: {
-          vs: "https://unpkg.com/monaco-editor@0.54.0/min/vs",
+          vs: "/vendor/monaco-editor/min/vs",
         },
       };
     </script>
-    <script
-      src="https://unpkg.com/monaco-editor@0.54.0/min/vs/loader.js"
-    ></script>
-    <script
-      src="https://unpkg.com/monaco-editor@0.54.0/min/vs/editor/editor.main.js"
-    ></script>
+    <script src="/vendor/monaco-editor/min/vs/loader.js"></script>
+    <script src="/vendor/monaco-editor/min/vs/editor/editor.main.js"></script>
     <script type="module" src="/js/app.js"></script>
   </body>
 </html>

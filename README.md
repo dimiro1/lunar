@@ -304,6 +304,23 @@ This runs Go unit tests and E2E tests. Run `make test-frontend` separately to op
 * **Runtime** - GopherLua for Lua script execution
 * **Storage** - SQLite for functions, versions, executions, KV store, and environment variables
 
+### Frontend Dependencies
+
+JavaScript dependencies are vendored in `frontend/vendor/` (no npm required). Versions are managed in the Makefile:
+
+| Library | Purpose |
+|---------|---------|
+| Mithril.js | SPA framework |
+| Monaco Editor | Code editor |
+| Highlight.js | Syntax highlighting |
+| Jasmine | Frontend testing |
+
+To update dependencies, edit the version variables in the Makefile and run:
+
+```bash
+make vendor-js
+```
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit issues or pull requests.

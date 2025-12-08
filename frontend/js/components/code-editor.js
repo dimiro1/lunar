@@ -605,6 +605,8 @@ export const CodeEditor = {
           },
           lineNumbers: lineNumbers ? "on" : "off",
           scrollBeyondLastLine: false,
+          fontFamily:
+            '"Berkeley Mono", "JetBrains Mono", "SF Mono", Menlo, Monaco, "Cascadia Mono", monospace',
           fontSize: 14,
           tabSize: 2,
           suggestOnTriggerCharacters: true,
