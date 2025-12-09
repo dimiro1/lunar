@@ -23,8 +23,12 @@
   --color-api-mod: #fbbf24;
 
   /* Typography - System fonts */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: "Berkeley Mono", "JetBrains Mono", "SF Mono", Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", "Courier New", monospace;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  --font-mono:
+    "Berkeley Mono", "JetBrains Mono", "SF Mono", Menlo, Monaco,
+    "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", "Courier New", monospace;
 
   /* Font sizes */
   --text-2xs: 0.625rem;

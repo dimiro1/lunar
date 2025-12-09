@@ -28,6 +28,7 @@ import {
   getLuaAPISections,
 } from "../components/api-reference.js";
 import { t } from "../i18n/index.js";
+import { CommandPalette } from "../components/command-palette.js";
 
 /**
  * @typedef {import('../types.js').LunarFunction} lunarFunction
@@ -64,12 +65,62 @@ export const FunctionCode = {
   editedCode: null,
 
   /**
+   * Whether the code editor is maximized.
+   * @type {boolean}
+   */
+  isCodeMaximized: false,
+
+  /**
    * Initializes the view and loads the function.
    * @param {Object} vnode - Mithril vnode
    */
   oninit: (vnode) => {
     FunctionCode.editedCode = null;
+    FunctionCode.isCodeMaximized = false;
     FunctionCode.loadFunction(vnode.attrs.id);
+    FunctionCode.registerPaletteCommands();
+  },
+
+  /**
+   * Cleans up when the view is removed.
+   */
+  onremove: () => {
+    CommandPalette.unregisterItems("function-code");
+  },
+
+  /**
+   * Registers commands with the command palette.
+   */
+  registerPaletteCommands: () => {
+    const items = [];
+
+    if (FunctionCode.isCodeMaximized) {
+      items.push({
+        type: "custom",
+        label: t("code.restoreEditor"),
+        description: t("code.restoreEditorDesc"),
+        icon: "arrowsPointingIn",
+        onSelect: () => {
+          FunctionCode.isCodeMaximized = false;
+          FunctionCode.registerPaletteCommands();
+          m.redraw();
+        },
+      });
+    } else {
+      items.push({
+        type: "custom",
+        label: t("code.maximizeEditor"),
+        description: t("code.maximizeEditorDesc"),
+        icon: "arrowsPointingOut",
+        onSelect: () => {
+          FunctionCode.isCodeMaximized = true;
+          FunctionCode.registerPaletteCommands();
+          m.redraw();
+        },
+      });
+    }
+
+    CommandPalette.registerItems("function-code", items);
   },
 
   /**
@@ -187,6 +238,12 @@ export const FunctionCode = {
               icon: "code",
               class: "code-card",
               headerActions: [m("span.code-editor-lang", "lua")],
+              isMaximized: FunctionCode.isCodeMaximized,
+              onToggleMaximize: (val) => {
+                FunctionCode.isCodeMaximized = val;
+                FunctionCode.registerPaletteCommands();
+                m.redraw();
+              },
             },
             m(CodeEditor, {
               id: "code-viewer",

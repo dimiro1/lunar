@@ -12,7 +12,7 @@ import { i18n, localeNames, t } from "../i18n/index.js";
  */
 
 /**
- * @typedef {('nav'|'function'|'action'|'language')} CommandItemType
+ * @typedef {('nav'|'function'|'action'|'language'|'custom')} CommandItemType
  */
 
 /**
@@ -25,6 +25,8 @@ import { i18n, localeNames, t } from "../i18n/index.js";
  * @property {string} [id] - Function ID (for function/action types)
  * @property {boolean} [disabled] - Whether the function is disabled
  * @property {string} [locale] - Locale code (for language type)
+ * @property {string} [source] - Source identifier for custom items
+ * @property {Function} [onSelect] - Custom action callback (for custom type)
  */
 
 /**
@@ -68,6 +70,38 @@ export const CommandPalette = {
    * @type {boolean}
    */
   loading: false,
+
+  /**
+   * Registered custom command items from other components.
+   * @type {CommandItem[]}
+   */
+  customItems: [],
+
+  /**
+   * Registers custom command items.
+   * @param {string} source - Unique identifier for the source (e.g., 'function-code')
+   * @param {CommandItem[]} items - Items to register
+   */
+  registerItems: (source, items) => {
+    // Remove any existing items from this source first
+    CommandPalette.customItems = CommandPalette.customItems.filter(
+      (item) => item.source !== source,
+    );
+    // Add new items with source tag
+    items.forEach((item) => {
+      CommandPalette.customItems.push({ ...item, source });
+    });
+  },
+
+  /**
+   * Unregisters all custom command items from a source.
+   * @param {string} source - Source identifier to remove
+   */
+  unregisterItems: (source) => {
+    CommandPalette.customItems = CommandPalette.customItems.filter(
+      (item) => item.source !== source,
+    );
+  },
 
   /**
    * Opens the command palette.
@@ -205,8 +239,13 @@ export const CommandPalette = {
       locale: locale,
     }));
 
-    // Combine and filter
-    const allItems = [...navItems, ...languageItems, ...functionItems];
+    // Combine and filter (custom items first for visibility)
+    const allItems = [
+      ...CommandPalette.customItems,
+      ...navItems,
+      ...languageItems,
+      ...functionItems,
+    ];
 
     if (q) {
       CommandPalette.results = allItems.filter(
@@ -279,7 +318,9 @@ export const CommandPalette = {
    */
   selectItem: (item) => {
     CommandPalette.close();
-    if (item.type === "language") {
+    if (item.type === "custom" && item.onSelect) {
+      item.onSelect();
+    } else if (item.type === "language") {
       i18n.setLocale(item.locale);
     } else {
       m.route.set(item.path);

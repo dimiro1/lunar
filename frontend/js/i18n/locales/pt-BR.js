@@ -264,6 +264,10 @@ export default {
   code: {
     codeSaved: "Código salvo com sucesso",
     failedToSave: "Falha ao salvar código",
+    maximizeEditor: "Maximizar Editor de Código",
+    maximizeEditorDesc: "Expandir o editor de código em tela cheia",
+    restoreEditor: "Restaurar Editor de Código",
+    restoreEditorDesc: "Retornar o editor de código ao tamanho normal",
   },
 
   // Execution detail

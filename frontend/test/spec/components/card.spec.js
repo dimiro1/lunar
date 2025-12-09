@@ -9,6 +9,7 @@ import {
   CardFooter,
   CardHeader,
   CardVariant,
+  MaximizableCard,
 } from "../../../js/components/card.js";
 
 describe("Card", () => {
@@ -181,6 +182,137 @@ describe("CardDivider", () => {
 
       expect(result.tag).toBe("hr");
       expect(result).toHaveClass("card__divider");
+    });
+  });
+});
+
+describe("MaximizableCard", () => {
+  function createVnode(attrs = {}) {
+    return {
+      attrs: { title: "Test", icon: "code", ...attrs },
+      state: {},
+      children: ["Content"],
+    };
+  }
+
+  describe("view()", () => {
+    it("renders Card component when not maximized", () => {
+      const vnode = createVnode();
+      const result = MaximizableCard.view(vnode);
+
+      // result.tag is the Card component (an object with view method)
+      expect(result.tag).toBe(Card);
+    });
+
+    it("uses internal state by default", () => {
+      const vnode = createVnode();
+      vnode.state.isMaximized = false;
+      const result = MaximizableCard.view(vnode);
+
+      // Should render Card component, not maximized overlay
+      expect(result.tag).toBe(Card);
+    });
+
+    it("initializes internal state if undefined", () => {
+      const vnode = createVnode();
+      // state.isMaximized is undefined
+      MaximizableCard.view(vnode);
+
+      expect(vnode.state.isMaximized).toBe(false);
+      expect(vnode.state.escapeHandler).toBeNull();
+    });
+  });
+
+  describe("external state control", () => {
+    it("uses isMaximized from attrs when provided", () => {
+      const vnode = createVnode({ isMaximized: true });
+      vnode.state.isMaximized = false; // Internal state should be ignored
+      const result = MaximizableCard.view(vnode);
+
+      // Should render maximized overlay (a div with class selector)
+      const hasOverlay =
+        getVnodeClass(result).includes("card-maximized-overlay") ||
+        (result.tag && result.tag.includes("card-maximized-overlay"));
+      expect(hasOverlay).toBe(true);
+    });
+
+    it("uses internal state when isMaximized attr is undefined", () => {
+      const vnode = createVnode();
+      vnode.state.isMaximized = false;
+      const result = MaximizableCard.view(vnode);
+
+      // Should render Card component, not overlay
+      expect(result.tag).toBe(Card);
+    });
+
+    it("calls onToggleMaximize when provided and maximize button clicked", () => {
+      const onToggleMaximize = jasmine.createSpy("onToggleMaximize");
+      const vnode = createVnode({ isMaximized: false, onToggleMaximize });
+      const result = MaximizableCard.view(vnode);
+
+      // Find maximize button
+      const header = result.children.find(
+        (c) => c && c.tag === CardHeader,
+      );
+      expect(header).toBeTruthy();
+
+      // The actions are passed to CardHeader
+      const actions = header.attrs.actions;
+      expect(actions).toBeTruthy();
+
+      // Find the CardMaximizeBtn in actions
+      const maximizeBtn = actions.find(
+        (a) => a && a.tag && a.attrs && a.attrs.onclick,
+      );
+      expect(maximizeBtn).toBeTruthy();
+
+      // Simulate click
+      maximizeBtn.attrs.onclick();
+      expect(onToggleMaximize).toHaveBeenCalledWith(true);
+    });
+
+    it("calls onToggleMaximize with false when restoring from maximized", () => {
+      const onToggleMaximize = jasmine.createSpy("onToggleMaximize");
+      const vnode = createVnode({ isMaximized: true, onToggleMaximize });
+      const result = MaximizableCard.view(vnode);
+
+      // In maximized state, find the close button
+      const maximizedContent = result.children.find(
+        (c) => c && getVnodeClass(c).includes("card-maximized"),
+      );
+      expect(maximizedContent).toBeTruthy();
+
+      // Find close button in header
+      const header = maximizedContent.children.find(
+        (c) => c && getVnodeClass(c).includes("card__header"),
+      );
+      const closeBtn = header.children.find(
+        (c) => c && c.tag === "button",
+      );
+      expect(closeBtn).toBeTruthy();
+
+      // Simulate click
+      closeBtn.attrs.onclick();
+      expect(onToggleMaximize).toHaveBeenCalledWith(false);
+    });
+
+    it("modifies internal state when onToggleMaximize is not provided", () => {
+      const vnode = createVnode();
+      vnode.state.isMaximized = false;
+      const result = MaximizableCard.view(vnode);
+
+      // Find maximize button
+      const header = result.children.find(
+        (c) => c && c.tag === CardHeader,
+      );
+      const actions = header.attrs.actions;
+      const maximizeBtn = actions.find(
+        (a) => a && a.tag && a.attrs && a.attrs.onclick,
+      );
+
+      // Simulate click - should modify internal state
+      maximizeBtn.attrs.onclick();
+      expect(vnode.state.isMaximized).toBe(true);
     });
   });
 });

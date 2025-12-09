@@ -16,6 +16,7 @@ describe("CommandPalette", () => {
       selectedIndex: CommandPalette.selectedIndex,
       functions: CommandPalette.functions,
       loading: CommandPalette.loading,
+      customItems: CommandPalette.customItems,
     };
     // Reset state before each test
     CommandPalette.isOpen = false;
@@ -24,6 +25,7 @@ describe("CommandPalette", () => {
     CommandPalette.selectedIndex = 0;
     CommandPalette.functions = [];
     CommandPalette.loading = false;
+    CommandPalette.customItems = [];
   });
 
   afterEach(() => {
@@ -163,6 +165,133 @@ describe("CommandPalette", () => {
       const event = { key: "Escape", preventDefault: jasmine.createSpy() };
       CommandPalette.handleKeyDown(event);
 
+      expect(CommandPalette.isOpen).toBe(false);
+    });
+  });
+
+  describe("custom items registration", () => {
+    it("registerItems adds items with source tag", () => {
+      const items = [
+        { type: "custom", label: "Test", icon: "bolt", onSelect: () => {} },
+      ];
+
+      CommandPalette.registerItems("test-source", items);
+
+      expect(CommandPalette.customItems.length).toBe(1);
+      expect(CommandPalette.customItems[0].source).toBe("test-source");
+      expect(CommandPalette.customItems[0].label).toBe("Test");
+    });
+
+    it("registerItems replaces items from same source", () => {
+      CommandPalette.registerItems("source-a", [
+        { type: "custom", label: "First" },
+      ]);
+      CommandPalette.registerItems("source-a", [
+        { type: "custom", label: "Second" },
+      ]);
+
+      expect(CommandPalette.customItems.length).toBe(1);
+      expect(CommandPalette.customItems[0].label).toBe("Second");
+    });
+
+    it("registerItems keeps items from different sources", () => {
+      CommandPalette.registerItems("source-a", [
+        { type: "custom", label: "A" },
+      ]);
+      CommandPalette.registerItems("source-b", [
+        { type: "custom", label: "B" },
+      ]);
+
+      expect(CommandPalette.customItems.length).toBe(2);
+    });
+
+    it("unregisterItems removes all items from source", () => {
+      CommandPalette.registerItems("source-a", [
+        { type: "custom", label: "A" },
+      ]);
+      CommandPalette.registerItems("source-b", [
+        { type: "custom", label: "B" },
+      ]);
+
+      CommandPalette.unregisterItems("source-a");
+
+      expect(CommandPalette.customItems.length).toBe(1);
+      expect(CommandPalette.customItems[0].label).toBe("B");
+    });
+
+    it("unregisterItems handles non-existent source gracefully", () => {
+      CommandPalette.registerItems("source-a", [
+        { type: "custom", label: "A" },
+      ]);
+
+      CommandPalette.unregisterItems("non-existent");
+
+      expect(CommandPalette.customItems.length).toBe(1);
+    });
+  });
+
+  describe("updateResults with custom items", () => {
+    beforeEach(() => {
+      CommandPalette.functions = [];
+      CommandPalette.customItems = [
+        {
+          type: "custom",
+          label: "Custom Action",
+          icon: "bolt",
+          source: "test",
+        },
+      ];
+    });
+
+    it("includes custom items in results", () => {
+      CommandPalette.query = "";
+      CommandPalette.updateResults();
+
+      const customItem = CommandPalette.results.find(
+        (r) => r.type === "custom",
+      );
+      expect(customItem).toBeTruthy();
+      expect(customItem.label).toBe("Custom Action");
+    });
+
+    it("filters custom items by query", () => {
+      CommandPalette.query = "Custom Action";
+      CommandPalette.updateResults();
+
+      const customItems = CommandPalette.results.filter(
+        (r) => r.type === "custom",
+      );
+      expect(customItems.length).toBe(1);
+      expect(customItems[0].label).toBe("Custom Action");
+    });
+
+    it("custom items appear at the beginning of results", () => {
+      CommandPalette.query = "";
+      CommandPalette.updateResults();
+
+      expect(CommandPalette.results[0].type).toBe("custom");
+    });
+  });
+
+  describe("selectItem with custom type", () => {
+    it("calls onSelect callback for custom type", () => {
+      const onSelect = jasmine.createSpy("onSelect");
+      const item = { type: "custom", label: "Test", onSelect };
+
+      CommandPalette.isOpen = true;
+      CommandPalette.selectItem(item);
+
+      expect(onSelect).toHaveBeenCalled();
+      expect(CommandPalette.isOpen).toBe(false);
+    });
+
+    it("does not call onSelect if not provided", () => {
+      const item = { type: "custom", label: "Test" };
+
+      CommandPalette.isOpen = true;
+      CommandPalette.selectItem(item);
+
+      // Should not throw and should still close
       expect(CommandPalette.isOpen).toBe(false);
     });
   });

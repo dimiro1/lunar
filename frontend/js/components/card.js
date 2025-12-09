@@ -244,6 +244,8 @@ export const MaximizableCard = {
    * @param {string} [vnode.attrs.variant='default'] - Color variant from CardVariant
    * @param {Array} [vnode.attrs.headerActions=[]] - Additional header action elements
    * @param {string} [vnode.attrs.class] - Additional CSS classes for the card
+   * @param {boolean} [vnode.attrs.isMaximized] - External state control for maximized state
+   * @param {Function} [vnode.attrs.onToggleMaximize] - Callback when maximize state changes
    * @param {*} vnode.children - Child elements to render in card content
    * @returns {Object} Mithril vnode
    */
@@ -254,14 +256,21 @@ export const MaximizableCard = {
       variant = CardVariant.DEFAULT,
       headerActions = [],
       class: className = "",
+      isMaximized: externalIsMaximized,
+      onToggleMaximize,
       ...attrs
     } = vnode.attrs;
 
-    // Initialize state
+    // Initialize internal state
     if (vnode.state.isMaximized === undefined) {
       vnode.state.isMaximized = false;
       vnode.state.escapeHandler = null;
     }
+
+    // Use external state if provided, otherwise use internal state
+    const isMaximized = externalIsMaximized !== undefined
+      ? externalIsMaximized
+      : vnode.state.isMaximized;
 
     /**
      * Removes the global Escape key listener.
@@ -278,8 +287,12 @@ export const MaximizableCard = {
      */
     const closeMaximized = () => {
       removeEscapeListener();
-      vnode.state.isMaximized = false;
-      m.redraw();
+      if (onToggleMaximize) {
+        onToggleMaximize(false);
+      } else {
+        vnode.state.isMaximized = false;
+        m.redraw();
+      }
     };
 
     /**
@@ -301,11 +314,21 @@ export const MaximizableCard = {
      * Toggles the maximized state.
      */
     const toggleMaximize = () => {
-      vnode.state.isMaximized = !vnode.state.isMaximized;
-      if (vnode.state.isMaximized) {
-        setupEscapeListener();
+      const newState = !isMaximized;
+      if (onToggleMaximize) {
+        onToggleMaximize(newState);
+        if (newState) {
+          setupEscapeListener();
+        } else {
+          removeEscapeListener();
+        }
+      } else {
+        vnode.state.isMaximized = newState;
+        if (newState) {
+          setupEscapeListener();
+        }
+        m.redraw();
       }
-      m.redraw();
     };
 
     /**
@@ -325,7 +348,7 @@ export const MaximizableCard = {
     ];
 
     // Render maximized overlay if active
-    if (vnode.state.isMaximized) {
+    if (isMaximized) {
       return m(
         ".card-maximized-overlay",
         {
