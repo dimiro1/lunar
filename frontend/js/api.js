@@ -171,6 +171,14 @@ export const API = {
         url: `/api/functions/${id}/env`,
         body: { env_vars },
       }),
+
+    /**
+     * Gets the next scheduled run time for a function.
+     * @param {string} id - Function ID
+     * @returns {Promise<NextRunResponse>} Next run information
+     */
+    getNextRun: (id) =>
+      apiRequest({ method: "GET", url: `/api/functions/${id}/next-run` }),
   },
 
   /**

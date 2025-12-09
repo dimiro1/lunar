@@ -31,6 +31,8 @@
  * @property {boolean} disabled - Whether function is disabled
  * @property {FunctionVersion} active_version - Currently active version
  * @property {Object.<string, string>} [env_vars] - Environment variables
+ * @property {string} [cron_schedule] - Cron expression for scheduled execution
+ * @property {string} [cron_status] - Cron status ('active' or 'paused')
  * @property {string} created_at - ISO timestamp
  * @property {string} updated_at - ISO timestamp
  */
@@ -56,6 +58,7 @@
  * @property {string} status - Execution status (success, error, timeout)
  * @property {number} duration_ms - Execution duration in milliseconds
  * @property {number} [status_code] - HTTP status code returned
+ * @property {string} trigger - Execution trigger ('http' or 'cron')
  * @property {string} created_at - ISO timestamp
  */
 
@@ -176,6 +179,18 @@
  * @property {string} [description] - New description
  * @property {string} [code] - New code (creates new version)
  * @property {boolean} [disabled] - Enable/disable function
+ * @property {string} [cron_schedule] - Cron expression for scheduled execution
+ * @property {string} [cron_status] - Cron status ('active' or 'paused')
+ */
+
+/**
+ * @typedef {Object} NextRunResponse
+ * @property {boolean} has_schedule - Whether the function has a schedule
+ * @property {string} [cron_schedule] - Cron expression
+ * @property {string} [cron_status] - Cron status ('active' or 'paused')
+ * @property {boolean} [is_paused] - Whether the schedule is paused
+ * @property {number} [next_run] - Next run Unix timestamp
+ * @property {string} [next_run_human] - Human-friendly next run time
  */
 
 /**

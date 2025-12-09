@@ -138,6 +138,24 @@ export default {
       days30: "30 dias",
       year1: "1 ano",
     },
+    schedule: "Agendamento",
+    enableSchedule: "Habilitar Execução Agendada",
+    scheduleDescription:
+      "Execute esta função automaticamente em um agendamento usando expressões cron.",
+    cronExpression: "Expressão Cron",
+    cronHelp:
+      "Formato cron padrão: minuto hora dia mês dia_semana (ex: */5 * * * * para cada 5 minutos).",
+    cronLearnMore: "Saiba mais",
+    cronPresets: "Predefinições:",
+    cronPreset: {
+      everyMin: "A cada minuto",
+      every5min: "A cada 5 minutos",
+      every15min: "A cada 15 minutos",
+      everyHour: "A cada hora no minuto 0",
+      everyDay: "Todo dia à meia-noite",
+      everyWeek: "Todo domingo à meia-noite",
+    },
+    nextRun: "Próxima execução agendada:",
   },
 
   // Executions
@@ -148,9 +166,14 @@ export default {
       "Nenhuma execução ainda. Teste sua função para ver o histórico de execuções.",
     columns: {
       id: "ID da Execução",
+      trigger: "Gatilho",
       status: "Status",
       duration: "Duração",
       time: "Hora",
+    },
+    triggers: {
+      http: "HTTP",
+      cron: "Cron",
     },
   },
 
@@ -198,6 +221,7 @@ export default {
     failedToDelete: "Falha ao excluir função",
     failedToUpdate: "Falha ao atualizar status",
     executionFailed: "Execução falhou",
+    scheduleUpdated: "Agendamento atualizado com sucesso",
   },
 
   // Pagination

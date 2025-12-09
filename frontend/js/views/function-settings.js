@@ -48,6 +48,16 @@ import { EnvEditor } from "../components/env-editor.js";
  */
 
 /**
+ * @typedef {Object} NextRunInfo
+ * @property {boolean} has_schedule - Whether the function has a schedule
+ * @property {string} [cron_schedule] - Cron expression
+ * @property {string} [cron_status] - Cron status ('active' or 'paused')
+ * @property {boolean} [is_paused] - Whether the schedule is paused
+ * @property {number} [next_run] - Next run Unix timestamp
+ * @property {string} [next_run_human] - Human-friendly next run time
+ */
+
+/**
  * Function settings view component.
  * Manages function configuration including name, description, env vars, and status.
  * @type {Object}
@@ -102,6 +112,24 @@ export const FunctionSettings = {
   envErrors: {},
 
   /**
+   * Edited cron schedule (null if unchanged).
+   * @type {string|null}
+   */
+  editedCronSchedule: null,
+
+  /**
+   * Edited cron status (null if unchanged).
+   * @type {string|null}
+   */
+  editedCronStatus: null,
+
+  /**
+   * Next run information.
+   * @type {NextRunInfo|null}
+   */
+  nextRunInfo: null,
+
+  /**
    * Initializes the view and loads the function.
    * @param {Object} vnode - Mithril vnode
    */
@@ -112,6 +140,9 @@ export const FunctionSettings = {
     FunctionSettings.editedRetentionDays = null;
     FunctionSettings.envVars = [];
     FunctionSettings.envErrors = {};
+    FunctionSettings.editedCronSchedule = null;
+    FunctionSettings.editedCronStatus = null;
+    FunctionSettings.nextRunInfo = null;
     FunctionSettings.loadFunction(vnode.attrs.id);
   },
 
@@ -123,11 +154,18 @@ export const FunctionSettings = {
   loadFunction: async (id) => {
     FunctionSettings.loading = true;
     try {
-      FunctionSettings.func = await API.functions.get(id);
+      const [func, nextRunInfo] = await Promise.all([
+        API.functions.get(id),
+        API.functions.getNextRun(id),
+      ]);
+      FunctionSettings.func = func;
+      FunctionSettings.nextRunInfo = nextRunInfo;
       FunctionSettings.editedName = null;
       FunctionSettings.editedDescription = null;
       FunctionSettings.editedDisabled = null;
       FunctionSettings.editedRetentionDays = null;
+      FunctionSettings.editedCronSchedule = null;
+      FunctionSettings.editedCronStatus = null;
       FunctionSettings.envVars = Object.entries(
         FunctionSettings.func.env_vars || {},
       ).map(([key, value]) => ({
@@ -271,6 +309,43 @@ export const FunctionSettings = {
       await FunctionSettings.loadFunction(FunctionSettings.func.id);
     } catch (e) {
       Toast.show(t("toast.failedToUpdate") + ": " + e.message, "error");
+    }
+  },
+
+  /**
+   * Checks if there are unsaved schedule changes.
+   * @returns {boolean} True if there are changes
+   */
+  hasScheduleChanges: () => {
+    return (
+      FunctionSettings.editedCronSchedule !== null ||
+      FunctionSettings.editedCronStatus !== null
+    );
+  },
+
+  /**
+   * Saves schedule settings to the API.
+   * @returns {Promise<void>}
+   */
+  saveScheduleSettings: async () => {
+    if (!FunctionSettings.hasScheduleChanges()) return;
+
+    try {
+      const updates = {};
+      const func = FunctionSettings.func;
+
+      if (FunctionSettings.editedCronSchedule !== null) {
+        updates.cron_schedule = FunctionSettings.editedCronSchedule;
+      }
+      if (FunctionSettings.editedCronStatus !== null) {
+        updates.cron_status = FunctionSettings.editedCronStatus;
+      }
+
+      await API.functions.update(func.id, updates);
+      Toast.show(t("toast.scheduleUpdated"), "success");
+      await FunctionSettings.loadFunction(func.id);
+    } catch (e) {
+      Toast.show(t("toast.failedToSave") + ": " + e.message, "error");
     }
   },
 
@@ -500,6 +575,125 @@ export const FunctionSettings = {
                   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
                 }),
               ]),
+            ]),
+          ]),
+
+          // Schedule Configuration
+          m(Card, { style: "margin-bottom: 1.5rem" }, [
+            m(CardHeader, { title: t("settings.schedule") }),
+            m(CardContent, [
+              m(FormCheckbox, {
+                id: "enable-schedule",
+                label: t("settings.enableSchedule"),
+                description: t("settings.scheduleDescription"),
+                checked: FunctionSettings.editedCronStatus !== null
+                  ? FunctionSettings.editedCronStatus === "active"
+                  : func.cron_status === "active",
+                onchange: () => {
+                  const currentStatus =
+                    FunctionSettings.editedCronStatus !== null
+                      ? FunctionSettings.editedCronStatus
+                      : func.cron_status || "paused";
+                  const newStatus = currentStatus === "active"
+                    ? "paused"
+                    : "active";
+                  if (newStatus === (func.cron_status || "paused")) {
+                    FunctionSettings.editedCronStatus = null;
+                  } else {
+                    FunctionSettings.editedCronStatus = newStatus;
+                  }
+                },
+              }),
+              m(FormGroup, { style: "margin-top: 1rem" }, [
+                m(FormLabel, { text: t("settings.cronExpression") }),
+                m(FormInput, {
+                  value: FunctionSettings.editedCronSchedule !== null
+                    ? FunctionSettings.editedCronSchedule
+                    : func.cron_schedule || "",
+                  placeholder: "*/5 * * * *",
+                  mono: true,
+                  "aria-label": t("settings.cronExpression"),
+                  oninput: (e) => {
+                    const value = e.target.value;
+                    if (value === (func.cron_schedule || "")) {
+                      FunctionSettings.editedCronSchedule = null;
+                    } else {
+                      FunctionSettings.editedCronSchedule = value;
+                    }
+                  },
+                }),
+                m(".cron-presets", [
+                  m("span.cron-presets-label", t("settings.cronPresets")),
+                  [
+                    {
+                      label: t("settings.cronPreset.everyMin"),
+                      value: "* * * * *",
+                    },
+                    {
+                      label: t("settings.cronPreset.every5min"),
+                      value: "*/5 * * * *",
+                    },
+                    {
+                      label: t("settings.cronPreset.every15min"),
+                      value: "*/15 * * * *",
+                    },
+                    {
+                      label: t("settings.cronPreset.everyHour"),
+                      value: "0 * * * *",
+                    },
+                    {
+                      label: t("settings.cronPreset.everyDay"),
+                      value: "0 0 * * *",
+                    },
+                    {
+                      label: t("settings.cronPreset.everyWeek"),
+                      value: "0 0 * * 0",
+                    },
+                  ].map((preset) =>
+                    m("button.cron-preset-btn", {
+                      type: "button",
+                      onclick: () => {
+                        if (preset.value === (func.cron_schedule || "")) {
+                          FunctionSettings.editedCronSchedule = null;
+                        } else {
+                          FunctionSettings.editedCronSchedule = preset.value;
+                        }
+                      },
+                    }, preset.label)
+                  ),
+                ]),
+                m(FormHelp, [
+                  t("settings.cronHelp"),
+                  " ",
+                  m("a", {
+                    href: "https://en.wikipedia.org/wiki/Cron",
+                    target: "_blank",
+                    rel: "noopener noreferrer",
+                  }, t("settings.cronLearnMore")),
+                ]),
+              ]),
+              // Next run display (when active)
+              FunctionSettings.nextRunInfo &&
+              FunctionSettings.nextRunInfo.has_schedule &&
+              FunctionSettings.nextRunInfo.next_run_human &&
+              m(".next-run-info", [
+                m("span.next-run-label", t("settings.nextRun")),
+                m(
+                  "span.next-run-time",
+                  FunctionSettings.nextRunInfo.next_run_human,
+                ),
+              ]),
+            ]),
+            m(CardFooter, [
+              m(
+                Button,
+                {
+                  variant: ButtonVariant.PRIMARY,
+                  onclick: FunctionSettings.saveScheduleSettings,
+                  disabled: !FunctionSettings.hasScheduleChanges(),
+                },
+                t("common.saveChanges"),
+              ),
             ]),
           ]),
 

@@ -226,6 +226,25 @@ describe("translation coverage", () => {
     "toast.settingsSaved",
     "pagination.previous",
     "pagination.next",
+    // Cron scheduling keys
+    "settings.schedule",
+    "settings.enableSchedule",
+    "settings.scheduleDescription",
+    "settings.cronExpression",
+    "settings.cronHelp",
+    "settings.cronLearnMore",
+    "settings.cronPresets",
+    "settings.cronPreset.everyMin",
+    "settings.cronPreset.every5min",
+    "settings.cronPreset.every15min",
+    "settings.cronPreset.everyHour",
+    "settings.cronPreset.everyDay",
+    "settings.cronPreset.everyWeek",
+    "settings.nextRun",
+    "executions.columns.trigger",
+    "executions.triggers.http",
+    "executions.triggers.cron",
+    "toast.scheduleUpdated",
   ];
 
   criticalKeys.forEach((key) => {

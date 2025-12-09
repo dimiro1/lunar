@@ -117,6 +117,12 @@ func (db *MemoryDB) UpdateFunction(_ context.Context, id string, updates UpdateF
 	if updates.RetentionDays != nil {
 		fn.RetentionDays = updates.RetentionDays
 	}
+	if updates.CronSchedule != nil {
+		fn.CronSchedule = updates.CronSchedule
+	}
+	if updates.CronStatus != nil {
+		fn.CronStatus = updates.CronStatus
+	}
 
 	fn.UpdatedAt = time.Now().Unix()
 	db.functions[id] = fn
@@ -281,6 +287,10 @@ func (db *MemoryDB) CreateExecution(_ context.Context, exec Execution) (Executio
 	if exec.CreatedAt == 0 {
 		exec.CreatedAt = time.Now().Unix()
 	}
+	// Default trigger to HTTP if not set
+	if exec.Trigger == "" {
+		exec.Trigger = ExecutionTriggerHTTP
+	}
 	db.executions[exec.ID] = exec
 	return exec, nil
 }
@@ -353,6 +363,21 @@ func (db *MemoryDB) DeleteOldExecutions(_ context.Context, beforeTimestamp int64
 	}
 
 	return deletedCount, nil
+}
+
+func (db *MemoryDB) ListFunctionsWithActiveCron(_ context.Context) ([]Function, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+
+	var functions []Function
+	for _, fn := range db.functions {
+		if fn.CronStatus != nil && *fn.CronStatus == string(CronStatusActive) &&
+			fn.CronSchedule != nil && *fn.CronSchedule != "" {
+			functions = append(functions, fn)
+		}
+	}
+
+	return functions, nil
 }
 
 // Health check

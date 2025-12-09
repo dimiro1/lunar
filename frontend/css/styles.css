@@ -614,6 +614,12 @@ main {
   border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
+.badge--info {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--color-accent);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
 /* Badge modifiers */
 .badge--uppercase {
   text-transform: uppercase;
@@ -946,6 +952,15 @@ main {
   font-size: var(--text-xs);
   color: var(--color-text-muted);
   margin: 0.25rem 0 0.5rem 0;
+}
+
+.form-help a {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.form-help a:hover {
+  color: var(--color-text);
 }
 
 .form-help--error {
@@ -3331,4 +3346,65 @@ pre {
 .language-selector__check svg {
   width: 1rem;
   height: 1rem;
+}
+
+/* Next run info display */
+.next-run-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  margin-top: 1rem;
+}
+
+.next-run-label {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.next-run-time {
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+/* Cron presets */
+.cron-presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.cron-presets-label {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.cron-preset-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: var(--text-xs);
+  font-family: var(--font-sans);
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cron-preset-btn:hover {
+  color: var(--color-text);
+  border-color: var(--color-accent);
+  background: var(--color-surface);
+}
+
+.cron-preset-btn:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }

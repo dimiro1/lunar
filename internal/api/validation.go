@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/dimiro1/lunar/internal/store"
+	"github.com/robfig/cron/v3"
 )
 
 const (
@@ -26,6 +27,7 @@ const (
 )
 
 var AllowedRetentionDays = []int{7, 15, 30, 365}
+var AllowedCronStatuses = []string{string(store.CronStatusActive), string(store.CronStatusPaused)}
 
 // ValidationError represents a validation error
 type ValidationError struct {
@@ -70,7 +72,7 @@ func ValidateUpdateFunctionRequest(req *store.UpdateFunctionRequest) error {
 	}
 
 	// At least one field must be provided
-	if req.Name == nil && req.Description == nil && req.Code == nil && req.Disabled == nil && req.RetentionDays == nil {
+	if req.Name == nil && req.Description == nil && req.Code == nil && req.Disabled == nil && req.RetentionDays == nil && req.CronSchedule == nil && req.CronStatus == nil {
 		return &ValidationError{Field: "request", Message: "at least one field must be provided for update"}
 	}
 
@@ -98,6 +100,20 @@ func ValidateUpdateFunctionRequest(req *store.UpdateFunctionRequest) error {
 	// Validate retention_days if provided
 	if req.RetentionDays != nil {
 		if err := validateRetentionDays(*req.RetentionDays); err != nil {
+			return err
+		}
+	}
+
+	// Validate cron_schedule if provided
+	if req.CronSchedule != nil {
+		if err := validateCronSchedule(*req.CronSchedule); err != nil {
+			return err
+		}
+	}
+
+	// Validate cron_status if provided
+	if req.CronStatus != nil {
+		if err := validateCronStatus(*req.CronStatus); err != nil {
 			return err
 		}
 	}
@@ -235,4 +251,40 @@ func validateRetentionDays(days int) error {
 		Field:   "retention_days",
 		Message: fmt.Sprintf("retention_days must be one of: %v", AllowedRetentionDays),
 	}
+}
+
+// validateCronSchedule validates a cron expression
+func validateCronSchedule(schedule string) error {
+	// Empty schedule is allowed (to clear the schedule)
+	if schedule == "" {
+		return nil
+	}
+
+	// Parse the cron expression using the robfig/cron parser
+	parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
+	_, err := parser.Parse(schedule)
+	if err != nil {
+		return &ValidationError{
+			Field:   "cron_schedule",
+			Message: fmt.Sprintf("invalid cron expression: %v", err),
+		}
+	}
+	return nil
+}
+
+// validateCronStatus validates a cron status value
+func validateCronStatus(status string) error {
+	if slices.Contains(AllowedCronStatuses, status) {
+		return nil
+	}
+	return &ValidationError{
+		Field:   "cron_status",
+		Message: fmt.Sprintf("cron_status must be one of: %v", AllowedCronStatuses),
+	}
+}
+
+// ValidateCronSchedule is a public function to validate cron expressions
+// Used by the scheduler and handlers
+func ValidateCronSchedule(schedule string) error {
+	return validateCronSchedule(schedule)
 }

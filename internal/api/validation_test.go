@@ -507,3 +507,185 @@ func TestValidateUpdateFunctionRequest_WithRetentionDays(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateUpdateFunctionRequest_WithCronSchedule(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     *store.UpdateFunctionRequest
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid cron schedule - every 5 minutes",
+			req: &store.UpdateFunctionRequest{
+				CronSchedule: strPtr("*/5 * * * *"),
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid cron schedule - every hour",
+			req: &store.UpdateFunctionRequest{
+				CronSchedule: strPtr("0 * * * *"),
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid cron schedule - every day at midnight",
+			req: &store.UpdateFunctionRequest{
+				CronSchedule: strPtr("0 0 * * *"),
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid cron schedule - weekdays at 9am",
+			req: &store.UpdateFunctionRequest{
+				CronSchedule: strPtr("0 9 * * 1-5"),
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid cron schedule - first day of month",
+			req: &store.UpdateFunctionRequest{
+				CronSchedule: strPtr("0 0 1 * *"),
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid empty cron schedule (to clear)",
+			req: &store.UpdateFunctionRequest{
+				CronSchedule: strPtr(""),
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid cron schedule - too few fields",
+			req: &store.UpdateFunctionRequest{
+				CronSchedule: strPtr("* * *"),
+			},
+			wantErr: true,
+			errMsg:  "invalid cron expression",
+		},
+		{
+			name: "invalid cron schedule - too many fields",
+			req: &store.UpdateFunctionRequest{
+				CronSchedule: strPtr("* * * * * *"),
+			},
+			wantErr: true,
+			errMsg:  "invalid cron expression",
+		},
+		{
+			name: "invalid cron schedule - bad minute value",
+			req: &store.UpdateFunctionRequest{
+				CronSchedule: strPtr("60 * * * *"),
+			},
+			wantErr: true,
+			errMsg:  "invalid cron expression",
+		},
+		{
+			name: "invalid cron schedule - bad hour value",
+			req: &store.UpdateFunctionRequest{
+				CronSchedule: strPtr("* 25 * * *"),
+			},
+			wantErr: true,
+			errMsg:  "invalid cron expression",
+		},
+		{
+			name: "invalid cron schedule - invalid syntax",
+			req: &store.UpdateFunctionRequest{
+				CronSchedule: strPtr("not a cron"),
+			},
+			wantErr: true,
+			errMsg:  "invalid cron expression",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateUpdateFunctionRequest(tt.req)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateUpdateFunctionRequest() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if err != nil && tt.errMsg != "" && !strings.Contains(err.Error(), tt.errMsg) {
+				t.Errorf("ValidateUpdateFunctionRequest() error = %v, should contain %v", err, tt.errMsg)
+			}
+		})
+	}
+}
+
+func TestValidateUpdateFunctionRequest_WithCronStatus(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     *store.UpdateFunctionRequest
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid cron status - active",
+			req: &store.UpdateFunctionRequest{
+				CronStatus: strPtr("active"),
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid cron status - paused",
+			req: &store.UpdateFunctionRequest{
+				CronStatus: strPtr("paused"),
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid cron status - stopped",
+			req: &store.UpdateFunctionRequest{
+				CronStatus: strPtr("stopped"),
+			},
+			wantErr: true,
+			errMsg:  "must be one of",
+		},
+		{
+			name: "invalid cron status - enabled",
+			req: &store.UpdateFunctionRequest{
+				CronStatus: strPtr("enabled"),
+			},
+			wantErr: true,
+			errMsg:  "must be one of",
+		},
+		{
+			name: "invalid cron status - empty",
+			req: &store.UpdateFunctionRequest{
+				CronStatus: strPtr(""),
+			},
+			wantErr: true,
+			errMsg:  "must be one of",
+		},
+		{
+			name: "valid combined cron schedule and status",
+			req: &store.UpdateFunctionRequest{
+				CronSchedule: strPtr("*/5 * * * *"),
+				CronStatus:   strPtr("active"),
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid cron schedule with paused status",
+			req: &store.UpdateFunctionRequest{
+				CronSchedule: strPtr("0 * * * *"),
+				CronStatus:   strPtr("paused"),
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateUpdateFunctionRequest(tt.req)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateUpdateFunctionRequest() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if err != nil && tt.errMsg != "" && !strings.Contains(err.Error(), tt.errMsg) {
+				t.Errorf("ValidateUpdateFunctionRequest() error = %v, should contain %v", err, tt.errMsg)
+			}
+		})
+	}
+}

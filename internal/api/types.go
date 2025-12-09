@@ -125,3 +125,13 @@ type PaginatedEmailRequestsResponse struct {
 	EmailRequests []store.EmailRequest `json:"email_requests"`
 	Pagination    store.PaginationInfo `json:"pagination"`
 }
+
+// NextRunResponse is the response for getting the next scheduled run time
+type NextRunResponse struct {
+	HasSchedule  bool    `json:"has_schedule"`
+	CronSchedule *string `json:"cron_schedule,omitempty"`
+	CronStatus   *string `json:"cron_status,omitempty"`
+	IsPaused     bool    `json:"is_paused,omitempty"`
+	NextRun      *int64  `json:"next_run,omitempty"`
+	NextRunHuman *string `json:"next_run_human,omitempty"`
+}

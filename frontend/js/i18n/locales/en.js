@@ -136,6 +136,24 @@ export default {
       days30: "30 days",
       year1: "1 year",
     },
+    schedule: "Schedule",
+    enableSchedule: "Enable Scheduled Execution",
+    scheduleDescription:
+      "Run this function automatically on a schedule using cron expressions.",
+    cronExpression: "Cron Expression",
+    cronHelp:
+      "Standard cron format: minute hour day month weekday (e.g., */5 * * * * for every 5 minutes).",
+    cronLearnMore: "Learn more",
+    cronPresets: "Presets:",
+    cronPreset: {
+      everyMin: "Every minute",
+      every5min: "Every 5 minutes",
+      every15min: "Every 15 minutes",
+      everyHour: "Every hour at minute 0",
+      everyDay: "Every day at midnight",
+      everyWeek: "Every Sunday at midnight",
+    },
+    nextRun: "Next scheduled run:",
   },
 
   // Executions
@@ -146,9 +164,14 @@ export default {
       "No executions yet. Test your function to see execution history.",
     columns: {
       id: "Execution ID",
+      trigger: "Trigger",
       status: "Status",
       duration: "Duration",
       time: "Time",
+    },
+    triggers: {
+      http: "HTTP",
+      cron: "Cron",
     },
   },
 
@@ -196,6 +219,7 @@ export default {
     failedToDelete: "Failed to delete function",
     failedToUpdate: "Failed to update status",
     executionFailed: "Execution failed",
+    scheduleUpdated: "Schedule updated successfully",
   },
 
   // Pagination
