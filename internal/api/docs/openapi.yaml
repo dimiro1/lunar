@@ -308,6 +308,20 @@ paths:
                 summary: Enable function
                 value:
                   disabled: false
+              enableCronSchedule:
+                summary: Enable cron schedule
+                value:
+                  cron_schedule: "*/5 * * * *"
+                  cron_status: "active"
+              pauseCronSchedule:
+                summary: Pause cron schedule
+                value:
+                  cron_status: "paused"
+              clearCronSchedule:
+                summary: Clear cron schedule
+                value:
+                  cron_schedule: ""
+                  cron_status: "paused"
       responses:
         "200":
           description: Function updated successfully
@@ -326,6 +340,14 @@ paths:
                   summary: Empty name
                   value:
                     error: "name: name cannot be empty"
+                invalidCronSchedule:
+                  summary: Invalid cron expression
+                  value:
+                    error: "cron_schedule: invalid cron expression"
+                invalidCronStatus:
+                  summary: Invalid cron status
+                  value:
+                    error: "cron_status: must be one of: active, paused"
         "500":
           description: Internal server error
           content:
@@ -603,6 +625,60 @@ paths:
                   summary: Too many environment variables
                   value:
                     error: "env_vars: cannot have more than 100 environment variables"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/functions/{id}/next-run:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Unique identifier of the function
+        schema:
+          type: string
+
+    get:
+      tags:
+        - Functions
+      summary: Get next scheduled run time
+      description: |
+        Returns the next scheduled execution time for a function with an active cron schedule.
+        If the function has no active schedule, returns null values.
+      operationId: getNextRun
+      responses:
+        "200":
+          description: Next run information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NextRunResponse"
+              examples:
+                activeSchedule:
+                  summary: Function with active schedule
+                  value:
+                    next_run: 1702345678
+                    next_run_human: "in 2 hours"
+                noSchedule:
+                  summary: Function without active schedule
+                  value:
+                    next_run: null
+                    next_run_human: null
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Function not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: Internal server error
           content:
@@ -1176,6 +1252,19 @@ components:
           description: Number of days to retain execution logs (default is 7 days)
           enum: [7, 15, 30, 365]
           example: 7
+        cron_schedule:
+          type: string
+          nullable: true
+          description: Cron expression for scheduled execution (standard 5-field format)
+          example: "*/5 * * * *"
+        cron_status:
+          type: string
+          nullable: true
+          description: Status of the cron schedule
+          enum:
+            - active
+            - paused
+          example: "paused"
         created_at:
           type: integer
           format: int64
@@ -1277,6 +1366,14 @@ components:
           nullable: true
           description: Error message if execution failed
           example: "Runtime error: attempt to call nil value"
+        trigger:
+          type: string
+          description: What triggered this execution
+          enum:
+            - http
+            - cron
+          example: "http"
+          default: "http"
         created_at:
           type: integer
           format: int64
@@ -1427,6 +1524,23 @@ components:
           description: Number of days to retain execution logs
           enum: [7, 15, 30, 365]
           example: 30
+        cron_schedule:
+          type: string
+          nullable: true
+          description: |
+            Cron expression for scheduled execution (standard 5-field format: minute hour day month weekday).
+            Examples: "*/5 * * * *" (every 5 minutes), "0 9 * * 1-5" (weekdays at 9am).
+            Set to empty string to clear the schedule.
+          example: "0 */2 * * *"
+          maxLength: 100
+        cron_status:
+          type: string
+          nullable: true
+          description: Status of the cron schedule. Set to "active" to enable scheduled execution.
+          enum:
+            - active
+            - paused
+          example: "active"
 
     UpdateEnvVarsRequest:
       type: object
@@ -1717,6 +1831,21 @@ components:
           items:
             $ref: "#/components/schemas/DiffLine"
           description: Line-by-line diff
+
+    NextRunResponse:
+      type: object
+      properties:
+        next_run:
+          type: integer
+          format: int64
+          nullable: true
+          description: Unix timestamp of the next scheduled execution (null if no active schedule)
+          example: 1702345678
+        next_run_human:
+          type: string
+          nullable: true
+          description: Human-readable description of when the next run will occur (e.g., "in 2 hours")
+          example: "in 2 hours"
 
     ErrorResponse:
       type: object

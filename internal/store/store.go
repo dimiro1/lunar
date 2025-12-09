@@ -78,6 +78,9 @@ type DB interface {
 	// Returns the number of deleted records.
 	DeleteOldExecutions(ctx context.Context, beforeTimestamp int64) (int64, error)
 
+	// ListFunctionsWithActiveCron returns all functions that have an active cron schedule.
+	ListFunctionsWithActiveCron(ctx context.Context) ([]Function, error)
+
 	// Ping verifies the database connection is alive.
 	Ping(ctx context.Context) error
 }

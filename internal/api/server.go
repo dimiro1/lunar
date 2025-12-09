@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/dimiro1/lunar/internal/ai"
+	internalcron "github.com/dimiro1/lunar/internal/cron"
 	"github.com/dimiro1/lunar/internal/email"
 	"github.com/dimiro1/lunar/internal/env"
 	internalhttp "github.com/dimiro1/lunar/internal/http"
@@ -22,6 +23,7 @@ type Server struct {
 	logger          logger.Logger
 	aiTracker       ai.Tracker
 	emailTracker    email.Tracker
+	scheduler       *internalcron.FunctionScheduler
 	frontendHandler http.Handler
 	apiKey          string
 	httpServer      *http.Server
@@ -36,6 +38,7 @@ type ServerConfig struct {
 	HTTPClient       internalhttp.Client
 	AITracker        ai.Tracker
 	EmailTracker     email.Tracker
+	Scheduler        *internalcron.FunctionScheduler
 	ExecutionTimeout time.Duration
 	FrontendHandler  http.Handler
 	APIKey           string
@@ -65,6 +68,7 @@ func NewServer(config ServerConfig) *Server {
 		logger:          config.Logger,
 		aiTracker:       config.AITracker,
 		emailTracker:    config.EmailTracker,
+		scheduler:       config.Scheduler,
 		frontendHandler: config.FrontendHandler,
 		apiKey:          config.APIKey,
 	}
@@ -92,9 +96,10 @@ func (s *Server) setupRoutes() {
 	s.mux.Handle("POST /api/functions", authMiddleware(http.HandlerFunc(CreateFunctionHandler(s.db))))
 	s.mux.Handle("GET /api/functions", authMiddleware(http.HandlerFunc(ListFunctionsHandler(s.db))))
 	s.mux.Handle("GET /api/functions/{id}", authMiddleware(http.HandlerFunc(GetFunctionHandler(s.db, s.execDeps.EnvStore))))
-	s.mux.Handle("PUT /api/functions/{id}", authMiddleware(http.HandlerFunc(UpdateFunctionHandler(s.db))))
+	s.mux.Handle("PUT /api/functions/{id}", authMiddleware(http.HandlerFunc(UpdateFunctionHandler(s.db, s.scheduler))))
 	s.mux.Handle("DELETE /api/functions/{id}", authMiddleware(http.HandlerFunc(DeleteFunctionHandler(s.db))))
 	s.mux.Handle("PUT /api/functions/{id}/env", authMiddleware(http.HandlerFunc(UpdateEnvVarsHandler(s.db, s.execDeps.EnvStore))))
+	s.mux.Handle("GET /api/functions/{id}/next-run", authMiddleware(http.HandlerFunc(GetNextRunHandler(s.db))))
 
 	// Version Management - only need DB
 	s.mux.Handle("GET /api/functions/{id}/versions", authMiddleware(http.HandlerFunc(ListVersionsHandler(s.db))))

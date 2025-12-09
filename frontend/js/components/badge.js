@@ -20,6 +20,7 @@ export const BadgeVariant = {
   OUTLINE: "outline",
   SUCCESS: "success",
   WARNING: "warning",
+  INFO: "info",
 };
 
 /**
@@ -223,6 +224,36 @@ export const LogLevelBadge = {
         mono: true,
       },
       level,
+    );
+  },
+};
+
+/**
+ * Trigger Badge - for execution trigger type (http/cron).
+ * @type {Object}
+ */
+export const TriggerBadge = {
+  /**
+   * Renders the trigger badge.
+   * @param {Object} vnode - Mithril vnode
+   * @param {Object} vnode.attrs - Component attributes
+   * @param {('http'|'cron')} vnode.attrs.trigger - Trigger type
+   * @returns {Object} Mithril vnode
+   */
+  view(vnode) {
+    const { trigger } = vnode.attrs;
+
+    const isCron = trigger === "cron";
+
+    return m(
+      Badge,
+      {
+        variant: isCron ? BadgeVariant.INFO : BadgeVariant.SUCCESS,
+        size: BadgeSize.SM,
+        uppercase: true,
+        mono: true,
+      },
+      t(isCron ? "executions.triggers.cron" : "executions.triggers.http"),
     );
   },
 };

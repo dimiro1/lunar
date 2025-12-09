@@ -19,6 +19,22 @@ const (
 	ExecutionStatusError   ExecutionStatus = "error"
 )
 
+// ExecutionTrigger represents how an execution was triggered
+type ExecutionTrigger string
+
+const (
+	ExecutionTriggerHTTP ExecutionTrigger = "http"
+	ExecutionTriggerCron ExecutionTrigger = "cron"
+)
+
+// CronStatus represents the status of a cron schedule
+type CronStatus string
+
+const (
+	CronStatusActive CronStatus = "active"
+	CronStatusPaused CronStatus = "paused"
+)
+
 // AIRequestStatus represents the status of an AI API request
 type AIRequestStatus string
 
@@ -78,6 +94,8 @@ type Function struct {
 	EnvVars       map[string]string `json:"env_vars"`
 	Disabled      bool              `json:"disabled"`
 	RetentionDays *int              `json:"retention_days,omitempty"`
+	CronSchedule  *string           `json:"cron_schedule,omitempty"`
+	CronStatus    *string           `json:"cron_status,omitempty"`
 	CreatedAt     int64             `json:"created_at"`
 	UpdatedAt     int64             `json:"updated_at"`
 }
@@ -95,14 +113,15 @@ type FunctionVersion struct {
 
 // Execution represents a function execution record
 type Execution struct {
-	ID                string          `json:"id"`
-	FunctionID        string          `json:"function_id"`
-	FunctionVersionID string          `json:"function_version_id"`
-	Status            ExecutionStatus `json:"status"`
-	DurationMs        *int64          `json:"duration_ms,omitempty"`
-	ErrorMessage      *string         `json:"error_message,omitempty"`
-	EventJSON         *string         `json:"event_json,omitempty"`
-	CreatedAt         int64           `json:"created_at"`
+	ID                string           `json:"id"`
+	FunctionID        string           `json:"function_id"`
+	FunctionVersionID string           `json:"function_version_id"`
+	Status            ExecutionStatus  `json:"status"`
+	DurationMs        *int64           `json:"duration_ms,omitempty"`
+	ErrorMessage      *string          `json:"error_message,omitempty"`
+	EventJSON         *string          `json:"event_json,omitempty"`
+	Trigger           ExecutionTrigger `json:"trigger"`
+	CreatedAt         int64            `json:"created_at"`
 }
 
 // FunctionWithActiveVersion includes the function and its active version
@@ -145,4 +164,6 @@ type UpdateFunctionRequest struct {
 	Code          *string `json:"code,omitempty"`
 	Disabled      *bool   `json:"disabled,omitempty"`
 	RetentionDays *int    `json:"retention_days,omitempty"`
+	CronSchedule  *string `json:"cron_schedule,omitempty"`
+	CronStatus    *string `json:"cron_status,omitempty"`
 }

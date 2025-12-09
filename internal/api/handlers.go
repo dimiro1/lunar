@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/dimiro1/lunar/internal/ai"
+	internalcron "github.com/dimiro1/lunar/internal/cron"
 	"github.com/dimiro1/lunar/internal/diff"
 	"github.com/dimiro1/lunar/internal/email"
 	"github.com/dimiro1/lunar/internal/env"
@@ -210,7 +211,7 @@ func GetFunctionHandler(database store.DB, envStore env.Store) http.HandlerFunc 
 }
 
 // UpdateFunctionHandler returns a handler for updating functions
-func UpdateFunctionHandler(database store.DB) http.HandlerFunc {
+func UpdateFunctionHandler(database store.DB, scheduler *internalcron.FunctionScheduler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 
@@ -235,12 +236,25 @@ func UpdateFunctionHandler(database store.DB) http.HandlerFunc {
 			}
 		}
 
+		// Track if cron settings changed
+		cronChanged := req.CronSchedule != nil || req.CronStatus != nil
+
 		// If metadata is provided, update the function
-		if req.Name != nil || req.Description != nil || req.Disabled != nil || req.RetentionDays != nil {
+		if req.Name != nil || req.Description != nil || req.Disabled != nil || req.RetentionDays != nil || req.CronSchedule != nil || req.CronStatus != nil {
 			err := database.UpdateFunction(r.Context(), id, req)
 			if err != nil {
 				writeError(w, http.StatusNotFound, "Function not found")
 				return
+			}
+		}
+
+		// If cron settings changed, refresh the scheduler
+		if cronChanged && scheduler != nil {
+			if err := scheduler.RefreshFunction(id); err != nil {
+				slog.Error("Failed to refresh cron schedule for function",
+					"function_id", id,
+					"error", err)
+				// Don't fail the request, just log the error
 			}
 		}
 
@@ -680,6 +694,12 @@ func ExecuteFunctionHandler(deps ExecuteFunctionDeps) http.HandlerFunc {
 		}
 		eventJSONStr := string(eventJSONBytes)
 
+		// Determine trigger (from X-Trigger header or default to HTTP)
+		trigger := store.ExecutionTriggerHTTP
+		if r.Header.Get("X-Trigger") == "cron" {
+			trigger = store.ExecutionTriggerCron
+		}
+
 		// Create execution record
 		execution := store.Execution{
 			ID:                executionID,
@@ -687,6 +707,7 @@ func ExecuteFunctionHandler(deps ExecuteFunctionDeps) http.HandlerFunc {
 			FunctionVersionID: version.ID,
 			Status:            store.ExecutionStatusPending,
 			EventJSON:         &eventJSONStr,
+			Trigger:           trigger,
 		}
 
 		_, err = deps.DB.CreateExecution(r.Context(), execution)
@@ -775,5 +796,62 @@ func ExecuteFunctionHandler(deps ExecuteFunctionDeps) http.HandlerFunc {
 			// No HTTP response, return 500
 			writeError(w, http.StatusInternalServerError, "Function did not return HTTP response")
 		}
+	}
+}
+
+// GetNextRunHandler returns a handler for getting the next scheduled run time
+func GetNextRunHandler(database store.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+
+		// Get the function
+		fn, err := database.GetFunction(r.Context(), id)
+		if err != nil {
+			writeError(w, http.StatusNotFound, "Function not found")
+			return
+		}
+
+		// Check if function has an active cron schedule
+		if fn.CronSchedule == nil || *fn.CronSchedule == "" {
+			writeJSON(w, http.StatusOK, NextRunResponse{
+				HasSchedule: false,
+			})
+			return
+		}
+
+		if fn.CronStatus == nil || *fn.CronStatus != string(store.CronStatusActive) {
+			writeJSON(w, http.StatusOK, NextRunResponse{
+				HasSchedule:  true,
+				CronSchedule: fn.CronSchedule,
+				CronStatus:   fn.CronStatus,
+				IsPaused:     true,
+			})
+			return
+		}
+
+		// Calculate next run time
+		nextRun, err := internalcron.GetNextRunFromSchedule(*fn.CronSchedule)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "Invalid cron schedule")
+			return
+		}
+
+		var nextRunUnix *int64
+		var nextRunHuman *string
+		if nextRun != nil {
+			unix := nextRun.Unix()
+			nextRunUnix = &unix
+			human := internalcron.FormatNextRun(*nextRun)
+			nextRunHuman = &human
+		}
+
+		writeJSON(w, http.StatusOK, NextRunResponse{
+			HasSchedule:  true,
+			CronSchedule: fn.CronSchedule,
+			CronStatus:   fn.CronStatus,
+			IsPaused:     false,
+			NextRun:      nextRunUnix,
+			NextRunHuman: nextRunHuman,
+		})
 	}
 }

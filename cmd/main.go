@@ -13,6 +13,7 @@ import (
 	"github.com/dimiro1/lunar/frontend"
 	"github.com/dimiro1/lunar/internal/ai"
 	"github.com/dimiro1/lunar/internal/api"
+	internalcron "github.com/dimiro1/lunar/internal/cron"
 	"github.com/dimiro1/lunar/internal/email"
 	"github.com/dimiro1/lunar/internal/env"
 	"github.com/dimiro1/lunar/internal/housekeeping"
@@ -75,6 +76,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Initialize function cron scheduler
+	functionScheduler := internalcron.NewScheduler(apiDB, config.BaseURL)
+	if err := functionScheduler.Start(); err != nil {
+		slog.Error("Failed to start function cron scheduler", "error", err)
+		os.Exit(1)
+	}
+
 	server := api.NewServer(api.ServerConfig{
 		DB:               apiDB,
 		Logger:           appLogger,
@@ -83,6 +91,7 @@ func main() {
 		HTTPClient:       httpClient,
 		AITracker:        aiRequestTracker,
 		EmailTracker:     emailRequestTracker,
+		Scheduler:        functionScheduler,
 		ExecutionTimeout: config.ExecutionTimeout,
 		FrontendHandler:  frontend.Handler(),
 		APIKey:           config.APIKey,
@@ -117,6 +126,10 @@ func main() {
 		// Stop housekeeping scheduler
 		slog.Info("Stopping housekeeping scheduler...")
 		housekeepingScheduler.Stop()
+
+		// Stop function cron scheduler
+		slog.Info("Stopping function cron scheduler...")
+		functionScheduler.Stop()
 
 		// Give active connections 30 seconds to complete
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

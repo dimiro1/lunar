@@ -15,6 +15,7 @@ import {
   BadgeVariant,
   IDBadge,
   StatusBadge,
+  TriggerBadge,
 } from "../components/badge.js";
 import {
   Table,
@@ -229,6 +230,7 @@ export const FunctionExecutions = {
                   m(TableHeader, [
                     m(TableRow, [
                       m(TableHead, t("executions.columns.id")),
+                      m(TableHead, t("executions.columns.trigger")),
                       m(TableHead, t("executions.columns.status")),
                       m(TableHead, t("executions.columns.duration")),
                       m(TableHead, t("executions.columns.time")),
@@ -245,6 +247,12 @@ export const FunctionExecutions = {
                         },
                         [
                           m(TableCell, m(IDBadge, { id: exec.id })),
+                          m(
+                            TableCell,
+                            m(TriggerBadge, {
+                              trigger: exec.trigger || "http",
+                            }),
+                          ),
                           m(
                             TableCell,
                             m(

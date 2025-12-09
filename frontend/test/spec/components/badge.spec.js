@@ -10,6 +10,7 @@ import {
   LogLevelBadge,
   MethodBadges,
   StatusBadge,
+  TriggerBadge,
 } from "../../../js/components/badge.js";
 import { t } from "../../../js/i18n/index.js";
 
@@ -45,6 +46,16 @@ describe("Badge", () => {
       const result = Badge.view(vnode);
 
       expect(result).toHaveClass("badge--success");
+    });
+
+    it("applies info variant class", () => {
+      const vnode = {
+        attrs: { variant: BadgeVariant.INFO },
+        children: ["Info"],
+      };
+      const result = Badge.view(vnode);
+
+      expect(result).toHaveClass("badge--info");
     });
 
     it("applies default size class by default", () => {
@@ -122,6 +133,7 @@ describe("BadgeVariant", () => {
     expect(BadgeVariant.OUTLINE).toBe("outline");
     expect(BadgeVariant.SUCCESS).toBe("success");
     expect(BadgeVariant.WARNING).toBe("warning");
+    expect(BadgeVariant.INFO).toBe("info");
   });
 });
 
@@ -284,6 +296,47 @@ describe("LogLevelBadge", () => {
       const result = LogLevelBadge.view(vnode);
 
       expect(result.attrs.variant).toBe(BadgeVariant.SECONDARY);
+    });
+  });
+});
+
+describe("TriggerBadge", () => {
+  describe("view()", () => {
+    it("renders cron trigger with info variant", () => {
+      const vnode = { attrs: { trigger: "cron" } };
+      const result = TriggerBadge.view(vnode);
+
+      expect(result.tag).toBe(Badge);
+      expect(result.attrs.variant).toBe(BadgeVariant.INFO);
+      expect(result.attrs.size).toBe(BadgeSize.SM);
+      expect(result.attrs.uppercase).toBe(true);
+      expect(result.attrs.mono).toBe(true);
+      expect(result.children).toContain(t("executions.triggers.cron"));
+    });
+
+    it("renders http trigger with success variant", () => {
+      const vnode = { attrs: { trigger: "http" } };
+      const result = TriggerBadge.view(vnode);
+
+      expect(result.tag).toBe(Badge);
+      expect(result.attrs.variant).toBe(BadgeVariant.SUCCESS);
+      expect(result.children).toContain(t("executions.triggers.http"));
+    });
+
+    it("renders unknown trigger as http (success variant)", () => {
+      const vnode = { attrs: { trigger: "unknown" } };
+      const result = TriggerBadge.view(vnode);
+
+      expect(result.attrs.variant).toBe(BadgeVariant.SUCCESS);
+      expect(result.children).toContain(t("executions.triggers.http"));
+    });
+
+    it("renders undefined trigger as http", () => {
+      const vnode = { attrs: {} };
+      const result = TriggerBadge.view(vnode);
+
+      expect(result.attrs.variant).toBe(BadgeVariant.SUCCESS);
+      expect(result.children).toContain(t("executions.triggers.http"));
     });
   });
 });

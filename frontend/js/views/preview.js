@@ -25,6 +25,7 @@ import {
   LogLevelBadge,
   MethodBadges,
   StatusBadge,
+  TriggerBadge,
 } from "../components/badge.js";
 import {
   Table,
@@ -396,6 +397,12 @@ export const Preview = {
         m(LogLevelBadge, { level: "WARN" }),
         m(LogLevelBadge, { level: "ERROR" }),
         m(LogLevelBadge, { level: "DEBUG" }),
+      ]),
+
+      m("h3", "Trigger Badges"),
+      m(".preview-row", [
+        m(TriggerBadge, { trigger: "http" }),
+        m(TriggerBadge, { trigger: "cron" }),
       ]),
     ]);
   },
