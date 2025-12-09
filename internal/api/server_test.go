@@ -635,6 +635,94 @@ end
 		if w.Header().Get("X-Custom-Header") != "custom-value" {
 			t.Errorf("expected X-Custom-Header 'custom-value', got %s", w.Header().Get("X-Custom-Header"))
 		}
+
+		if w.Header().Get("Content-Type") != "text/plain" {
+			t.Errorf("expected Content-Type 'text/plain', got %s", w.Header().Get("Content-Type"))
+		}
+	})
+
+	t.Run("success with html content type", func(t *testing.T) {
+		database := store.NewMemoryDB()
+		server := NewServer(ServerConfig{
+			DB:         database,
+			Logger:     logger.NewMemoryLogger(),
+			KVStore:    kv.NewMemoryStore(),
+			EnvStore:   env.NewMemoryStore(),
+			HTTPClient: internalhttp.NewDefaultClient(),
+			APIKey:     "test-api-key",
+		})
+
+		fn := createTestFunction(t, database)
+		_, err := database.CreateVersion(context.Background(), fn.ID, `
+function handler(ctx, event)
+  return {
+    statusCode = 200,
+    headers = {
+      ["Content-Type"] = "text/html"
+    },
+    body = '<html><body><h1>Hello World</h1></body></html>'
+  }
+end
+`, nil)
+		if err != nil {
+			t.Fatalf("Failed to create version: %v", err)
+		}
+
+		req := httptest.NewRequest(http.MethodGet, "/fn/"+fn.ID, nil)
+		w := httptest.NewRecorder()
+
+		server.Handler().ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("expected status 200, got %d", w.Code)
+		}
+
+		if w.Header().Get("Content-Type") != "text/html" {
+			t.Errorf("expected Content-Type 'text/html', got %s", w.Header().Get("Content-Type"))
+		}
+
+		expectedBody := "<html><body><h1>Hello World</h1></body></html>"
+		if w.Body.String() != expectedBody {
+			t.Errorf("expected body %q, got %q", expectedBody, w.Body.String())
+		}
+	})
+
+	t.Run("default content type when not specified", func(t *testing.T) {
+		database := store.NewMemoryDB()
+		server := NewServer(ServerConfig{
+			DB:         database,
+			Logger:     logger.NewMemoryLogger(),
+			KVStore:    kv.NewMemoryStore(),
+			EnvStore:   env.NewMemoryStore(),
+			HTTPClient: internalhttp.NewDefaultClient(),
+			APIKey:     "test-api-key",
+		})
+
+		fn := createTestFunction(t, database)
+		_, err := database.CreateVersion(context.Background(), fn.ID, `
+function handler(ctx, event)
+  return {
+    statusCode = 200,
+    body = '{"message": "hello"}'
+  }
+end
+`, nil)
+		if err != nil {
+			t.Fatalf("Failed to create version: %v", err)
+		}
+
+		req := httptest.NewRequest(http.MethodGet, "/fn/"+fn.ID, nil)
+		w := httptest.NewRecorder()
+
+		server.Handler().ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("expected status 200, got %d", w.Code)
+		}
+
+		if w.Header().Get("Content-Type") != "application/json" {
+			t.Errorf("expected Content-Type 'application/json', got %s", w.Header().Get("Content-Type"))
+		}
 	})
 
 	t.Run("error with syntax error in lua code", func(t *testing.T) {

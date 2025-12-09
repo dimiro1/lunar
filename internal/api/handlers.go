@@ -789,7 +789,10 @@ func ExecuteFunctionHandler(deps ExecuteFunctionDeps) http.HandlerFunc {
 			}
 
 			// Write response
-			w.Header().Set("Content-Type", "application/json")
+			// Only set default Content-Type if the function didn't provide one
+			if w.Header().Get("Content-Type") == "" {
+				w.Header().Set("Content-Type", "application/json")
+			}
 			w.WriteHeader(statusCode)
 			_, _ = w.Write([]byte(resp.HTTP.Body))
 		} else {
