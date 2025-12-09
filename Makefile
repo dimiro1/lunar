@@ -57,7 +57,7 @@ install-tools:
 
 fmt-frontend:
 	@echo "Formatting frontend..."
-	@deno fmt frontend/
+	@deno fmt --ignore=frontend/vendor frontend/
 
 test-frontend:
 	@go run ./cmd/testserver
