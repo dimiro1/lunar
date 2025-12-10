@@ -75,6 +75,12 @@ const API_DOCS = {
     snippet: "event.query",
     description: "Query parameters (table with param name as key)",
   },
+  "event.relativePath": {
+    signature: "event.relativePath: string",
+    snippet: "event.relativePath",
+    description:
+      "Request path without /fn/{function_id} prefix (e.g., /api/users)",
+  },
   "log.info": {
     signature: "log.info(message: string)",
     snippet: 'log.info("${1:message}")',
@@ -348,6 +354,30 @@ const API_DOCS = {
 })`,
     description:
       "Send email via Resend. Requires RESEND_API_KEY env var. scheduled_at accepts Unix timestamp or ISO 8601 string. Returns {id}.",
+  },
+  "router.match": {
+    signature: "router.match(path: string, pattern: string): boolean",
+    snippet: 'router.match(${1:path}, "${2:/users/:id}")',
+    description:
+      "Test if path matches pattern. Use :name for parameters, * for wildcard.",
+  },
+  "router.params": {
+    signature: "router.params(path: string, pattern: string): table",
+    snippet: 'router.params(${1:path}, "${2:/users/:id}")',
+    description:
+      'Extract parameters from path. Returns table with param names as keys (e.g., {id = "42"}).',
+  },
+  "router.path": {
+    signature: "router.path(pattern: string, params?: table): string",
+    snippet: 'router.path("${1:/users/:id}", {${2:id} = "${3:value}"})',
+    description:
+      "Build full path with /fn/{functionId} prefix. Supports parameter substitution.",
+  },
+  "router.url": {
+    signature: "router.url(pattern: string, params?: table): string",
+    snippet: 'router.url("${1:/users/:id}", {${2:id} = "${3:value}"})',
+    description:
+      "Build full URL including base URL and /fn/{functionId} prefix. Supports parameter substitution.",
   },
 };
 

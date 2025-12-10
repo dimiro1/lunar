@@ -74,6 +74,7 @@ func Run(ctx context.Context, deps Dependencies, req Request) (Response, error) 
 	registerURL(L)
 	registerStrings(L)
 	registerRandom(L)
+	registerRouter(L, req.Context)
 
 	// Register AI module
 	registerAI(L, deps.AI, req.Context.FunctionID, deps.AITracker, req.Context.ExecutionID)

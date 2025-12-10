@@ -327,7 +327,8 @@ export const API = {
         queryString = params.toString() ? "?" + params : "";
       }
     }
-    const url = `/fn/${functionId}${queryString}`;
+    const pathSuffix = request.path || "";
+    const url = `/fn/${functionId}${pathSuffix}${queryString}`;
 
     // Parse body if it's a JSON string to avoid double-encoding
     let body;

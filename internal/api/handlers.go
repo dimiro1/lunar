@@ -21,6 +21,7 @@ import (
 	"github.com/dimiro1/lunar/internal/runner"
 	"github.com/dimiro1/lunar/internal/store"
 	"github.com/rs/xid"
+	"strings"
 )
 
 // ExecuteFunctionDeps holds dependencies for executing functions
@@ -651,13 +652,21 @@ func ExecuteFunctionHandler(deps ExecuteFunctionDeps) http.HandlerFunc {
 			return
 		}
 
+		// Compute relativePath by stripping /fn/{function_id} prefix
+		prefix := "/fn/" + functionID
+		relativePath := strings.TrimPrefix(r.URL.Path, prefix)
+		if relativePath == "" {
+			relativePath = "/"
+		}
+
 		// Create HTTP event from the request
 		httpEvent := events.HTTPEvent{
-			Method:  r.Method,
-			Path:    r.URL.Path,
-			Headers: make(map[string]string),
-			Body:    string(body),
-			Query:   make(map[string]string),
+			Method:       r.Method,
+			Path:         r.URL.Path,
+			RelativePath: relativePath,
+			Headers:      make(map[string]string),
+			Body:         string(body),
+			Query:        make(map[string]string),
 		}
 
 		// Copy headers

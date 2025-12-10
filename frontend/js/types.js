@@ -196,6 +196,7 @@
 /**
  * @typedef {Object} ExecuteRequest
  * @property {string} [method] - HTTP method (GET, POST, etc.)
+ * @property {string} [path] - Path suffix to append to function URL
  * @property {string|Object.<string, string>} [query] - Query parameters
  * @property {Object.<string, string>} [headers] - Request headers
  * @property {*} [body] - Request body

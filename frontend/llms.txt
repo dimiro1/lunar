@@ -35,7 +35,8 @@ Execution metadata available in every function:
 HTTP request data:
 
 - event.method (string) - HTTP method (GET, POST, PUT, DELETE, etc.)
-- event.path (string) - Request path
+- event.path (string) - Full request path (including /fn/{function_id})
+- event.relativePath (string) - Request path without /fn/{function_id} prefix (e.g., /api/users)
 - event.body (string) - Request body as string
 - event.headers (table) - Request headers (key-value pairs)
 - event.query (table) - Query parameters (key-value pairs)
@@ -386,6 +387,45 @@ local token = random.string(32)
 local id = random.id()
 ```
 
+### Router (router)
+
+Path matching and URL building utilities for creating routers:
+
+**Path Matching:**
+- router.match(path: string, pattern: string): boolean - Test if path matches pattern
+- router.params(path: string, pattern: string): table - Extract parameters from path
+
+**URL Building:**
+- router.path(pattern: string, params?: table): string - Build full path with /fn/{functionId} prefix
+- router.url(pattern: string, params?: table): string - Build full URL including base URL
+
+Pattern syntax:
+- `:name` - Named parameter (matches one path segment)
+- `*` - Wildcard (matches everything after, must be at end)
+
+Example:
+```lua
+-- Check if path matches pattern
+router.match("/users/42", "/users/:id")        -- true
+router.match("/users/42/posts", "/users/:id")  -- false (extra segment)
+router.match("/files/a/b/c", "/files/*")       -- true (wildcard)
+
+-- Extract parameters
+local params = router.params("/users/42", "/users/:id")
+-- params = {id = "42"}
+
+local params = router.params("/users/42/posts/5", "/users/:userId/posts/:postId")
+-- params = {userId = "42", postId = "5"}
+
+-- Build paths for external consumers (includes /fn/{functionId} prefix)
+router.path("/users")                          -- "/fn/{functionId}/users"
+router.path("/users/:id", {id = "42"})         -- "/fn/{functionId}/users/42"
+
+-- Build full URLs (includes base URL)
+router.url("/users")                           -- "http://localhost:8080/fn/{functionId}/users"
+router.url("/users/:id", {id = "42"})          -- "http://localhost:8080/fn/{functionId}/users/42"
+```
+
 ## Code Examples
 
 ### Basic HTTP Handler
@@ -625,6 +665,73 @@ function handler(ctx, event)
     statusCode = 200,
     headers = { ["Content-Type"] = "application/json" },
     body = json.encode({ success = true, email_id = result.id })
+  }
+end
+```
+
+### Simple REST Router
+
+```lua
+function handler(ctx, event)
+  local path = event.relativePath
+  local method = event.method
+
+  -- Home route
+  if path == "/" then
+    return {
+      statusCode = 200,
+      headers = { ["Content-Type"] = "application/json" },
+      body = json.encode({ message = "Welcome to the API" })
+    }
+  end
+
+  -- GET /users/:id - Get user by ID
+  if method == "GET" and router.match(path, "/users/:id") then
+    local params = router.params(path, "/users/:id")
+    return {
+      statusCode = 200,
+      headers = { ["Content-Type"] = "application/json" },
+      body = json.encode({ userId = params.id })
+    }
+  end
+
+  -- POST /users - Create user
+  if method == "POST" and path == "/users" then
+    local data, err = json.decode(event.body)
+    if err then
+      return { statusCode = 400, body = json.encode({ error = "Invalid JSON" }) }
+    end
+    return {
+      statusCode = 201,
+      headers = { ["Content-Type"] = "application/json" },
+      body = json.encode({ created = true, name = data.name })
+    }
+  end
+
+  -- GET /users/:userId/posts/:postId - Nested resource
+  if method == "GET" and router.match(path, "/users/:userId/posts/:postId") then
+    local params = router.params(path, "/users/:userId/posts/:postId")
+    return {
+      statusCode = 200,
+      headers = { ["Content-Type"] = "application/json" },
+      body = json.encode(params)
+    }
+  end
+
+  -- Static files wildcard
+  if router.match(path, "/static/*") then
+    return {
+      statusCode = 200,
+      headers = { ["Content-Type"] = "text/plain" },
+      body = "Static file: " .. path
+    }
+  end
+
+  -- 404 Not Found
+  return {
+    statusCode = 404,
+    headers = { ["Content-Type"] = "application/json" },
+    body = json.encode({ error = "Not found" })
   }
 end
 ```

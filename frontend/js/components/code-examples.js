@@ -47,13 +47,16 @@ export const CodeExamples = {
    * Generates a code example for the selected language.
    * @param {string} functionId - Function ID
    * @param {string} method - HTTP method
+   * @param {string} path - Path suffix
    * @param {string} query - Query string
    * @param {string} body - Request body
    * @returns {string} Generated code example
    */
-  generateCodeExample: (functionId, method, query, body) => {
+  generateCodeExample: (functionId, method, path, query, body) => {
     const host = window.location.origin;
-    const url = `${host}/fn/${functionId}${query ? "?" + query : ""}`;
+    const url = `${host}/fn/${functionId}${path || ""}${
+      query ? "?" + query : ""
+    }`;
     const lang = CodeExamples.selectedLang;
 
     /** @type {Object.<SupportedLanguage, string>} */
@@ -141,12 +144,13 @@ func main() {
    * @param {Object} vnode.attrs - Component attributes
    * @param {string} vnode.attrs.functionId - Function ID
    * @param {string} vnode.attrs.method - HTTP method
+   * @param {string} [vnode.attrs.path=''] - Path suffix
    * @param {string} vnode.attrs.query - Query string
    * @param {string} vnode.attrs.body - Request body
    * @returns {Object} Mithril vnode
    */
   view: (vnode) => {
-    const { functionId, method, query, body } = vnode.attrs;
+    const { functionId, method, path = "", query, body } = vnode.attrs;
 
     return m(Card, { style: "margin-bottom: 1.5rem" }, [
       m(
@@ -191,6 +195,7 @@ func main() {
                 const code = CodeExamples.generateCodeExample(
                   functionId,
                   method,
+                  path,
                   query,
                   body,
                 );
@@ -218,6 +223,7 @@ func main() {
                   const code = CodeExamples.generateCodeExample(
                     functionId,
                     method,
+                    path,
                     query,
                     body,
                   );
@@ -230,6 +236,7 @@ func main() {
                   const code = CodeExamples.generateCodeExample(
                     functionId,
                     method,
+                    path,
                     query,
                     body,
                   );

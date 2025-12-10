@@ -90,6 +90,7 @@ import { CodeEditor } from "../components/code-editor.js";
  * @property {number} paginationLimit - Pagination limit
  * @property {EnvVar[]} envVars - Environment variables demo data
  * @property {string} requestMethod - Request builder method
+ * @property {string} requestPath - Request builder path
  * @property {string} requestQuery - Request builder query
  * @property {string} requestBody - Request builder body
  */
@@ -128,6 +129,7 @@ export const Preview = {
       { key: "DEBUG", value: "true", state: "original", originalKey: "DEBUG" },
     ],
     requestMethod: "GET",
+    requestPath: "",
     requestQuery: "",
     requestBody: "",
   },
@@ -972,11 +974,13 @@ end`;
       m("h3", "Request Builder"),
       m(".preview-request-builder", { style: "max-width: 500px;" }, [
         m(RequestBuilder, {
-          url: "https://api.example.com/functions/abc123/invoke",
+          url: "https://api.example.com/fn/abc123",
+          path: Preview.demoState.requestPath,
           method: Preview.demoState.requestMethod,
           query: Preview.demoState.requestQuery,
           body: Preview.demoState.requestBody,
           onMethodChange: (v) => (Preview.demoState.requestMethod = v),
+          onPathChange: (v) => (Preview.demoState.requestPath = v),
           onQueryChange: (v) => (Preview.demoState.requestQuery = v),
           onBodyChange: (v) => (Preview.demoState.requestBody = v),
           onExecute: () => Toast.show("Request sent!", "success"),

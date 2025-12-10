@@ -38,12 +38,14 @@ export const RequestBuilder = {
    * Renders the request builder component.
    * @param {Object} vnode - Mithril vnode
    * @param {Object} vnode.attrs - Component attributes
-   * @param {string} [vnode.attrs.url=''] - Base URL for the request
+   * @param {string} [vnode.attrs.url=''] - Base URL for the request (without path suffix)
+   * @param {string} [vnode.attrs.path=''] - Path suffix to append to URL
    * @param {string} [vnode.attrs.method='GET'] - HTTP method
    * @param {string} [vnode.attrs.query=''] - Query string parameters
    * @param {string} [vnode.attrs.headers] - Request headers as JSON string
    * @param {string} [vnode.attrs.body=''] - Request body
    * @param {function(string): void} [vnode.attrs.onMethodChange] - Callback when method changes
+   * @param {function(string): void} [vnode.attrs.onPathChange] - Callback when path changes
    * @param {function(string): void} [vnode.attrs.onQueryChange] - Callback when query changes
    * @param {function(string): void} [vnode.attrs.onHeadersChange] - Callback when headers change
    * @param {function(string): void} [vnode.attrs.onBodyChange] - Callback when body changes
@@ -54,11 +56,13 @@ export const RequestBuilder = {
   view(vnode) {
     const {
       url = "",
+      path = "",
       method = "GET",
       query = "",
       headers = '{"Content-Type": "application/json"}',
       body = "",
       onMethodChange,
+      onPathChange,
       onQueryChange,
       onHeadersChange,
       onBodyChange,
@@ -74,10 +78,12 @@ export const RequestBuilder = {
       { value: "PATCH", label: "PATCH" },
     ];
 
+    const fullUrl = url + path + (query ? `?${query}` : "");
+
     return m(Card, [
       m(CardHeader, { title: t("requestBuilder.request") }),
       m(CardContent, [
-        // URL display with method selector
+        // Method selector and full URL display
         m(".request-builder__url", [
           m(FormSelect, {
             options: methods,
@@ -86,9 +92,21 @@ export const RequestBuilder = {
             ["aria-label"]: t("requestBuilder.method"),
           }),
           m(CopyInput, {
-            value: url + (query ? `?${query}` : ""),
+            value: fullUrl,
             mono: true,
             ["aria-label"]: t("requestBuilder.requestUrl"),
+          }),
+        ]),
+
+        // Path suffix
+        m(FormGroup, [
+          m(FormLabel, { text: t("requestBuilder.path") }),
+          m(FormInput, {
+            value: path,
+            placeholder: "/users/123",
+            mono: true,
+            oninput: (e) => onPathChange && onPathChange(e.target.value),
+            ["aria-label"]: t("requestBuilder.path"),
           }),
         ]),
 
@@ -100,7 +118,7 @@ export const RequestBuilder = {
             placeholder: "key=value&other=value",
             mono: true,
             oninput: (e) => onQueryChange && onQueryChange(e.target.value),
-            ["aria-label"]: t("requestBuilder.labelUrl"),
+            ["aria-label"]: t("requestBuilder.queryParams"),
           }),
         ]),
 
@@ -151,13 +169,14 @@ export const RequestBuilder = {
  * Creates ready-to-use code snippets for cURL, JavaScript, Python, and Go.
  * @param {string} url - Base URL
  * @param {string} method - HTTP method
+ * @param {string} path - Path suffix to append to URL
  * @param {string} query - Query string parameters
  * @param {string} headers - Headers as JSON string
  * @param {string} body - Request body
  * @returns {CodeExamples} Object with code examples for each language
  */
-export function generateCodeExamples(url, method, query, headers, body) {
-  const fullUrl = url + (query ? `?${query}` : "");
+export function generateCodeExamples(url, method, path, query, headers, body) {
+  const fullUrl = url + path + (query ? `?${query}` : "");
   const hasBody = body && ["POST", "PUT", "PATCH"].includes(method);
 
   let headersList = [];

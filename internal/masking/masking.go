@@ -189,11 +189,12 @@ func maskJSONValue(value any) any {
 // MaskHTTPEvent creates a copy of the HTTPEvent with sensitive data masked
 func MaskHTTPEvent(event events.HTTPEvent) events.HTTPEvent {
 	return events.HTTPEvent{
-		Method:  event.Method,
-		Path:    event.Path,
-		Headers: MaskHeaders(event.Headers),
-		Body:    MaskJSONBody(event.Body),
-		Query:   MaskQueryParams(event.Query),
+		Method:       event.Method,
+		Path:         event.Path,
+		RelativePath: event.RelativePath,
+		Headers:      MaskHeaders(event.Headers),
+		Body:         MaskJSONBody(event.Body),
+		Query:        MaskQueryParams(event.Query),
 	}
 }
 

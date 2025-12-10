@@ -33,6 +33,7 @@ import { FormGroup, FormLabel } from "../components/form.js";
 /**
  * @typedef {Object} TestRequest
  * @property {string} method - HTTP method
+ * @property {string} path - Path suffix to append to function URL
  * @property {string} query - Query string
  * @property {string} body - Request body
  */
@@ -61,6 +62,7 @@ export const FunctionTest = {
    */
   testRequest: {
     method: "GET",
+    path: "",
     query: "",
     body: "",
   },
@@ -212,6 +214,7 @@ export const FunctionTest = {
           m(CodeExamples, {
             functionId: func.id,
             method: FunctionTest.testRequest.method,
+            path: FunctionTest.testRequest.path,
             query: FunctionTest.testRequest.query,
             body: FunctionTest.testRequest.body,
           }),
@@ -220,12 +223,14 @@ export const FunctionTest = {
             // Request Builder
             m(RequestBuilder, {
               url: `${window.location.origin}/fn/${func.id}`,
+              path: FunctionTest.testRequest.path,
               method: FunctionTest.testRequest.method,
               query: FunctionTest.testRequest.query,
               body: FunctionTest.testRequest.body,
               onMethodChange: (
                 value,
               ) => (FunctionTest.testRequest.method = value),
+              onPathChange: (value) => (FunctionTest.testRequest.path = value),
               onQueryChange: (
                 value,
               ) => (FunctionTest.testRequest.query = value),
