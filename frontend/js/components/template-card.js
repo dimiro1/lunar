@@ -293,6 +293,52 @@ function handler(ctx, event)
 end`,
   },
   {
+    id: "router",
+    icon: "route",
+    code: `-- Simple Router
+-- Uses event.relativePath and router module for path matching
+function handler(ctx, event)
+    local path = event.relativePath
+    local method = event.method
+
+    -- GET /users
+    if method == "GET" and router.match(path, "/users") then
+        return {
+            statusCode = 200,
+            headers = { ["Content-Type"] = "application/json" },
+            body = json.encode({ users = {} })
+        }
+    end
+
+    -- GET /users/:id
+    if method == "GET" and router.match(path, "/users/:id") then
+        local params = router.params(path, "/users/:id")
+        return {
+            statusCode = 200,
+            headers = { ["Content-Type"] = "application/json" },
+            body = json.encode({ id = params.id, name = "User " .. params.id })
+        }
+    end
+
+    -- POST /users
+    if method == "POST" and router.match(path, "/users") then
+        local data = json.decode(event.body)
+        return {
+            statusCode = 201,
+            headers = { ["Content-Type"] = "application/json" },
+            body = json.encode({ id = crypto.uuid(), name = data.name })
+        }
+    end
+
+    -- 404 Not Found
+    return {
+        statusCode = 404,
+        headers = { ["Content-Type"] = "application/json" },
+        body = json.encode({ error = "Not found" })
+    }
+end`,
+  },
+  {
     id: "blank",
     icon: "document",
     code: `-- Your function code here

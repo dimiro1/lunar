@@ -115,11 +115,12 @@ func (s *Server) setupRoutes() {
 	s.mux.Handle("GET /api/executions/{id}/email-requests", authMiddleware(http.HandlerFunc(GetExecutionEmailRequestsHandler(s.db, s.emailTracker))))
 
 	// Runtime Execution - needs all dependencies (NO AUTH - public endpoint)
+	// Register both exact match and wildcard patterns for routing support
 	executeHandler := ExecuteFunctionHandler(*s.execDeps)
-	s.mux.HandleFunc("GET /fn/{function_id}", executeHandler)
-	s.mux.HandleFunc("POST /fn/{function_id}", executeHandler)
-	s.mux.HandleFunc("PUT /fn/{function_id}", executeHandler)
-	s.mux.HandleFunc("DELETE /fn/{function_id}", executeHandler)
+	for _, method := range []string{"GET", "POST", "PUT", "DELETE", "PATCH"} {
+		s.mux.HandleFunc(method+" /fn/{function_id}", executeHandler)
+		s.mux.HandleFunc(method+" /fn/{function_id}/{path...}", executeHandler)
+	}
 
 	// Serve frontend files (catch-all route for SPA)
 	if s.frontendHandler != nil {

@@ -285,6 +285,11 @@ export function getLuaAPISections() {
               type: "table",
               description: t("luaApi.handler.items.query"),
             },
+            {
+              name: "event.relativePath",
+              type: "string",
+              description: t("luaApi.handler.items.relativePath"),
+            },
           ],
         },
       ],
@@ -433,6 +438,43 @@ export function getLuaAPISections() {
               name: "crypto.uuid()",
               type: "function",
               description: t("luaApi.data.items.uuid"),
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "router",
+      name: t("luaApi.router.name"),
+      description: t("luaApi.router.description"),
+      groups: [
+        {
+          name: t("luaApi.router.groups.matching"),
+          items: [
+            {
+              name: "router.match(path, pattern)",
+              type: "function",
+              description: t("luaApi.router.items.match"),
+            },
+            {
+              name: "router.params(path, pattern)",
+              type: "function",
+              description: t("luaApi.router.items.params"),
+            },
+          ],
+        },
+        {
+          name: t("luaApi.router.groups.building"),
+          items: [
+            {
+              name: "router.path(pattern, params?)",
+              type: "function",
+              description: t("luaApi.router.items.path"),
+            },
+            {
+              name: "router.url(pattern, params?)",
+              type: "function",
+              description: t("luaApi.router.items.url"),
             },
           ],
         },

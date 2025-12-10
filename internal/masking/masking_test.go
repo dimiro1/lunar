@@ -316,8 +316,9 @@ func TestMaskHTTPEvent(t *testing.T) {
 		{
 			name: "Full event with sensitive data",
 			event: events.HTTPEvent{
-				Method: "POST",
-				Path:   "/api/users",
+				Method:       "POST",
+				Path:         "/api/users",
+				RelativePath: "/users/42",
 				Headers: map[string]string{
 					"Authorization": "Bearer secret_token",
 					"Content-Type":  "application/json",
@@ -336,12 +337,15 @@ func TestMaskHTTPEvent(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := MaskHTTPEvent(tt.event)
 
-			// Method and Path should be unchanged
+			// Method, Path, and RelativePath should be unchanged
 			if result.Method != tt.event.Method {
 				t.Errorf("Method = %q, want %q", result.Method, tt.event.Method)
 			}
 			if result.Path != tt.event.Path {
 				t.Errorf("Path = %q, want %q", result.Path, tt.event.Path)
+			}
+			if result.RelativePath != tt.event.RelativePath {
+				t.Errorf("RelativePath = %q, want %q", result.RelativePath, tt.event.RelativePath)
 			}
 
 			// Sensitive headers should be masked

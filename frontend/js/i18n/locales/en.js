@@ -102,6 +102,10 @@ export default {
       name: "Send Email",
       description: "Send emails via Resend API",
     },
+    router: {
+      name: "Router",
+      description: "Simple path-based routing with params",
+    },
     blank: {
       name: "Blank",
       description: "Start with empty template",
@@ -269,6 +273,7 @@ export default {
     method: "Method",
     url: "URL",
     requestUrl: "Request URL",
+    path: "Path",
     queryParams: "Query Parameters",
     headers: "Headers (JSON)",
     requestBody: "Request Body",
@@ -446,10 +451,25 @@ export default {
         startedAt: "Start timestamp (Unix)",
         baseUrl: "Server base URL",
         method: "HTTP method (GET, POST, etc.)",
-        path: "Request path",
+        path: "Full request path",
         body: "Request body as string",
         headers: "Request headers table",
         query: "Query parameters table",
+        relativePath: "Path without /fn/:id prefix",
+      },
+    },
+    router: {
+      name: "Router",
+      description: "Path matching and URL building",
+      groups: {
+        matching: "Path Matching (router)",
+        building: "URL Building (router)",
+      },
+      items: {
+        match: "Test if path matches pattern",
+        params: "Extract parameters from path",
+        path: "Build path with /fn/:id prefix",
+        url: "Build full URL with base URL",
       },
     },
     io: {

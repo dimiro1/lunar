@@ -103,6 +103,10 @@ export default {
       name: "Enviar Email",
       description: "Envie emails via API Resend",
     },
+    router: {
+      name: "Roteador",
+      description: "Roteamento simples baseado em caminhos com parâmetros",
+    },
     blank: {
       name: "Em branco",
       description: "Comece com template vazio",
@@ -271,6 +275,7 @@ export default {
     method: "Método",
     url: "URL",
     requestUrl: "URL da requisição",
+    path: "Caminho",
     queryParams: "Parâmetros de Query",
     headers: "Headers (JSON)",
     requestBody: "Corpo da Requisição",
@@ -449,10 +454,25 @@ export default {
         startedAt: "Timestamp de início (Unix)",
         baseUrl: "URL base do servidor",
         method: "Método HTTP (GET, POST, etc.)",
-        path: "Caminho da requisição",
+        path: "Caminho completo da requisição",
         body: "Corpo da requisição como string",
         headers: "Tabela de cabeçalhos da requisição",
         query: "Tabela de parâmetros de query",
+        relativePath: "Caminho sem prefixo /fn/:id",
+      },
+    },
+    router: {
+      name: "Router",
+      description: "Correspondência de rotas e construção de URLs",
+      groups: {
+        matching: "Correspondência de Rotas (router)",
+        building: "Construção de URLs (router)",
+      },
+      items: {
+        match: "Testar se caminho corresponde ao padrão",
+        params: "Extrair parâmetros do caminho",
+        path: "Construir caminho com prefixo /fn/:id",
+        url: "Construir URL completa com base URL",
       },
     },
     io: {

@@ -11,6 +11,7 @@ func httpEventToLuaTable(L *lua.LState, event events.HTTPEvent) *lua.LTable {
 
 	L.SetField(tbl, "method", lua.LString(event.Method))
 	L.SetField(tbl, "path", lua.LString(event.Path))
+	L.SetField(tbl, "relativePath", lua.LString(event.RelativePath))
 	L.SetField(tbl, "body", lua.LString(event.Body))
 
 	// Convert headers to Lua table

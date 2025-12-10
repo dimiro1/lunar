@@ -2,11 +2,12 @@ package events
 
 // HTTPEvent represents an incoming HTTP request
 type HTTPEvent struct {
-	Method  string            `json:"method"`
-	Path    string            `json:"path"`
-	Headers map[string]string `json:"headers"`
-	Body    string            `json:"body"`
-	Query   map[string]string `json:"query"`
+	Method       string            `json:"method"`
+	Path         string            `json:"path"`
+	RelativePath string            `json:"relativePath"`
+	Headers      map[string]string `json:"headers"`
+	Body         string            `json:"body"`
+	Query        map[string]string `json:"query"`
 }
 
 // Type returns the event type for HTTPEvent
