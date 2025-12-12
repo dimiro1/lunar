@@ -417,23 +417,42 @@ func GetVersionHandler(database store.DB) http.HandlerFunc {
 // ActivateVersionHandler returns a handler for activating a version
 func ActivateVersionHandler(database store.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := r.PathValue("id")
-		versionStr := r.PathValue("version")
-
-		// Parse version number
-		versionNum, err := strconv.Atoi(versionStr)
-		if err != nil {
-			writeError(w, http.StatusBadRequest, "Invalid version number")
-			return
-		}
+		versionID := r.PathValue("versionId")
 
 		// Activate the version
-		if err := database.ActivateVersion(r.Context(), id, versionNum); err != nil {
-			writeError(w, http.StatusNotFound, "Version not found")
+		if err := database.ActivateVersion(r.Context(), versionID); err != nil {
+			if err == store.ErrVersionNotFound {
+				writeError(w, http.StatusNotFound, "Version not found")
+				return
+			}
+			writeError(w, http.StatusInternalServerError, "Failed to activate version")
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
+	}
+}
+
+// DeleteVersionHandler returns a handler for deleting a version
+func DeleteVersionHandler(database store.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		versionID := r.PathValue("versionId")
+
+		// Delete the version
+		if err := database.DeleteVersion(r.Context(), versionID); err != nil {
+			if err == store.ErrVersionNotFound {
+				writeError(w, http.StatusNotFound, "Version not found")
+				return
+			}
+			if err == store.ErrCannotDeleteActiveVersion {
+				writeError(w, http.StatusBadRequest, "Cannot delete active version")
+				return
+			}
+			writeError(w, http.StatusInternalServerError, "Failed to delete version")
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 

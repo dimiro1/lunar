@@ -353,6 +353,11 @@ export default {
     selectToCompare: "Selecione 2 versões para comparar",
     compareVersions: "Comparar v{{v1}} e v{{v2}}",
     versionsCount: "{{count}} versões",
+    deleteConfirm:
+      "Excluir versão {{version}}? Isso também excluirá todas as execuções desta versão. Esta ação não pode ser desfeita.",
+    versionDeleted: "Versão {{version}} excluída",
+    failedToDelete: "Falha ao excluir versão",
+    delete: "Excluir",
   },
 
   // AI Request viewer

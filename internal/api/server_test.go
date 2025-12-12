@@ -323,10 +323,11 @@ func TestActivateVersion(t *testing.T) {
 
 	// Create a test function and two versions
 	fn := createTestFunction(t, database)
-	createTestVersion(t, database, fn.ID, "function handler(ctx, event)\n  return {statusCode = 200}\nend")
+	v1 := createTestVersion(t, database, fn.ID, "function handler(ctx, event)\n  return {statusCode = 200}\nend")
 	createTestVersion(t, database, fn.ID, "function handler(ctx, event)\n  return {statusCode = 201}\nend")
 
-	req := makeAuthRequest(http.MethodPost, "/api/functions/"+fn.ID+"/versions/1/activate", nil)
+	// Use version ID (primary key) instead of version number
+	req := makeAuthRequest(http.MethodPost, "/api/functions/"+fn.ID+"/versions/"+v1.ID+"/activate", nil)
 	w := httptest.NewRecorder()
 
 	server.Handler().ServeHTTP(w, req)

@@ -104,7 +104,8 @@ func (s *Server) setupRoutes() {
 	// Version Management - only need DB
 	s.mux.Handle("GET /api/functions/{id}/versions", authMiddleware(http.HandlerFunc(ListVersionsHandler(s.db))))
 	s.mux.Handle("GET /api/functions/{id}/versions/{version}", authMiddleware(http.HandlerFunc(GetVersionHandler(s.db))))
-	s.mux.Handle("POST /api/functions/{id}/versions/{version}/activate", authMiddleware(http.HandlerFunc(ActivateVersionHandler(s.db))))
+	s.mux.Handle("POST /api/functions/{id}/versions/{versionId}/activate", authMiddleware(http.HandlerFunc(ActivateVersionHandler(s.db))))
+	s.mux.Handle("DELETE /api/functions/{id}/versions/{versionId}", authMiddleware(http.HandlerFunc(DeleteVersionHandler(s.db))))
 	s.mux.Handle("GET /api/functions/{id}/diff/{v1}/{v2}", authMiddleware(http.HandlerFunc(GetVersionDiffHandler(s.db))))
 
 	// Execution History - only need DB

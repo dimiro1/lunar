@@ -256,27 +256,73 @@ func (db *MemoryDB) GetActiveVersion(_ context.Context, functionID string) (Func
 	return FunctionVersion{}, ErrNoActiveVersion
 }
 
-func (db *MemoryDB) ActivateVersion(_ context.Context, functionID string, version int) error {
+func (db *MemoryDB) ActivateVersion(_ context.Context, versionID string) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
-	versions := db.versions[functionID]
-	found := false
+	// Find the version by ID across all functions
+	var targetFunctionID string
+	var targetIdx = -1
 
-	for i := range versions {
-		if versions[i].Version == version {
-			versions[i].IsActive = true
-			found = true
-		} else {
-			versions[i].IsActive = false
+	for funcID, versions := range db.versions {
+		for i, v := range versions {
+			if v.ID == versionID {
+				targetFunctionID = funcID
+				targetIdx = i
+				break
+			}
+		}
+		if targetIdx != -1 {
+			break
 		}
 	}
 
-	if !found {
+	if targetIdx == -1 {
 		return ErrVersionNotFound
 	}
 
-	db.versions[functionID] = versions
+	// Deactivate all versions and activate the target
+	versions := db.versions[targetFunctionID]
+	for i := range versions {
+		versions[i].IsActive = (i == targetIdx)
+	}
+
+	db.versions[targetFunctionID] = versions
+	return nil
+}
+
+func (db *MemoryDB) DeleteVersion(_ context.Context, versionID string) error {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	// Find the version by ID across all functions
+	var targetFunctionID string
+	var targetIdx = -1
+
+	for funcID, versions := range db.versions {
+		for i, v := range versions {
+			if v.ID == versionID {
+				// Check if it's the active version
+				if v.IsActive {
+					return ErrCannotDeleteActiveVersion
+				}
+				targetFunctionID = funcID
+				targetIdx = i
+				break
+			}
+		}
+		if targetIdx != -1 {
+			break
+		}
+	}
+
+	if targetIdx == -1 {
+		return ErrVersionNotFound
+	}
+
+	// Remove the version from the slice
+	versions := db.versions[targetFunctionID]
+	db.versions[targetFunctionID] = append(versions[:targetIdx], versions[targetIdx+1:]...)
 	return nil
 }
 
