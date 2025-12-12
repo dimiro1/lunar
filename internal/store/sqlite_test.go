@@ -478,15 +478,16 @@ func TestSQLiteDB_ActivateVersion(t *testing.T) {
 	}
 
 	// Create 2 versions
-	if _, err := sqliteDB.CreateVersion(ctx, fn.ID, "v1", nil); err != nil {
+	v1, err := sqliteDB.CreateVersion(ctx, fn.ID, "v1", nil)
+	if err != nil {
 		t.Fatalf("CreateVersion v1 failed: %v", err)
 	}
 	if _, err := sqliteDB.CreateVersion(ctx, fn.ID, "v2", nil); err != nil {
 		t.Fatalf("CreateVersion v2 failed: %v", err)
 	}
 
-	// Activate v1
-	if err := sqliteDB.ActivateVersion(ctx, fn.ID, 1); err != nil {
+	// Activate v1 using version ID
+	if err := sqliteDB.ActivateVersion(ctx, v1.ID); err != nil {
 		t.Fatalf("ActivateVersion failed: %v", err)
 	}
 

@@ -215,13 +215,13 @@ export const API = {
     /**
      * Activates a specific version.
      * @param {string} functionId - Function ID
-     * @param {number} version - Version number to activate
-     * @returns {Promise<LunarFunction>} The updated function
+     * @param {string} versionId - Version ID to activate
+     * @returns {Promise<void>}
      */
-    activate: (functionId, version) =>
+    activate: (functionId, versionId) =>
       apiRequest({
         method: "POST",
-        url: `/api/functions/${functionId}/versions/${version}/activate`,
+        url: `/api/functions/${functionId}/versions/${versionId}/activate`,
       }),
 
     /**
@@ -235,6 +235,18 @@ export const API = {
       apiRequest({
         method: "GET",
         url: `/api/functions/${functionId}/diff/${v1}/${v2}`,
+      }),
+
+    /**
+     * Deletes a specific version.
+     * @param {string} functionId - Function ID
+     * @param {string} versionId - Version ID to delete
+     * @returns {Promise<void>}
+     */
+    delete: (functionId, versionId) =>
+      apiRequest({
+        method: "DELETE",
+        url: `/api/functions/${functionId}/versions/${versionId}`,
       }),
   },
 

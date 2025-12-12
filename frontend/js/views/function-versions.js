@@ -187,17 +187,48 @@ export const FunctionVersions = {
 
   /**
    * Activates a specific version.
-   * @param {number} version - Version number to activate
+   * @param {FunctionVersion} ver - Version object to activate
    * @returns {Promise<void>}
    */
-  activateVersion: async (version) => {
-    if (!confirm(t("versionsPage.activateConfirm", { version }))) return;
+  activateVersion: async (ver) => {
+    if (!confirm(t("versionsPage.activateConfirm", { version: ver.version }))) {
+      return;
+    }
     try {
-      await API.versions.activate(FunctionVersions.func.id, version);
-      Toast.show(t("versionsPage.versionActivated", { version }), "success");
+      await API.versions.activate(FunctionVersions.func.id, ver.id);
+      Toast.show(
+        t("versionsPage.versionActivated", { version: ver.version }),
+        "success",
+      );
       await FunctionVersions.loadData(FunctionVersions.func.id);
     } catch (e) {
       Toast.show(t("versionsPage.failedToActivate"), "error");
+    }
+  },
+
+  /**
+   * Deletes a specific version.
+   * @param {FunctionVersion} ver - Version object to delete
+   * @returns {Promise<void>}
+   */
+  deleteVersion: async (ver) => {
+    if (!confirm(t("versionsPage.deleteConfirm", { version: ver.version }))) {
+      return;
+    }
+    try {
+      await API.versions.delete(FunctionVersions.func.id, ver.id);
+      Toast.show(
+        t("versionsPage.versionDeleted", { version: ver.version }),
+        "success",
+      );
+      // Remove from selected versions if it was selected
+      const idx = FunctionVersions.selectedVersions.indexOf(ver.version);
+      if (idx !== -1) {
+        FunctionVersions.selectedVersions.splice(idx, 1);
+      }
+      await FunctionVersions.loadVersions();
+    } catch (e) {
+      Toast.show(t("versionsPage.failedToDelete"), "error");
     }
   },
 
@@ -345,21 +376,33 @@ export const FunctionVersions = {
                           ]),
                           m(TableCell, formatUnixTimestamp(ver.created_at)),
                           m(TableCell, { align: "right" }, [
-                            ver.version !== func.active_version.version &&
-                            m(
-                              Button,
-                              {
-                                variant: ButtonVariant.OUTLINE,
-                                size: ButtonSize.SM,
-                                onclick: (e) => {
-                                  e.stopPropagation();
-                                  FunctionVersions.activateVersion(
-                                    ver.version,
-                                  );
+                            ver.version !== func.active_version.version && [
+                              m(
+                                Button,
+                                {
+                                  variant: ButtonVariant.OUTLINE,
+                                  size: ButtonSize.SM,
+                                  onclick: (e) => {
+                                    e.stopPropagation();
+                                    FunctionVersions.activateVersion(ver);
+                                  },
                                 },
-                              },
-                              t("versionsPage.activate"),
-                            ),
+                                t("versionsPage.activate"),
+                              ),
+                              m(
+                                Button,
+                                {
+                                  variant: ButtonVariant.DESTRUCTIVE,
+                                  size: ButtonSize.SM,
+                                  style: "margin-left: 0.5rem;",
+                                  onclick: (e) => {
+                                    e.stopPropagation();
+                                    FunctionVersions.deleteVersion(ver);
+                                  },
+                                },
+                                t("versionsPage.delete"),
+                              ),
+                            ],
                           ]),
                         ],
                       )

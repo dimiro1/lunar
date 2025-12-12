@@ -350,6 +350,11 @@ export default {
     selectToCompare: "Select 2 versions to compare",
     compareVersions: "Compare v{{v1}} and v{{v2}}",
     versionsCount: "{{count}} versions",
+    deleteConfirm:
+      "Delete version {{version}}? This will also delete all executions for this version. This action cannot be undone.",
+    versionDeleted: "Version {{version}} deleted",
+    failedToDelete: "Failed to delete version",
+    delete: "Delete",
   },
 
   // AI Request viewer

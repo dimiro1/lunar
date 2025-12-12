@@ -9,10 +9,11 @@ import (
 )
 
 var (
-	ErrFunctionNotFound  = errors.New("function not found")
-	ErrVersionNotFound   = errors.New("version not found")
-	ErrNoActiveVersion   = errors.New("no active version")
-	ErrExecutionNotFound = errors.New("execution not found")
+	ErrFunctionNotFound          = errors.New("function not found")
+	ErrVersionNotFound           = errors.New("version not found")
+	ErrNoActiveVersion           = errors.New("no active version")
+	ErrExecutionNotFound         = errors.New("execution not found")
+	ErrCannotDeleteActiveVersion = errors.New("cannot delete active version")
 )
 
 // DB defines the database interface for the Lunar API.
@@ -55,9 +56,14 @@ type DB interface {
 	// Returns ErrNoActiveVersion if no version is active.
 	GetActiveVersion(ctx context.Context, functionID string) (FunctionVersion, error)
 
-	// ActivateVersion sets a specific version as the active version.
+	// ActivateVersion sets a specific version as the active version by its ID.
 	// Returns ErrVersionNotFound if the version does not exist.
-	ActivateVersion(ctx context.Context, functionID string, version int) error
+	ActivateVersion(ctx context.Context, versionID string) error
+
+	// DeleteVersion removes a specific version by its ID.
+	// Returns ErrVersionNotFound if the version does not exist.
+	// Returns ErrCannotDeleteActiveVersion if attempting to delete the active version.
+	DeleteVersion(ctx context.Context, versionID string) error
 
 	// CreateExecution records a new execution. Returns the execution with
 	// timestamps populated.

@@ -436,37 +436,68 @@ func (db *SQLiteDB) GetActiveVersion(ctx context.Context, functionID string) (Fu
 	return v, nil
 }
 
-func (db *SQLiteDB) ActivateVersion(ctx context.Context, functionID string, version int) error {
+func (db *SQLiteDB) ActivateVersion(ctx context.Context, versionID string) error {
 	tx, err := db.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	// Check if the version exists
-	var exists bool
+	// Get the function_id for this version
+	var functionID string
 	err = tx.QueryRowContext(ctx,
-		"SELECT EXISTS(SELECT 1 FROM function_versions WHERE function_id = ? AND version = ?)",
-		functionID, version).Scan(&exists)
-	if err != nil {
-		return fmt.Errorf("failed to check version existence: %w", err)
-	}
-	if !exists {
+		"SELECT function_id FROM function_versions WHERE id = ?",
+		versionID).Scan(&functionID)
+	if errors.Is(err, sql.ErrNoRows) {
 		return ErrVersionNotFound
 	}
+	if err != nil {
+		return fmt.Errorf("failed to get version: %w", err)
+	}
 
-	// Deactivate all versions
+	// Deactivate all versions for this function
 	_, err = tx.ExecContext(ctx, "UPDATE function_versions SET is_active = 0 WHERE function_id = ?", functionID)
 	if err != nil {
 		return fmt.Errorf("failed to deactivate versions: %w", err)
 	}
 
 	// Activate the specified version
-	_, err = tx.ExecContext(ctx,
-		"UPDATE function_versions SET is_active = 1 WHERE function_id = ? AND version = ?",
-		functionID, version)
+	_, err = tx.ExecContext(ctx, "UPDATE function_versions SET is_active = 1 WHERE id = ?", versionID)
 	if err != nil {
 		return fmt.Errorf("failed to activate version: %w", err)
+	}
+
+	return tx.Commit()
+}
+
+func (db *SQLiteDB) DeleteVersion(ctx context.Context, versionID string) error {
+	tx, err := db.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	// Check if the version exists and if it's active
+	var isActive bool
+	err = tx.QueryRowContext(ctx,
+		"SELECT is_active FROM function_versions WHERE id = ?",
+		versionID).Scan(&isActive)
+	if errors.Is(err, sql.ErrNoRows) {
+		return ErrVersionNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("failed to check version: %w", err)
+	}
+
+	// Prevent deletion of active version
+	if isActive {
+		return ErrCannotDeleteActiveVersion
+	}
+
+	// Delete the version
+	_, err = tx.ExecContext(ctx, "DELETE FROM function_versions WHERE id = ?", versionID)
+	if err != nil {
+		return fmt.Errorf("failed to delete version: %w", err)
 	}
 
 	return tx.Commit()
