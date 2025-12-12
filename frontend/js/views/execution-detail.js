@@ -23,6 +23,7 @@ import {
 } from "../components/badge.js";
 import { LogViewer } from "../components/log-viewer.js";
 import { CodeViewer } from "../components/code-viewer.js";
+import { HtmlPreview } from "../components/html-preview.js";
 import { AIRequestViewer } from "../components/ai-request-viewer.js";
 import { EmailRequestViewer } from "../components/email-request-viewer.js";
 import { t } from "../i18n/index.js";
@@ -450,6 +451,67 @@ export const ExecutionDetail = {
             }),
           ]),
         ]),
+
+        // HTTP Response (if save_response enabled)
+        exec.response_json &&
+        (() => {
+          const response = JSON.parse(exec.response_json);
+          const contentType = response.headers?.["Content-Type"] ||
+            response.headers?.["content-type"] || "";
+          const isHtml = contentType.toLowerCase().includes("text/html");
+          const isJson = contentType.toLowerCase().includes("application/json");
+
+          // Try to parse and format JSON body
+          let formattedJsonBody = null;
+          if (isJson && response.body) {
+            try {
+              formattedJsonBody = JSON.stringify(
+                JSON.parse(response.body),
+                null,
+                2,
+              );
+            } catch (e) {
+              // Body is not valid JSON, show as-is
+              formattedJsonBody = response.body;
+            }
+          }
+
+          return [
+            m(Card, { style: "margin-bottom: 1.5rem" }, [
+              m(CardHeader, { title: t("execution.httpResponse") }),
+              m(CardContent, { noPadding: true }, [
+                m(CodeViewer, {
+                  code: JSON.stringify(response, null, 2),
+                  language: "json",
+                  maxHeight: "300px",
+                  noBorder: true,
+                  padded: true,
+                }),
+              ]),
+            ]),
+            // Show HTML body with preview/code toggle if content type is HTML
+            isHtml && response.body &&
+            m(HtmlPreview, {
+              html: response.body,
+              maxHeight: "400px",
+              style: "margin-bottom: 1.5rem",
+            }),
+            // Show JSON body in separate card if content type is JSON
+            isJson && response.body &&
+            m(Card, { style: "margin-bottom: 1.5rem" }, [
+              m(CardHeader, { title: t("execution.responseBody") }),
+              m(CardContent, { noPadding: true }, [
+                m(CodeViewer, {
+                  code: formattedJsonBody,
+                  language: "json",
+                  maxHeight: "400px",
+                  noBorder: true,
+                  padded: true,
+                }),
+              ]),
+            ]),
+          ];
+        })(),
 
         // AI Requests
         ExecutionDetail.aiRequestsTotal > 0 &&

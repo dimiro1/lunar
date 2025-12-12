@@ -1265,6 +1265,11 @@ components:
             - active
             - paused
           example: "paused"
+        save_response:
+          type: boolean
+          description: Whether to save HTTP responses with executions for debugging
+          example: false
+          default: false
         created_at:
           type: integer
           format: int64
@@ -1374,6 +1379,11 @@ components:
             - cron
           example: "http"
           default: "http"
+        response_json:
+          type: string
+          nullable: true
+          description: JSON-encoded HTTP response (only present if save_response is enabled on the function). Contains statusCode, headers, body, and isBase64Encoded. Body is truncated to 1MB if larger.
+          example: '{"statusCode":200,"headers":{"Content-Type":"application/json"},"body":"{\"success\":true}","isBase64Encoded":false}'
         created_at:
           type: integer
           format: int64
@@ -1541,6 +1551,11 @@ components:
             - active
             - paused
           example: "active"
+        save_response:
+          type: boolean
+          nullable: true
+          description: Whether to save HTTP responses with executions for debugging
+          example: true
 
     UpdateEnvVarsRequest:
       type: object

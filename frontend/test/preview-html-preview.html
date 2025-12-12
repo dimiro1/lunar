@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HtmlPreview Component Preview</title>
+    <!-- Styles -->
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="/vendor/highlight.js/styles/github-dark.min.css"
+    />
+    <style>
+      body {
+        padding: 2rem;
+        background: var(--color-background);
+      }
+      .preview-section {
+        margin-bottom: 2rem;
+      }
+      .preview-section h2 {
+        color: var(--color-text);
+        margin-bottom: 1rem;
+        font-size: 1.25rem;
+      }
+      .preview-section p {
+        color: var(--color-text-muted);
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <script src="/vendor/mithril/mithril.min.js"></script>
+    <script src="/vendor/highlight.js/highlight.min.js"></script>
+    <script src="/vendor/highlight.js/languages/xml.min.js"></script>
+    <script src="/vendor/highlight.js/languages/json.min.js"></script>
+    <script type="module">
+      import {
+        HtmlPreview,
+        HtmlPreviewMode,
+      } from "/js/components/html-preview.js";
+
+      // Sample HTML content for previewing
+      const simpleHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Simple Page</title>
+</head>
+<body>
+  <h1>Hello World</h1>
+  <p>This is a simple HTML page.</p>
+</body>
+</html>`;
+
+      const styledHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+    }
+    h1 { margin: 0 0 16px 0; }
+    p { margin: 0; opacity: 0.9; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Styled Card</h1>
+    <p>This demonstrates a more complex HTML page with CSS styling.</p>
+  </div>
+</body>
+</html>`;
+
+      const formHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    form {
+      max-width: 400px;
+      background: white;
+      padding: 24px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <form>
+    <label>Email</label>
+    <input type="email" placeholder="you@example.com" />
+    <label>Password</label>
+    <input type="password" placeholder="Enter password" />
+    <button type="submit">Sign In</button>
+  </form>
+</body>
+</html>`;
+
+      const tableHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    th {
+      background: #f9fafb;
+      font-weight: 600;
+    }
+    tr:hover { background: #f5f5f5; }
+  </style>
+</head>
+<body>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Status</th>
+        <th>Duration</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>my-function</td>
+        <td>Success</td>
+        <td>125ms</td>
+      </tr>
+      <tr>
+        <td>api-handler</td>
+        <td>Error</td>
+        <td>2350ms</td>
+      </tr>
+      <tr>
+        <td>webhook-processor</td>
+        <td>Success</td>
+        <td>89ms</td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>`;
+
+      // Preview App Component
+      const PreviewApp = {
+        view() {
+          return m(".preview-container", [
+            m("h1", {
+              style: "color: var(--color-text); margin-bottom: 2rem;",
+            }, "HtmlPreview Component Preview"),
+
+            // Simple HTML
+            m(".preview-section", [
+              m("h2", "Simple HTML"),
+              m(
+                "p",
+                "Basic HTML page with minimal content. Click the icon in the header to toggle between preview and code view.",
+              ),
+              m(HtmlPreview, {
+                html: simpleHtml,
+                maxHeight: "300px",
+                style: "margin-bottom: 1rem",
+              }),
+            ]),
+
+            // Styled HTML
+            m(".preview-section", [
+              m("h2", "Styled HTML with CSS"),
+              m(
+                "p",
+                "HTML page with embedded CSS styling and gradients.",
+              ),
+              m(HtmlPreview, {
+                html: styledHtml,
+                maxHeight: "350px",
+                style: "margin-bottom: 1rem",
+              }),
+            ]),
+
+            // Form HTML
+            m(".preview-section", [
+              m("h2", "HTML Form"),
+              m("p", "HTML form with styled inputs and button."),
+              m(HtmlPreview, {
+                html: formHtml,
+                maxHeight: "400px",
+                style: "margin-bottom: 1rem",
+              }),
+            ]),
+
+            // Table HTML
+            m(".preview-section", [
+              m("h2", "HTML Table"),
+              m("p", "HTML table with hover effects."),
+              m(HtmlPreview, {
+                html: tableHtml,
+                maxHeight: "350px",
+                style: "margin-bottom: 1rem",
+              }),
+            ]),
+
+            // Default to Code Mode
+            m(".preview-section", [
+              m("h2", "Default to Code Mode"),
+              m(
+                "p",
+                "This preview starts in code mode by setting defaultMode='code'.",
+              ),
+              m(HtmlPreview, {
+                html: simpleHtml,
+                maxHeight: "300px",
+                defaultMode: HtmlPreviewMode.CODE,
+                style: "margin-bottom: 1rem",
+              }),
+            ]),
+
+            // Custom Title
+            m(".preview-section", [
+              m("h2", "Custom Title"),
+              m(
+                "p",
+                "Using a custom title instead of the default dynamic title.",
+              ),
+              m(HtmlPreview, {
+                html: styledHtml,
+                title: "Custom Response Preview",
+                maxHeight: "300px",
+                style: "margin-bottom: 1rem",
+              }),
+            ]),
+          ]);
+        },
+      };
+
+      // Mount the preview app
+      m.mount(document.getElementById("app"), PreviewApp);
+    </script>
+  </body>
+</html>

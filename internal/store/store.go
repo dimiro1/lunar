@@ -69,7 +69,7 @@ type DB interface {
 
 	// UpdateExecution updates an execution's status and results.
 	// Returns ErrExecutionNotFound if the execution does not exist.
-	UpdateExecution(ctx context.Context, executionID string, status ExecutionStatus, durationMs *int64, errorMsg *string) error
+	UpdateExecution(ctx context.Context, executionID string, status ExecutionStatus, durationMs *int64, errorMsg *string, responseJSON *string) error
 
 	// ListExecutions returns paginated executions for a function.
 	ListExecutions(ctx context.Context, functionID string, params PaginationParams) ([]Execution, int64, error)

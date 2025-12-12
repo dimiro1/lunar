@@ -96,6 +96,7 @@ type Function struct {
 	RetentionDays *int              `json:"retention_days,omitempty"`
 	CronSchedule  *string           `json:"cron_schedule,omitempty"`
 	CronStatus    *string           `json:"cron_status,omitempty"`
+	SaveResponse  bool              `json:"save_response"`
 	CreatedAt     int64             `json:"created_at"`
 	UpdatedAt     int64             `json:"updated_at"`
 }
@@ -120,6 +121,7 @@ type Execution struct {
 	DurationMs        *int64           `json:"duration_ms,omitempty"`
 	ErrorMessage      *string          `json:"error_message,omitempty"`
 	EventJSON         *string          `json:"event_json,omitempty"`
+	ResponseJSON      *string          `json:"response_json,omitempty"`
 	Trigger           ExecutionTrigger `json:"trigger"`
 	CreatedAt         int64            `json:"created_at"`
 }
@@ -166,4 +168,5 @@ type UpdateFunctionRequest struct {
 	RetentionDays *int    `json:"retention_days,omitempty"`
 	CronSchedule  *string `json:"cron_schedule,omitempty"`
 	CronStatus    *string `json:"cron_status,omitempty"`
+	SaveResponse  *bool   `json:"save_response,omitempty"`
 }

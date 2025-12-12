@@ -67,7 +67,7 @@ func (db *MemoryDB) ListFunctions(_ context.Context, params PaginationParams) ([
 			Function: fn,
 		}
 
-		// Find active version
+		// Find an active version
 		if versions, ok := db.versions[fn.ID]; ok {
 			for _, v := range versions {
 				if v.IsActive {
@@ -122,6 +122,9 @@ func (db *MemoryDB) UpdateFunction(_ context.Context, id string, updates UpdateF
 	}
 	if updates.CronStatus != nil {
 		fn.CronStatus = updates.CronStatus
+	}
+	if updates.SaveResponse != nil {
+		fn.SaveResponse = *updates.SaveResponse
 	}
 
 	fn.UpdatedAt = time.Now().Unix()
@@ -306,7 +309,7 @@ func (db *MemoryDB) GetExecution(_ context.Context, executionID string) (Executi
 	return exec, nil
 }
 
-func (db *MemoryDB) UpdateExecution(_ context.Context, executionID string, status ExecutionStatus, durationMs *int64, errorMsg *string) error {
+func (db *MemoryDB) UpdateExecution(_ context.Context, executionID string, status ExecutionStatus, durationMs *int64, errorMsg *string, responseJSON *string) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
@@ -318,6 +321,7 @@ func (db *MemoryDB) UpdateExecution(_ context.Context, executionID string, statu
 	exec.Status = status
 	exec.DurationMs = durationMs
 	exec.ErrorMessage = errorMsg
+	exec.ResponseJSON = responseJSON
 	db.executions[executionID] = exec
 
 	return nil

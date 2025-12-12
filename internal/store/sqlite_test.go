@@ -632,7 +632,7 @@ func TestSQLiteDB_UpdateExecution(t *testing.T) {
 	// Update execution
 	duration := int64(250)
 	errorMsg := "test error"
-	if err := sqliteDB.UpdateExecution(ctx, exec.ID, ExecutionStatusError, &duration, &errorMsg); err != nil {
+	if err := sqliteDB.UpdateExecution(ctx, exec.ID, ExecutionStatusError, &duration, &errorMsg, nil); err != nil {
 		t.Fatalf("UpdateExecution failed: %v", err)
 	}
 
@@ -1387,5 +1387,242 @@ func TestSQLiteDB_DeleteOldExecutions_AllNew(t *testing.T) {
 	_, err = sqliteDB.GetExecution(ctx, exec.ID)
 	if err != nil {
 		t.Errorf("Expected execution to still exist: %v", err)
+	}
+}
+
+// Save Response tests
+
+func TestSQLiteDB_UpdateFunction_SaveResponse(t *testing.T) {
+	db, sqliteDB := setupTestDB(t)
+	defer func() { _ = db.Close() }()
+
+	ctx := context.Background()
+
+	// Create a function
+	fn := Function{
+		ID:           "func_save_response",
+		Name:         "save-response-test",
+		EnvVars:      make(map[string]string),
+		SaveResponse: false,
+	}
+
+	created, err := sqliteDB.CreateFunction(ctx, fn)
+	if err != nil {
+		t.Fatalf("CreateFunction failed: %v", err)
+	}
+
+	if created.SaveResponse {
+		t.Error("Expected SaveResponse to be false initially")
+	}
+
+	// Enable save_response
+	saveResponse := true
+	updates := UpdateFunctionRequest{
+		SaveResponse: &saveResponse,
+	}
+
+	if err := sqliteDB.UpdateFunction(ctx, fn.ID, updates); err != nil {
+		t.Fatalf("UpdateFunction failed: %v", err)
+	}
+
+	// Verify save_response is enabled
+	updated, err := sqliteDB.GetFunction(ctx, fn.ID)
+	if err != nil {
+		t.Fatalf("GetFunction failed: %v", err)
+	}
+
+	if !updated.SaveResponse {
+		t.Error("Expected SaveResponse to be true after update")
+	}
+
+	// Disable save_response
+	saveResponseFalse := false
+	updates2 := UpdateFunctionRequest{
+		SaveResponse: &saveResponseFalse,
+	}
+
+	if err := sqliteDB.UpdateFunction(ctx, fn.ID, updates2); err != nil {
+		t.Fatalf("UpdateFunction failed: %v", err)
+	}
+
+	// Verify save_response is disabled
+	updated2, err := sqliteDB.GetFunction(ctx, fn.ID)
+	if err != nil {
+		t.Fatalf("GetFunction failed: %v", err)
+	}
+
+	if updated2.SaveResponse {
+		t.Error("Expected SaveResponse to be false after update")
+	}
+}
+
+func TestSQLiteDB_UpdateExecution_WithResponseJSON(t *testing.T) {
+	db, sqliteDB := setupTestDB(t)
+	defer func() { _ = db.Close() }()
+
+	ctx := context.Background()
+
+	// Create function and version
+	fn := Function{
+		ID:      "func_response_json",
+		Name:    "response-json-test",
+		EnvVars: make(map[string]string),
+	}
+
+	if _, err := sqliteDB.CreateFunction(ctx, fn); err != nil {
+		t.Fatalf("CreateFunction failed: %v", err)
+	}
+
+	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	if err != nil {
+		t.Fatalf("CreateVersion failed: %v", err)
+	}
+
+	// Create execution
+	exec := Execution{
+		ID:                "exec_response_json",
+		FunctionID:        fn.ID,
+		FunctionVersionID: ver.ID,
+		Status:            ExecutionStatusPending,
+	}
+
+	if _, err := sqliteDB.CreateExecution(ctx, exec); err != nil {
+		t.Fatalf("CreateExecution failed: %v", err)
+	}
+
+	// Update execution with response JSON
+	durationMs := int64(100)
+	responseJSON := `{"statusCode":200,"headers":{"Content-Type":"application/json"},"body":"{\"success\":true}","isBase64Encoded":false}`
+
+	if err := sqliteDB.UpdateExecution(ctx, exec.ID, ExecutionStatusSuccess, &durationMs, nil, &responseJSON); err != nil {
+		t.Fatalf("UpdateExecution failed: %v", err)
+	}
+
+	// Verify response JSON was stored
+	updated, err := sqliteDB.GetExecution(ctx, exec.ID)
+	if err != nil {
+		t.Fatalf("GetExecution failed: %v", err)
+	}
+
+	if updated.ResponseJSON == nil {
+		t.Fatal("Expected ResponseJSON to be set")
+	}
+
+	if *updated.ResponseJSON != responseJSON {
+		t.Errorf("Expected ResponseJSON %s, got %s", responseJSON, *updated.ResponseJSON)
+	}
+
+	if updated.Status != ExecutionStatusSuccess {
+		t.Errorf("Expected status %s, got %s", ExecutionStatusSuccess, updated.Status)
+	}
+
+	if updated.DurationMs == nil || *updated.DurationMs != durationMs {
+		t.Errorf("Expected duration %d, got %v", durationMs, updated.DurationMs)
+	}
+}
+
+func TestSQLiteDB_GetExecution_WithResponseJSON(t *testing.T) {
+	db, sqliteDB := setupTestDB(t)
+	defer func() { _ = db.Close() }()
+
+	ctx := context.Background()
+
+	// Create function and version
+	fn := Function{
+		ID:      "func_get_response_json",
+		Name:    "get-response-json-test",
+		EnvVars: make(map[string]string),
+	}
+
+	if _, err := sqliteDB.CreateFunction(ctx, fn); err != nil {
+		t.Fatalf("CreateFunction failed: %v", err)
+	}
+
+	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	if err != nil {
+		t.Fatalf("CreateVersion failed: %v", err)
+	}
+
+	// Create execution and update with response JSON
+	exec := Execution{
+		ID:                "exec_get_response",
+		FunctionID:        fn.ID,
+		FunctionVersionID: ver.ID,
+		Status:            ExecutionStatusPending,
+	}
+
+	if _, err := sqliteDB.CreateExecution(ctx, exec); err != nil {
+		t.Fatalf("CreateExecution failed: %v", err)
+	}
+
+	responseJSON := `{"statusCode":201,"headers":{"Location":"/items/123"},"body":"created","isBase64Encoded":false}`
+	durationMs := int64(50)
+
+	if err := sqliteDB.UpdateExecution(ctx, exec.ID, ExecutionStatusSuccess, &durationMs, nil, &responseJSON); err != nil {
+		t.Fatalf("UpdateExecution failed: %v", err)
+	}
+
+	// Get execution and verify response JSON
+	retrieved, err := sqliteDB.GetExecution(ctx, exec.ID)
+	if err != nil {
+		t.Fatalf("GetExecution failed: %v", err)
+	}
+
+	if retrieved.ResponseJSON == nil {
+		t.Fatal("Expected ResponseJSON to be set")
+	}
+
+	if *retrieved.ResponseJSON != responseJSON {
+		t.Errorf("Expected ResponseJSON %s, got %s", responseJSON, *retrieved.ResponseJSON)
+	}
+}
+
+func TestSQLiteDB_GetExecution_WithoutResponseJSON(t *testing.T) {
+	db, sqliteDB := setupTestDB(t)
+	defer func() { _ = db.Close() }()
+
+	ctx := context.Background()
+
+	// Create function and version
+	fn := Function{
+		ID:      "func_no_response_json",
+		Name:    "no-response-json-test",
+		EnvVars: make(map[string]string),
+	}
+
+	if _, err := sqliteDB.CreateFunction(ctx, fn); err != nil {
+		t.Fatalf("CreateFunction failed: %v", err)
+	}
+
+	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	if err != nil {
+		t.Fatalf("CreateVersion failed: %v", err)
+	}
+
+	// Create execution and update without response JSON
+	exec := Execution{
+		ID:                "exec_no_response",
+		FunctionID:        fn.ID,
+		FunctionVersionID: ver.ID,
+		Status:            ExecutionStatusPending,
+	}
+
+	if _, err := sqliteDB.CreateExecution(ctx, exec); err != nil {
+		t.Fatalf("CreateExecution failed: %v", err)
+	}
+
+	durationMs := int64(25)
+	if err := sqliteDB.UpdateExecution(ctx, exec.ID, ExecutionStatusSuccess, &durationMs, nil, nil); err != nil {
+		t.Fatalf("UpdateExecution failed: %v", err)
+	}
+
+	// Get execution and verify no response JSON
+	retrieved, err := sqliteDB.GetExecution(ctx, exec.ID)
+	if err != nil {
+		t.Fatalf("GetExecution failed: %v", err)
+	}
+
+	if retrieved.ResponseJSON != nil {
+		t.Errorf("Expected ResponseJSON to be nil, got %s", *retrieved.ResponseJSON)
 	}
 }

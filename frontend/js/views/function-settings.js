@@ -130,6 +130,12 @@ export const FunctionSettings = {
   nextRunInfo: null,
 
   /**
+   * Edited save response state (null if unchanged).
+   * @type {boolean|null}
+   */
+  editedSaveResponse: null,
+
+  /**
    * Initializes the view and loads the function.
    * @param {Object} vnode - Mithril vnode
    */
@@ -143,6 +149,7 @@ export const FunctionSettings = {
     FunctionSettings.editedCronSchedule = null;
     FunctionSettings.editedCronStatus = null;
     FunctionSettings.nextRunInfo = null;
+    FunctionSettings.editedSaveResponse = null;
     FunctionSettings.loadFunction(vnode.attrs.id);
   },
 
@@ -166,6 +173,7 @@ export const FunctionSettings = {
       FunctionSettings.editedRetentionDays = null;
       FunctionSettings.editedCronSchedule = null;
       FunctionSettings.editedCronStatus = null;
+      FunctionSettings.editedSaveResponse = null;
       FunctionSettings.envVars = Object.entries(
         FunctionSettings.func.env_vars || {},
       ).map(([key, value]) => ({
@@ -230,12 +238,13 @@ export const FunctionSettings = {
     return (
       FunctionSettings.editedName !== null ||
       FunctionSettings.editedDescription !== null ||
-      FunctionSettings.editedRetentionDays !== null
+      FunctionSettings.editedRetentionDays !== null ||
+      FunctionSettings.editedSaveResponse !== null
     );
   },
 
   /**
-   * Saves general settings (name, description, retention) to the API.
+   * Saves general settings (name, description, retention, save_response) to the API.
    * @returns {Promise<void>}
    */
   saveGeneralSettings: async () => {
@@ -251,6 +260,9 @@ export const FunctionSettings = {
       }
       if (FunctionSettings.editedRetentionDays !== null) {
         updates.retention_days = FunctionSettings.editedRetentionDays || 7;
+      }
+      if (FunctionSettings.editedSaveResponse !== null) {
+        updates.save_response = FunctionSettings.editedSaveResponse;
       }
 
       await API.functions.update(FunctionSettings.func.id, updates);
@@ -481,6 +493,24 @@ export const FunctionSettings = {
                   text: t("settings.retentionHelp"),
                 }),
               ]),
+              m(FormCheckbox, {
+                id: "save-response",
+                label: t("settings.saveResponse"),
+                description: t("settings.saveResponseDescription"),
+                checked: FunctionSettings.editedSaveResponse !== null
+                  ? FunctionSettings.editedSaveResponse
+                  : func.save_response,
+                onchange: () => {
+                  const newValue = FunctionSettings.editedSaveResponse !== null
+                    ? !FunctionSettings.editedSaveResponse
+                    : !func.save_response;
+                  if (newValue === func.save_response) {
+                    FunctionSettings.editedSaveResponse = null;
+                  } else {
+                    FunctionSettings.editedSaveResponse = newValue;
+                  }
+                },
+              }),
             ]),
             m(CardFooter, [
               m(

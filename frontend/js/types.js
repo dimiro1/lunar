@@ -33,6 +33,7 @@
  * @property {Object.<string, string>} [env_vars] - Environment variables
  * @property {string} [cron_schedule] - Cron expression for scheduled execution
  * @property {string} [cron_status] - Cron status ('active' or 'paused')
+ * @property {boolean} save_response - Whether to save HTTP responses for debugging
  * @property {string} created_at - ISO timestamp
  * @property {string} updated_at - ISO timestamp
  */
@@ -59,6 +60,8 @@
  * @property {number} duration_ms - Execution duration in milliseconds
  * @property {number} [status_code] - HTTP status code returned
  * @property {string} trigger - Execution trigger ('http' or 'cron')
+ * @property {string} [event_json] - Input event data as JSON string
+ * @property {string} [response_json] - HTTP response data as JSON string (if save_response enabled)
  * @property {string} created_at - ISO timestamp
  */
 
@@ -181,6 +184,7 @@
  * @property {boolean} [disabled] - Enable/disable function
  * @property {string} [cron_schedule] - Cron expression for scheduled execution
  * @property {string} [cron_status] - Cron status ('active' or 'paused')
+ * @property {boolean} [save_response] - Enable/disable response saving for debugging
  */
 
 /**

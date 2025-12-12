@@ -103,13 +103,16 @@ describe("RequestBuilder", () => {
 });
 
 describe("generateCodeExamples", () => {
+  // Function signature: generateCodeExamples(url, method, path, query, headers, body)
+
   it("generates correct URL with query params", () => {
     const examples = generateCodeExamples(
       "http://api.test.com/fn",
       "GET",
-      "key=value",
-      "",
-      "",
+      "", // path
+      "key=value", // query
+      "", // headers
+      "", // body
     );
 
     expect(examples.curl).toContain("http://api.test.com/fn?key=value");
@@ -122,9 +125,10 @@ describe("generateCodeExamples", () => {
     const examples = generateCodeExamples(
       "http://api.test.com/fn",
       "GET",
-      "",
-      "",
-      "",
+      "", // path
+      "", // query
+      "", // headers
+      "", // body
     );
 
     // Should not have the ? query separator
@@ -136,9 +140,10 @@ describe("generateCodeExamples", () => {
     const examples = generateCodeExamples(
       "http://api.test.com/fn",
       "POST",
-      "",
-      "",
-      '{"data": "test"}',
+      "", // path
+      "", // query
+      "", // headers
+      '{"data": "test"}', // body
     );
 
     expect(examples.curl).toContain("-d");
@@ -152,9 +157,10 @@ describe("generateCodeExamples", () => {
     const examples = generateCodeExamples(
       "http://api.test.com/fn",
       "GET",
-      "",
-      "",
-      '{"data": "test"}',
+      "", // path
+      "", // query
+      "", // headers
+      '{"data": "test"}', // body
     );
 
     // GET should not include body even if provided
@@ -166,9 +172,10 @@ describe("generateCodeExamples", () => {
     const examples = generateCodeExamples(
       "http://api.test.com/fn",
       "GET",
-      "",
-      '{"Authorization": "Bearer token123"}',
-      "",
+      "", // path
+      "", // query
+      '{"Authorization": "Bearer token123"}', // headers
+      "", // body
     );
 
     expect(examples.curl).toContain("Authorization: Bearer token123");
@@ -184,9 +191,10 @@ describe("generateCodeExamples", () => {
     const examples = generateCodeExamples(
       "http://api.test.com/fn",
       "GET",
-      "",
-      "invalid json {{{",
-      "",
+      "", // path
+      "", // query
+      "invalid json {{{", // headers
+      "", // body
     );
 
     expect(examples.curl).toContain("http://api.test.com/fn");
@@ -197,13 +205,46 @@ describe("generateCodeExamples", () => {
     const examples = generateCodeExamples(
       "http://api.test.com/fn",
       "DELETE",
-      "",
-      "",
-      "",
+      "", // path
+      "", // query
+      "", // headers
+      "", // body
     );
 
     expect(examples.curl).toContain("curl -X DELETE");
     expect(examples.python).toContain("requests.delete");
     expect(examples.go).toContain('"DELETE"');
+  });
+
+  it("includes path in URL", () => {
+    const examples = generateCodeExamples(
+      "http://api.test.com/fn",
+      "GET",
+      "/users/123", // path
+      "", // query
+      "", // headers
+      "", // body
+    );
+
+    expect(examples.curl).toContain("http://api.test.com/fn/users/123");
+    expect(examples.javascript).toContain("http://api.test.com/fn/users/123");
+    expect(examples.python).toContain("http://api.test.com/fn/users/123");
+    expect(examples.go).toContain("http://api.test.com/fn/users/123");
+  });
+
+  it("combines path and query in URL", () => {
+    const examples = generateCodeExamples(
+      "http://api.test.com/fn",
+      "GET",
+      "/items", // path
+      "limit=10", // query
+      "", // headers
+      "", // body
+    );
+
+    expect(examples.curl).toContain("http://api.test.com/fn/items?limit=10");
+    expect(examples.javascript).toContain(
+      "http://api.test.com/fn/items?limit=10",
+    );
   });
 });
