@@ -72,7 +72,7 @@ func ValidateUpdateFunctionRequest(req *store.UpdateFunctionRequest) error {
 	}
 
 	// At least one field must be provided
-	if req.Name == nil && req.Description == nil && req.Code == nil && req.Disabled == nil && req.RetentionDays == nil && req.CronSchedule == nil && req.CronStatus == nil {
+	if req.Name == nil && req.Description == nil && req.Code == nil && req.Disabled == nil && req.RetentionDays == nil && req.CronSchedule == nil && req.CronStatus == nil && req.SaveResponse == nil {
 		return &ValidationError{Field: "request", Message: "at least one field must be provided for update"}
 	}
 
@@ -281,10 +281,4 @@ func validateCronStatus(status string) error {
 		Field:   "cron_status",
 		Message: fmt.Sprintf("cron_status must be one of: %v", AllowedCronStatuses),
 	}
-}
-
-// ValidateCronSchedule is a public function to validate cron expressions
-// Used by the scheduler and handlers
-func ValidateCronSchedule(schedule string) error {
-	return validateCronSchedule(schedule)
 }

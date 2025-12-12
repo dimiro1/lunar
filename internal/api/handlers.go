@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dimiro1/lunar/internal/ai"
@@ -21,7 +22,6 @@ import (
 	"github.com/dimiro1/lunar/internal/runner"
 	"github.com/dimiro1/lunar/internal/store"
 	"github.com/rs/xid"
-	"strings"
 )
 
 // ExecuteFunctionDeps holds dependencies for executing functions
@@ -101,6 +101,28 @@ func generateDiff(oldCode, newCode string, oldVersion, newVersion int) VersionDi
 	}
 }
 
+// MaxResponseBodySize is the maximum size of response body to store (1MB)
+const MaxResponseBodySize = 1024 * 1024
+
+// serializeHTTPResponse converts an HTTPResponse to a JSON string for storage.
+// If the response body exceeds MaxResponseBodySize, it is truncated.
+func serializeHTTPResponse(resp *events.HTTPResponse) string {
+	// Create a copy to avoid modifying the original response
+	respToStore := *resp
+
+	// Truncate the body if it exceeds the maximum size
+	if len(respToStore.Body) > MaxResponseBodySize {
+		respToStore.Body = respToStore.Body[:MaxResponseBodySize] + "\n[TRUNCATED - Response exceeded 1MB]"
+	}
+
+	jsonBytes, err := json.Marshal(respToStore)
+	if err != nil {
+		slog.Error("Failed to serialize HTTP response", "error", err)
+		return "{}"
+	}
+	return string(jsonBytes)
+}
+
 // Functional handler factories - each handler explicitly declares its dependencies
 
 // CreateFunctionHandler returns a handler for creating functions
@@ -142,7 +164,7 @@ func CreateFunctionHandler(database store.DB) http.HandlerFunc {
 			return
 		}
 
-		// Return function with active version
+		// Return function with the active version
 		resp := store.FunctionWithActiveVersion{
 			Function:      createdFn,
 			ActiveVersion: version,
@@ -194,7 +216,7 @@ func GetFunctionHandler(database store.DB, envStore env.Store) http.HandlerFunc 
 			return
 		}
 
-		// Get env vars from env store
+		// Get env vars from the env store
 		envVars, err := envStore.All(id)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "Failed to get env vars")
@@ -241,7 +263,7 @@ func UpdateFunctionHandler(database store.DB, scheduler *internalcron.FunctionSc
 		cronChanged := req.CronSchedule != nil || req.CronStatus != nil
 
 		// If metadata is provided, update the function
-		if req.Name != nil || req.Description != nil || req.Disabled != nil || req.RetentionDays != nil || req.CronSchedule != nil || req.CronStatus != nil {
+		if req.Name != nil || req.Description != nil || req.Disabled != nil || req.RetentionDays != nil || req.CronSchedule != nil || req.CronStatus != nil || req.SaveResponse != nil {
 			err := database.UpdateFunction(r.Context(), id, req)
 			if err != nil {
 				writeError(w, http.StatusNotFound, "Function not found")
@@ -632,7 +654,7 @@ func ExecuteFunctionHandler(deps ExecuteFunctionDeps) http.HandlerFunc {
 			return
 		}
 
-		// Check if function is disabled
+		// Check if a function is disabled
 		if fn.Disabled {
 			writeError(w, http.StatusForbidden, "Function is disabled")
 			return
@@ -645,7 +667,7 @@ func ExecuteFunctionHandler(deps ExecuteFunctionDeps) http.HandlerFunc {
 			return
 		}
 
-		// Read request body
+		// Read the request body
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			writeError(w, http.StatusBadRequest, "Failed to read request body")
@@ -659,7 +681,7 @@ func ExecuteFunctionHandler(deps ExecuteFunctionDeps) http.HandlerFunc {
 			relativePath = "/"
 		}
 
-		// Create HTTP event from the request
+		// Create an HTTP event from the request
 		httpEvent := events.HTTPEvent{
 			Method:       r.Method,
 			Path:         r.URL.Path,
@@ -709,7 +731,7 @@ func ExecuteFunctionHandler(deps ExecuteFunctionDeps) http.HandlerFunc {
 			trigger = store.ExecutionTriggerCron
 		}
 
-		// Create execution record
+		// Create an execution record
 		execution := store.Execution{
 			ID:                executionID,
 			FunctionID:        functionID,
@@ -763,7 +785,14 @@ func ExecuteFunctionHandler(deps ExecuteFunctionDeps) http.HandlerFunc {
 			status = store.ExecutionStatusError
 		}
 
-		if err := deps.DB.UpdateExecution(r.Context(), executionID, status, &duration, errorMsg); err != nil {
+		// Save response JSON if function has SaveResponse enabled
+		var responseJSON *string
+		if fn.SaveResponse && resp.HTTP != nil {
+			responseJSONStr := serializeHTTPResponse(resp.HTTP)
+			responseJSON = &responseJSONStr
+		}
+
+		if err := deps.DB.UpdateExecution(r.Context(), executionID, status, &duration, errorMsg, responseJSON); err != nil {
 			slog.Error("Failed to update execution status", "execution_id", executionID, "error", err)
 		}
 
@@ -773,7 +802,7 @@ func ExecuteFunctionHandler(deps ExecuteFunctionDeps) http.HandlerFunc {
 		w.Header().Set("X-Execution-Id", executionID)
 		w.Header().Set("X-Execution-Duration-Ms", strconv.FormatInt(duration, 10))
 
-		// If execution failed, log details and return generic error
+		// If execution failed, log details and return a generic error
 		if runErr != nil {
 			deps.Logger.Error(functionID, runErr.Error())
 			slog.Error("Function execution failed",
@@ -791,7 +820,7 @@ func ExecuteFunctionHandler(deps ExecuteFunctionDeps) http.HandlerFunc {
 				w.Header().Set(key, value)
 			}
 
-			// Set status code
+			// Set the status code
 			statusCode := resp.HTTP.StatusCode
 			if statusCode == 0 {
 				statusCode = http.StatusOK
@@ -823,7 +852,7 @@ func GetNextRunHandler(database store.DB) http.HandlerFunc {
 			return
 		}
 
-		// Check if function has an active cron schedule
+		// Check if the function has an active cron schedule
 		if fn.CronSchedule == nil || *fn.CronSchedule == "" {
 			writeJSON(w, http.StatusOK, NextRunResponse{
 				HasSchedule: false,

@@ -160,6 +160,9 @@ export default {
       everyWeek: "Todo domingo à meia-noite",
     },
     nextRun: "Próxima execução agendada:",
+    saveResponse: "Salvar Resposta",
+    saveResponseDescription:
+      "Armazena respostas HTTP com as execuções para depuração.",
   },
 
   // Executions
@@ -305,12 +308,21 @@ export default {
     executionNotFound: "Execução não encontrada",
     executionError: "Erro de Execução",
     inputEvent: "Evento de Entrada (JSON)",
+    httpResponse: "Resposta HTTP",
+    responseBody: "Corpo da Resposta",
+    htmlPreview: "Visualização HTML",
     aiRequests: "Requisições de IA",
     aiRequestsCount: "{{count}} chamadas de API",
     emailRequests: "Requisições de Email",
     emailsSent: "{{count}} emails enviados",
     executionLogs: "Logs de Execução",
     logEntries: "{{count}} entradas de log",
+    showPreview: "Mostrar Visualização",
+    showCode: "Mostrar Código",
+    switchToPreview: "Alternar para Visualização HTML",
+    switchToPreviewDesc: "Mostrar HTML renderizado no modo de visualização",
+    switchToCode: "Alternar para Visualização de Código",
+    switchToCodeDesc: "Mostrar código fonte HTML",
   },
 
   // Version diff

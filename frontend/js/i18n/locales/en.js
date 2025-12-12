@@ -158,6 +158,9 @@ export default {
       everyWeek: "Every Sunday at midnight",
     },
     nextRun: "Next scheduled run:",
+    saveResponse: "Save Response",
+    saveResponseDescription:
+      "Store HTTP responses with executions for debugging.",
   },
 
   // Executions
@@ -303,12 +306,21 @@ export default {
     executionNotFound: "Execution not found",
     executionError: "Execution Error",
     inputEvent: "Input Event (JSON)",
+    httpResponse: "HTTP Response",
+    responseBody: "Response Body",
+    htmlPreview: "HTML Preview",
     aiRequests: "AI Requests",
     aiRequestsCount: "{{count}} API calls",
     emailRequests: "Email Requests",
     emailsSent: "{{count}} emails sent",
     executionLogs: "Execution Logs",
     logEntries: "{{count}} log entries",
+    showPreview: "Show Preview",
+    showCode: "Show Code",
+    switchToPreview: "Switch to HTML Preview",
+    switchToPreviewDesc: "Show rendered HTML in preview mode",
+    switchToCode: "Switch to Code View",
+    switchToCodeDesc: "Show raw HTML source code",
   },
 
   // Version diff

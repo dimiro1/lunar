@@ -10,7 +10,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-// SQLiteDB is a SQLite implementation of the DB interface
+// SQLiteDB is an SQLite implementation of the DB interface
 type SQLiteDB struct {
 	db *sql.DB
 }
@@ -42,7 +42,7 @@ func (db *SQLiteDB) CreateFunction(ctx context.Context, fn Function) (Function, 
 }
 
 func (db *SQLiteDB) GetFunction(ctx context.Context, id string) (Function, error) {
-	query := `SELECT id, name, description, disabled, retention_days, cron_schedule, cron_status, created_at, updated_at
+	query := `SELECT id, name, description, disabled, retention_days, cron_schedule, cron_status, save_response, created_at, updated_at
 	          FROM functions WHERE id = ?`
 
 	var fn Function
@@ -50,9 +50,10 @@ func (db *SQLiteDB) GetFunction(ctx context.Context, id string) (Function, error
 	var retentionDays sql.NullInt64
 	var cronSchedule sql.NullString
 	var cronStatus sql.NullString
+	var saveResponse sql.NullBool
 
 	err := db.db.QueryRowContext(ctx, query, id).Scan(
-		&fn.ID, &fn.Name, &description, &fn.Disabled, &retentionDays, &cronSchedule, &cronStatus, &fn.CreatedAt, &fn.UpdatedAt,
+		&fn.ID, &fn.Name, &description, &fn.Disabled, &retentionDays, &cronSchedule, &cronStatus, &saveResponse, &fn.CreatedAt, &fn.UpdatedAt,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Function{}, ErrFunctionNotFound
@@ -74,6 +75,9 @@ func (db *SQLiteDB) GetFunction(ctx context.Context, id string) (Function, error
 	if cronStatus.Valid {
 		fn.CronStatus = &cronStatus.String
 	}
+	if saveResponse.Valid {
+		fn.SaveResponse = saveResponse.Bool
+	}
 
 	fn.EnvVars = make(map[string]string)
 
@@ -92,7 +96,7 @@ func (db *SQLiteDB) ListFunctions(ctx context.Context, params PaginationParams) 
 	params = params.Normalize()
 
 	query := `SELECT
-		f.id, f.name, f.description, f.disabled, f.retention_days, f.cron_schedule, f.cron_status, f.created_at, f.updated_at,
+		f.id, f.name, f.description, f.disabled, f.retention_days, f.cron_schedule, f.cron_status, f.save_response, f.created_at, f.updated_at,
 		fv.id, fv.version, fv.code, fv.created_at, fv.created_by
 	FROM functions f
 	LEFT JOIN function_versions fv ON f.id = fv.function_id AND fv.is_active = 1
@@ -112,13 +116,14 @@ func (db *SQLiteDB) ListFunctions(ctx context.Context, params PaginationParams) 
 		var retentionDays sql.NullInt64
 		var cronSchedule sql.NullString
 		var cronStatus sql.NullString
+		var saveResponse sql.NullBool
 		var versionID, versionCode sql.NullString
 		var versionNum sql.NullInt64
 		var versionCreatedAt sql.NullInt64
 		var versionCreatedBy sql.NullString
 
 		if err := rows.Scan(
-			&fn.ID, &fn.Name, &description, &fn.Disabled, &retentionDays, &cronSchedule, &cronStatus, &fn.CreatedAt, &fn.UpdatedAt,
+			&fn.ID, &fn.Name, &description, &fn.Disabled, &retentionDays, &cronSchedule, &cronStatus, &saveResponse, &fn.CreatedAt, &fn.UpdatedAt,
 			&versionID, &versionNum, &versionCode, &versionCreatedAt, &versionCreatedBy,
 		); err != nil {
 			return nil, 0, fmt.Errorf("failed to scan function: %w", err)
@@ -137,10 +142,13 @@ func (db *SQLiteDB) ListFunctions(ctx context.Context, params PaginationParams) 
 		if cronStatus.Valid {
 			fn.CronStatus = &cronStatus.String
 		}
+		if saveResponse.Valid {
+			fn.SaveResponse = saveResponse.Bool
+		}
 
 		fn.EnvVars = make(map[string]string)
 
-		// Set active version if it exists
+		// Set the active version if it exists
 		if versionID.Valid {
 			fn.ActiveVersion = FunctionVersion{
 				ID:         versionID.String,
@@ -226,6 +234,14 @@ func (db *SQLiteDB) UpdateFunction(ctx context.Context, id string, updates Updat
 		}
 	}
 
+	if updates.SaveResponse != nil {
+		_, err = tx.ExecContext(ctx, "UPDATE functions SET save_response = ?, updated_at = ? WHERE id = ?",
+			*updates.SaveResponse, time.Now().Unix(), id)
+		if err != nil {
+			return fmt.Errorf("failed to update save_response: %w", err)
+		}
+	}
+
 	return tx.Commit()
 }
 
@@ -266,7 +282,7 @@ func (db *SQLiteDB) CreateVersion(ctx context.Context, functionID string, code s
 		return FunctionVersion{}, ErrFunctionNotFound
 	}
 
-	// Get next version number
+	// Get the next version number
 	var versionNum int
 	err = tx.QueryRowContext(ctx,
 		"SELECT COALESCE(MAX(version), 0) + 1 FROM function_versions WHERE function_id = ?",
@@ -427,7 +443,7 @@ func (db *SQLiteDB) ActivateVersion(ctx context.Context, functionID string, vers
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	// Check if version exists
+	// Check if the version exists
 	var exists bool
 	err = tx.QueryRowContext(ctx,
 		"SELECT EXISTS(SELECT 1 FROM function_versions WHERE function_id = ? AND version = ?)",
@@ -479,18 +495,19 @@ func (db *SQLiteDB) CreateExecution(ctx context.Context, exec Execution) (Execut
 }
 
 func (db *SQLiteDB) GetExecution(ctx context.Context, executionID string) (Execution, error) {
-	query := `SELECT id, function_id, function_version_id, status, duration_ms, error_message, event_json, trigger, created_at
+	query := `SELECT id, function_id, function_version_id, status, duration_ms, error_message, event_json, response_json, trigger, created_at
 	          FROM executions WHERE id = ?`
 
 	var exec Execution
 	var durationMs sql.NullInt64
 	var errorMessage sql.NullString
 	var eventJSON sql.NullString
+	var responseJSON sql.NullString
 	var trigger sql.NullString
 
 	err := db.db.QueryRowContext(ctx, query, executionID).Scan(
 		&exec.ID, &exec.FunctionID, &exec.FunctionVersionID,
-		&exec.Status, &durationMs, &errorMessage, &eventJSON, &trigger, &exec.CreatedAt,
+		&exec.Status, &durationMs, &errorMessage, &eventJSON, &responseJSON, &trigger, &exec.CreatedAt,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Execution{}, ErrExecutionNotFound
@@ -508,6 +525,9 @@ func (db *SQLiteDB) GetExecution(ctx context.Context, executionID string) (Execu
 	if eventJSON.Valid {
 		exec.EventJSON = &eventJSON.String
 	}
+	if responseJSON.Valid {
+		exec.ResponseJSON = &responseJSON.String
+	}
 	if trigger.Valid {
 		exec.Trigger = ExecutionTrigger(trigger.String)
 	} else {
@@ -517,10 +537,10 @@ func (db *SQLiteDB) GetExecution(ctx context.Context, executionID string) (Execu
 	return exec, nil
 }
 
-func (db *SQLiteDB) UpdateExecution(ctx context.Context, executionID string, status ExecutionStatus, durationMs *int64, errorMsg *string) error {
-	query := `UPDATE executions SET status = ?, duration_ms = ?, error_message = ? WHERE id = ?`
+func (db *SQLiteDB) UpdateExecution(ctx context.Context, executionID string, status ExecutionStatus, durationMs *int64, errorMsg *string, responseJSON *string) error {
+	query := `UPDATE executions SET status = ?, duration_ms = ?, error_message = ?, response_json = ? WHERE id = ?`
 
-	result, err := db.db.ExecContext(ctx, query, status, durationMs, errorMsg, executionID)
+	result, err := db.db.ExecContext(ctx, query, status, durationMs, errorMsg, responseJSON, executionID)
 	if err != nil {
 		return fmt.Errorf("failed to update execution: %w", err)
 	}
@@ -598,7 +618,7 @@ func (db *SQLiteDB) ListExecutions(ctx context.Context, functionID string, param
 }
 
 func (db *SQLiteDB) ListFunctionsWithActiveCron(ctx context.Context) ([]Function, error) {
-	query := `SELECT id, name, description, disabled, retention_days, cron_schedule, cron_status, created_at, updated_at
+	query := `SELECT id, name, description, disabled, retention_days, cron_schedule, cron_status, save_response, created_at, updated_at
 	          FROM functions WHERE cron_status = 'active' AND cron_schedule IS NOT NULL AND cron_schedule != ''`
 
 	rows, err := db.db.QueryContext(ctx, query)
@@ -614,8 +634,9 @@ func (db *SQLiteDB) ListFunctionsWithActiveCron(ctx context.Context) ([]Function
 		var retentionDays sql.NullInt64
 		var cronSchedule sql.NullString
 		var cronStatus sql.NullString
+		var saveResponse sql.NullBool
 
-		if err := rows.Scan(&fn.ID, &fn.Name, &description, &fn.Disabled, &retentionDays, &cronSchedule, &cronStatus, &fn.CreatedAt, &fn.UpdatedAt); err != nil {
+		if err := rows.Scan(&fn.ID, &fn.Name, &description, &fn.Disabled, &retentionDays, &cronSchedule, &cronStatus, &saveResponse, &fn.CreatedAt, &fn.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("failed to scan function: %w", err)
 		}
 
@@ -631,6 +652,9 @@ func (db *SQLiteDB) ListFunctionsWithActiveCron(ctx context.Context) ([]Function
 		}
 		if cronStatus.Valid {
 			fn.CronStatus = &cronStatus.String
+		}
+		if saveResponse.Valid {
+			fn.SaveResponse = saveResponse.Bool
 		}
 
 		fn.EnvVars = make(map[string]string)

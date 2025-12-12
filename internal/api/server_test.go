@@ -1373,3 +1373,205 @@ end
 		t.Errorf("Expected username field to be unchanged, got %v", bodyData["username"])
 	}
 }
+
+func TestUpdateFunction_SaveResponse(t *testing.T) {
+	database := store.NewMemoryDB()
+	server := createTestServer(database)
+
+	// Create a test function first
+	fn := createTestFunction(t, database)
+
+	// Enable save_response
+	saveResponse := true
+	reqBody := store.UpdateFunctionRequest{
+		SaveResponse: &saveResponse,
+	}
+
+	body, _ := json.Marshal(reqBody)
+	req := makeAuthRequest(http.MethodPut, "/api/functions/"+fn.ID, body)
+	w := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", w.Code)
+	}
+
+	// Verify the save_response was updated
+	updated, err := database.GetFunction(context.Background(), fn.ID)
+	if err != nil {
+		t.Fatalf("failed to get updated function: %v", err)
+	}
+
+	if !updated.SaveResponse {
+		t.Error("expected save_response to be true")
+	}
+
+	// Disable save_response
+	saveResponseFalse := false
+	reqBody2 := store.UpdateFunctionRequest{
+		SaveResponse: &saveResponseFalse,
+	}
+
+	body2, _ := json.Marshal(reqBody2)
+	req2 := makeAuthRequest(http.MethodPut, "/api/functions/"+fn.ID, body2)
+	w2 := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(w2, req2)
+
+	if w2.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", w2.Code)
+	}
+
+	// Verify the save_response was updated
+	updated2, err := database.GetFunction(context.Background(), fn.ID)
+	if err != nil {
+		t.Fatalf("failed to get updated function: %v", err)
+	}
+
+	if updated2.SaveResponse {
+		t.Error("expected save_response to be false")
+	}
+}
+
+func TestExecuteFunction_SaveResponse(t *testing.T) {
+	t.Run("saves response when enabled", func(t *testing.T) {
+		database := store.NewMemoryDB()
+		server := NewServer(ServerConfig{
+			DB:         database,
+			Logger:     logger.NewMemoryLogger(),
+			KVStore:    kv.NewMemoryStore(),
+			EnvStore:   env.NewMemoryStore(),
+			HTTPClient: internalhttp.NewDefaultClient(),
+			APIKey:     "test-api-key",
+		})
+
+		fn := createTestFunction(t, database)
+		_, err := database.CreateVersion(context.Background(), fn.ID, `
+function handler(ctx, event)
+  return {
+    statusCode = 200,
+    headers = {
+      ["Content-Type"] = "application/json"
+    },
+    body = '{"message": "success"}'
+  }
+end
+`, nil)
+		if err != nil {
+			t.Fatalf("Failed to create version: %v", err)
+		}
+
+		// Enable save_response
+		saveResponse := true
+		if err := database.UpdateFunction(context.Background(), fn.ID, store.UpdateFunctionRequest{
+			SaveResponse: &saveResponse,
+		}); err != nil {
+			t.Fatalf("Failed to enable save_response: %v", err)
+		}
+
+		req := httptest.NewRequest(http.MethodPost, "/fn/"+fn.ID, nil)
+		w := httptest.NewRecorder()
+
+		server.Handler().ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d: %s", w.Code, w.Body.String())
+		}
+
+		// Get the execution ID from the response header
+		executionID := w.Header().Get("X-Execution-Id")
+		if executionID == "" {
+			t.Fatal("expected X-Execution-Id header")
+		}
+
+		// Retrieve the execution from the database
+		execution, err := database.GetExecution(context.Background(), executionID)
+		if err != nil {
+			t.Fatalf("Failed to get execution: %v", err)
+		}
+
+		// Verify response JSON was stored
+		if execution.ResponseJSON == nil {
+			t.Fatal("Expected ResponseJSON to be stored when save_response is enabled")
+		}
+
+		// Parse and verify the response JSON content
+		var responseData map[string]any
+		if err := json.Unmarshal([]byte(*execution.ResponseJSON), &responseData); err != nil {
+			t.Fatalf("Failed to parse response JSON: %v", err)
+		}
+
+		// Verify status code
+		if statusCode, ok := responseData["statusCode"].(float64); !ok || int(statusCode) != 200 {
+			t.Errorf("Expected statusCode 200, got %v", responseData["statusCode"])
+		}
+
+		// Verify body
+		if body, ok := responseData["body"].(string); !ok || body != `{"message": "success"}` {
+			t.Errorf("Expected body to be stored, got %v", responseData["body"])
+		}
+
+		// Verify headers
+		if headers, ok := responseData["headers"].(map[string]any); ok {
+			if contentType, ok := headers["Content-Type"].(string); !ok || contentType != "application/json" {
+				t.Errorf("Expected Content-Type header, got %v", headers["Content-Type"])
+			}
+		} else {
+			t.Error("Expected headers to be present in response JSON")
+		}
+	})
+
+	t.Run("does not save response when disabled", func(t *testing.T) {
+		database := store.NewMemoryDB()
+		server := NewServer(ServerConfig{
+			DB:         database,
+			Logger:     logger.NewMemoryLogger(),
+			KVStore:    kv.NewMemoryStore(),
+			EnvStore:   env.NewMemoryStore(),
+			HTTPClient: internalhttp.NewDefaultClient(),
+			APIKey:     "test-api-key",
+		})
+
+		fn := createTestFunction(t, database)
+		_, err := database.CreateVersion(context.Background(), fn.ID, `
+function handler(ctx, event)
+  return {
+    statusCode = 200,
+    body = '{"message": "success"}'
+  }
+end
+`, nil)
+		if err != nil {
+			t.Fatalf("Failed to create version: %v", err)
+		}
+
+		// save_response is disabled by default
+
+		req := httptest.NewRequest(http.MethodPost, "/fn/"+fn.ID, nil)
+		w := httptest.NewRecorder()
+
+		server.Handler().ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d: %s", w.Code, w.Body.String())
+		}
+
+		// Get the execution ID from the response header
+		executionID := w.Header().Get("X-Execution-Id")
+		if executionID == "" {
+			t.Fatal("expected X-Execution-Id header")
+		}
+
+		// Retrieve the execution from the database
+		execution, err := database.GetExecution(context.Background(), executionID)
+		if err != nil {
+			t.Fatalf("Failed to get execution: %v", err)
+		}
+
+		// Verify response JSON was NOT stored
+		if execution.ResponseJSON != nil {
+			t.Error("Expected ResponseJSON to be nil when save_response is disabled")
+		}
+	})
+}

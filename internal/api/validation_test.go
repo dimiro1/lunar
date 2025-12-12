@@ -613,6 +613,51 @@ func TestValidateUpdateFunctionRequest_WithCronSchedule(t *testing.T) {
 	}
 }
 
+func TestValidateUpdateFunctionRequest_WithSaveResponse(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     *store.UpdateFunctionRequest
+		wantErr bool
+	}{
+		{
+			name: "valid save_response true",
+			req: &store.UpdateFunctionRequest{
+				SaveResponse: boolPtr(true),
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid save_response false",
+			req: &store.UpdateFunctionRequest{
+				SaveResponse: boolPtr(false),
+			},
+			wantErr: false,
+		},
+		{
+			name: "combined update with save_response",
+			req: &store.UpdateFunctionRequest{
+				Name:         strPtr("new-name"),
+				SaveResponse: boolPtr(true),
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateUpdateFunctionRequest(tt.req)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateUpdateFunctionRequest() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+// Helper function for creating bool pointers
+func boolPtr(b bool) *bool {
+	return &b
+}
+
 func TestValidateUpdateFunctionRequest_WithCronStatus(t *testing.T) {
 	tests := []struct {
 		name    string

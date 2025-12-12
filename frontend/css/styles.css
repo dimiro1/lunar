@@ -1787,6 +1787,36 @@ pre {
   color: var(--color-text);
 }
 
+/* HTML Preview Toggle Button */
+.html-preview__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.html-preview__toggle:hover {
+  background: var(--color-border);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.html-preview__toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
 .card-maximized-overlay {
   position: fixed;
   top: 56px; /* Account for navbar height */
