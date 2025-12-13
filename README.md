@@ -4,6 +4,9 @@
 
 # Lunar (formerly Faas-Go)
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/dimiro1/lunar.svg)](https://pkg.go.dev/github.com/dimiro1/lunar)
+[![Go Report Card](https://goreportcard.com/badge/github.com/dimiro1/lunar)](https://goreportcard.com/report/github.com/dimiro1/lunar)
+
 A lightweight, self-hosted Function-as-a-Service platform written in Go with Lua scripting.
 
 > **Beta Phase Notice**: This project is currently in beta. New features and changes are actively being developed, but I promise to maintain backward compatibility for all Lua APIs. 
