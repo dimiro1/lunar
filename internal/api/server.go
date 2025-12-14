@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dimiro1/lunar/internal/ai"
+	"github.com/dimiro1/lunar/internal/services/ai"
 	internalcron "github.com/dimiro1/lunar/internal/cron"
-	"github.com/dimiro1/lunar/internal/email"
-	"github.com/dimiro1/lunar/internal/env"
-	internalhttp "github.com/dimiro1/lunar/internal/http"
-	"github.com/dimiro1/lunar/internal/kv"
-	"github.com/dimiro1/lunar/internal/logger"
+	"github.com/dimiro1/lunar/internal/services/email"
+	"github.com/dimiro1/lunar/internal/services/env"
+	internalhttp "github.com/dimiro1/lunar/internal/services/http"
+	"github.com/dimiro1/lunar/internal/services/kv"
+	"github.com/dimiro1/lunar/internal/services/logger"
 	"github.com/dimiro1/lunar/internal/store"
 )
 

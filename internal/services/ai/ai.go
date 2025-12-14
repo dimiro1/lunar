@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/dimiro1/lunar/internal/env"
-	internalhttp "github.com/dimiro1/lunar/internal/http"
+	"github.com/dimiro1/lunar/internal/services/env"
+	internalhttp "github.com/dimiro1/lunar/internal/services/http"
 )
 
 // provider defines the interface for AI provider implementations.

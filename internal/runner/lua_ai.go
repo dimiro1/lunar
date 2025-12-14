@@ -1,87 +1,40 @@
 package runner
 
 import (
-	"time"
-
-	"github.com/dimiro1/lunar/internal/ai"
-	"github.com/dimiro1/lunar/internal/store"
+	"github.com/dimiro1/lunar/internal/services/ai"
+	stdlibai "github.com/dimiro1/lunar/internal/runtime/ai"
 	lua "github.com/yuin/gopher-lua"
 )
 
-// registerAI creates the global 'ai' table with AI provider functions
+// registerAI creates the global 'ai' table with AI provider functions.
+// This is a thin wrapper using the stdlib/ai TrackedClient decorator.
 func registerAI(L *lua.LState, client ai.Client, functionID string, tracker ai.Tracker, executionID string) {
+	trackedClient := stdlibai.NewTrackedClient(client, tracker, executionID)
+
 	aiTable := L.NewTable()
 
 	// ai.chat(options)
 	L.SetField(aiTable, "chat", L.NewFunction(func(L *lua.LState) int {
 		options := L.CheckTable(1)
 
-		// Extract required parameters
-		provider := lua.LVAsString(options.RawGetString("provider"))
-		model := lua.LVAsString(options.RawGetString("model"))
-		messagesLV := options.RawGetString("messages")
-
-		// Validate required parameters
-		if provider == "" {
+		// Extract and validate parameters
+		req, errMsg := parseAIChatRequest(options)
+		if errMsg != "" {
 			L.Push(lua.LNil)
-			L.Push(lua.LString("provider is required (openai or anthropic)"))
-			return 2
-		}
-		if model == "" {
-			L.Push(lua.LNil)
-			L.Push(lua.LString("model is required"))
-			return 2
-		}
-		if messagesLV.Type() != lua.LTTable {
-			L.Push(lua.LNil)
-			L.Push(lua.LString("messages is required and must be a table"))
+			L.Push(lua.LString(errMsg))
 			return 2
 		}
 
-		// Convert messages from Lua to Go
-		messages := luaMessagesToGo(messagesLV.(*lua.LTable))
-		if len(messages) == 0 {
+		// Execute with automatic tracking via decorator
+		result := trackedClient.ChatWithTracking(functionID, req)
+
+		if result.Error != nil {
 			L.Push(lua.LNil)
-			L.Push(lua.LString("messages cannot be empty"))
+			L.Push(lua.LString(result.Error.Error()))
 			return 2
 		}
 
-		// Extract optional parameters
-		maxTokens := int(lua.LVAsNumber(options.RawGetString("max_tokens")))
-		temperature := lua.LVAsNumber(options.RawGetString("temperature"))
-		endpoint := lua.LVAsString(options.RawGetString("endpoint"))
-
-		// Set defaults for optional parameters
-		if maxTokens == 0 {
-			maxTokens = 1024
-		}
-
-		// Build chat request
-		req := ai.ChatRequest{
-			Provider:    provider,
-			Model:       model,
-			Messages:    messages,
-			MaxTokens:   maxTokens,
-			Temperature: float64(temperature),
-			Endpoint:    endpoint,
-		}
-
-		// Execute the request with tracking
-		response, trackReq := executeWithTracking(client, functionID, req)
-
-		// Track the request (success or error)
-		if tracker != nil {
-			tracker.Track(executionID, trackReq)
-		}
-
-		if trackReq.Status == store.AIRequestStatusError {
-			L.Push(lua.LNil)
-			L.Push(lua.LString(*trackReq.ErrorMessage))
-			return 2
-		}
-
-		// Convert response to Lua table
-		L.Push(aiResponseToLuaTable(L, response))
+		L.Push(aiResponseToLuaTable(L, result.Response))
 		L.Push(lua.LNil)
 		return 2
 	}))
@@ -89,38 +42,47 @@ func registerAI(L *lua.LState, client ai.Client, functionID string, tracker ai.T
 	L.SetGlobal("ai", aiTable)
 }
 
-// executeWithTracking executes an AI chat request and returns tracking info
-func executeWithTracking(client ai.Client, functionID string, req ai.ChatRequest) (*ai.ChatResponse, ai.TrackRequest) {
-	trackReq := ai.TrackRequest{
-		Provider: req.Provider,
-		Model:    req.Model,
+// parseAIChatRequest extracts ai.ChatRequest from Lua options table
+func parseAIChatRequest(options *lua.LTable) (ai.ChatRequest, string) {
+	provider := lua.LVAsString(options.RawGetString("provider"))
+	model := lua.LVAsString(options.RawGetString("model"))
+	messagesLV := options.RawGetString("messages")
+
+	// Validate required parameters
+	if provider == "" {
+		return ai.ChatRequest{}, "provider is required (openai or anthropic)"
+	}
+	if model == "" {
+		return ai.ChatRequest{}, "model is required"
+	}
+	if messagesLV.Type() != lua.LTTable {
+		return ai.ChatRequest{}, "messages is required and must be a table"
 	}
 
-	startTime := time.Now()
-	response, err := client.Chat(functionID, req)
-	trackReq.DurationMs = time.Since(startTime).Milliseconds()
-
-	// Capture tracking info from response even on error (if available)
-	if response != nil {
-		trackReq.Endpoint = response.Endpoint
-		trackReq.RequestJSON = response.RequestJSON
-		if response.ResponseJSON != "" {
-			trackReq.ResponseJSON = &response.ResponseJSON
-		}
+	// Convert messages from Lua to Go
+	messages := luaMessagesToGo(messagesLV.(*lua.LTable))
+	if len(messages) == 0 {
+		return ai.ChatRequest{}, "messages cannot be empty"
 	}
 
-	if err != nil {
-		errMsg := err.Error()
-		trackReq.Status = store.AIRequestStatusError
-		trackReq.ErrorMessage = &errMsg
-		return nil, trackReq
+	// Extract optional parameters
+	maxTokens := int(lua.LVAsNumber(options.RawGetString("max_tokens")))
+	temperature := lua.LVAsNumber(options.RawGetString("temperature"))
+	endpoint := lua.LVAsString(options.RawGetString("endpoint"))
+
+	// Set defaults for optional parameters
+	if maxTokens == 0 {
+		maxTokens = 1024
 	}
 
-	trackReq.Status = store.AIRequestStatusSuccess
-	trackReq.InputTokens = &response.Usage.InputTokens
-	trackReq.OutputTokens = &response.Usage.OutputTokens
-
-	return response, trackReq
+	return ai.ChatRequest{
+		Provider:    provider,
+		Model:       model,
+		Messages:    messages,
+		MaxTokens:   maxTokens,
+		Temperature: float64(temperature),
+		Endpoint:    endpoint,
+	}, ""
 }
 
 // luaMessagesToGo converts a Lua table of messages to Go

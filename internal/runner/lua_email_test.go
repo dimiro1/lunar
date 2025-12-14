@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dimiro1/lunar/internal/email"
-	"github.com/dimiro1/lunar/internal/env"
+	"github.com/dimiro1/lunar/internal/services/email"
+	"github.com/dimiro1/lunar/internal/services/env"
 	"github.com/dimiro1/lunar/internal/events"
-	internalhttp "github.com/dimiro1/lunar/internal/http"
-	"github.com/dimiro1/lunar/internal/kv"
-	"github.com/dimiro1/lunar/internal/logger"
+	internalhttp "github.com/dimiro1/lunar/internal/services/http"
+	"github.com/dimiro1/lunar/internal/services/kv"
+	"github.com/dimiro1/lunar/internal/services/logger"
 )
 
 func TestRun_Email_MissingFrom(t *testing.T) {
