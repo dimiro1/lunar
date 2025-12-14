@@ -8,11 +8,14 @@ import (
 	"github.com/dimiro1/lunar/internal/services/ai"
 	internalcron "github.com/dimiro1/lunar/internal/cron"
 	"github.com/dimiro1/lunar/internal/services/email"
+	"github.com/dimiro1/lunar/internal/engine"
 	"github.com/dimiro1/lunar/internal/services/env"
 	internalhttp "github.com/dimiro1/lunar/internal/services/http"
 	"github.com/dimiro1/lunar/internal/services/kv"
 	"github.com/dimiro1/lunar/internal/services/logger"
+	"github.com/dimiro1/lunar/internal/runner"
 	"github.com/dimiro1/lunar/internal/store"
+	"github.com/rs/xid"
 )
 
 // Server represents the API server
@@ -20,6 +23,7 @@ type Server struct {
 	mux             *http.ServeMux
 	db              store.DB
 	execDeps        *ExecuteFunctionDeps
+	envStore        env.Store
 	logger          logger.Logger
 	aiTracker       ai.Tracker
 	emailTracker    email.Tracker
@@ -47,24 +51,49 @@ type ServerConfig struct {
 
 // NewServer creates a new API server with full configuration
 func NewServer(config ServerConfig) *Server {
-	execDeps := &ExecuteFunctionDeps{
+	// Create AI and Email clients
+	aiClient := ai.NewDefaultClient(config.HTTPClient, config.EnvStore)
+	emailClient := email.NewDefaultClient(config.EnvStore)
+
+	// Create Lua runtime
+	luaRuntime := runner.NewLuaRuntime(runner.LuaRuntimeConfig{
+		Logger:       config.Logger,
+		KV:           config.KVStore,
+		Env:          config.EnvStore,
+		HTTP:         config.HTTPClient,
+		AI:           aiClient,
+		AITracker:    config.AITracker,
+		Email:        emailClient,
+		EmailTracker: config.EmailTracker,
+		Timeout:      config.ExecutionTimeout,
+	})
+
+	// Create execution engine
+	eng := engine.New(engine.Config{
 		DB:               config.DB,
+		Runtime:          luaRuntime,
 		Logger:           config.Logger,
 		KVStore:          config.KVStore,
 		EnvStore:         config.EnvStore,
 		HTTPClient:       config.HTTPClient,
-		AIClient:         ai.NewDefaultClient(config.HTTPClient, config.EnvStore),
+		AIClient:         aiClient,
 		AITracker:        config.AITracker,
-		EmailClient:      email.NewDefaultClient(config.EnvStore),
+		EmailClient:      emailClient,
 		EmailTracker:     config.EmailTracker,
 		ExecutionTimeout: config.ExecutionTimeout,
-		BaseURL:          config.BaseURL,
+		IDGenerator:      func() string { return xid.New().String() },
+	})
+
+	execDeps := &ExecuteFunctionDeps{
+		Engine:  eng,
+		BaseURL: config.BaseURL,
 	}
 
 	s := &Server{
 		mux:             http.NewServeMux(),
 		db:              config.DB,
 		execDeps:        execDeps,
+		envStore:        config.EnvStore,
 		logger:          config.Logger,
 		aiTracker:       config.AITracker,
 		emailTracker:    config.EmailTracker,
@@ -95,10 +124,10 @@ func (s *Server) setupRoutes() {
 	// Function Management - only need DB
 	s.mux.Handle("POST /api/functions", authMiddleware(http.HandlerFunc(CreateFunctionHandler(s.db))))
 	s.mux.Handle("GET /api/functions", authMiddleware(http.HandlerFunc(ListFunctionsHandler(s.db))))
-	s.mux.Handle("GET /api/functions/{id}", authMiddleware(http.HandlerFunc(GetFunctionHandler(s.db, s.execDeps.EnvStore))))
+	s.mux.Handle("GET /api/functions/{id}", authMiddleware(http.HandlerFunc(GetFunctionHandler(s.db, s.envStore))))
 	s.mux.Handle("PUT /api/functions/{id}", authMiddleware(http.HandlerFunc(UpdateFunctionHandler(s.db, s.scheduler))))
 	s.mux.Handle("DELETE /api/functions/{id}", authMiddleware(http.HandlerFunc(DeleteFunctionHandler(s.db))))
-	s.mux.Handle("PUT /api/functions/{id}/env", authMiddleware(http.HandlerFunc(UpdateEnvVarsHandler(s.db, s.execDeps.EnvStore))))
+	s.mux.Handle("PUT /api/functions/{id}/env", authMiddleware(http.HandlerFunc(UpdateEnvVarsHandler(s.db, s.envStore))))
 	s.mux.Handle("GET /api/functions/{id}/next-run", authMiddleware(http.HandlerFunc(GetNextRunHandler(s.db))))
 
 	// Version Management - only need DB

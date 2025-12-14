@@ -2,41 +2,29 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
-	"github.com/dimiro1/lunar/internal/services/ai"
 	internalcron "github.com/dimiro1/lunar/internal/cron"
 	"github.com/dimiro1/lunar/internal/diff"
+	"github.com/dimiro1/lunar/internal/engine"
+	"github.com/dimiro1/lunar/internal/events"
+	"github.com/dimiro1/lunar/internal/services/ai"
 	"github.com/dimiro1/lunar/internal/services/email"
 	"github.com/dimiro1/lunar/internal/services/env"
-	"github.com/dimiro1/lunar/internal/events"
-	internalhttp "github.com/dimiro1/lunar/internal/services/http"
-	"github.com/dimiro1/lunar/internal/services/kv"
 	"github.com/dimiro1/lunar/internal/services/logger"
-	"github.com/dimiro1/lunar/internal/masking"
-	"github.com/dimiro1/lunar/internal/runner"
 	"github.com/dimiro1/lunar/internal/store"
 	"github.com/rs/xid"
 )
 
 // ExecuteFunctionDeps holds dependencies for executing functions
 type ExecuteFunctionDeps struct {
-	DB               store.DB
-	Logger           logger.Logger
-	KVStore          kv.Store
-	EnvStore         env.Store
-	HTTPClient       internalhttp.Client
-	AIClient         ai.Client
-	AITracker        ai.Tracker
-	EmailClient      email.Client
-	EmailTracker     email.Tracker
-	ExecutionTimeout time.Duration
-	BaseURL          string
+	Engine  engine.Engine
+	BaseURL string
 }
 
 // Helper functions
@@ -100,30 +88,6 @@ func generateDiff(oldCode, newCode string, oldVersion, newVersion int) VersionDi
 		Diff:       apiDiffLines,
 	}
 }
-
-// MaxResponseBodySize is the maximum size of response body to store (1MB)
-const MaxResponseBodySize = 1024 * 1024
-
-// serializeHTTPResponse converts an HTTPResponse to a JSON string for storage.
-// If the response body exceeds MaxResponseBodySize, it is truncated.
-func serializeHTTPResponse(resp *events.HTTPResponse) string {
-	// Create a copy to avoid modifying the original response
-	respToStore := *resp
-
-	// Truncate the body if it exceeds the maximum size
-	if len(respToStore.Body) > MaxResponseBodySize {
-		respToStore.Body = respToStore.Body[:MaxResponseBodySize] + "\n[TRUNCATED - Response exceeded 1MB]"
-	}
-
-	jsonBytes, err := json.Marshal(respToStore)
-	if err != nil {
-		slog.Error("Failed to serialize HTTP response", "error", err)
-		return "{}"
-	}
-	return string(jsonBytes)
-}
-
-// Functional handler factories - each handler explicitly declares its dependencies
 
 // CreateFunctionHandler returns a handler for creating functions
 func CreateFunctionHandler(database store.DB) http.HandlerFunc {
@@ -662,87 +626,14 @@ func GetExecutionEmailRequestsHandler(database store.DB, emailTracker email.Trac
 // ExecuteFunctionHandler returns a handler for executing functions
 func ExecuteFunctionHandler(deps ExecuteFunctionDeps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		startTime := time.Now()
 		functionID := r.PathValue("function_id")
-		executionID := generateID()
 
-		// Get the function
-		fn, err := deps.DB.GetFunction(r.Context(), functionID)
-		if err != nil {
-			writeError(w, http.StatusNotFound, "Function not found")
-			return
-		}
-
-		// Check if a function is disabled
-		if fn.Disabled {
-			writeError(w, http.StatusForbidden, "Function is disabled")
-			return
-		}
-
-		// Get the active version
-		version, err := deps.DB.GetActiveVersion(r.Context(), functionID)
-		if err != nil {
-			writeError(w, http.StatusInternalServerError, "No active version found")
-			return
-		}
-
-		// Read the request body
-		body, err := io.ReadAll(r.Body)
+		// Parse HTTP event from request
+		httpEvent, err := parseHTTPEvent(r, functionID)
 		if err != nil {
 			writeError(w, http.StatusBadRequest, "Failed to read request body")
 			return
 		}
-
-		// Compute relativePath by stripping /fn/{function_id} prefix
-		prefix := "/fn/" + functionID
-		relativePath := strings.TrimPrefix(r.URL.Path, prefix)
-		if relativePath == "" {
-			relativePath = "/"
-		}
-
-		// Create an HTTP event from the request
-		httpEvent := events.HTTPEvent{
-			Method:       r.Method,
-			Path:         r.URL.Path,
-			RelativePath: relativePath,
-			Headers:      make(map[string]string),
-			Body:         string(body),
-			Query:        make(map[string]string),
-		}
-
-		// Copy headers
-		for key, values := range r.Header {
-			if len(values) > 0 {
-				httpEvent.Headers[key] = values[0]
-			}
-		}
-
-		// Copy query parameters
-		for key, values := range r.URL.Query() {
-			if len(values) > 0 {
-				httpEvent.Query[key] = values[0]
-			}
-		}
-
-		// Create execution context
-		execContext := &events.ExecutionContext{
-			ExecutionID: executionID,
-			FunctionID:  functionID,
-			StartedAt:   time.Now().Unix(),
-			Version:     strconv.Itoa(version.Version),
-			BaseURL:     deps.BaseURL,
-		}
-
-		// Mask sensitive data in the event before storing
-		maskedEvent := masking.MaskHTTPEvent(httpEvent)
-
-		// Serialize the masked event to JSON for storage
-		eventJSONBytes, err := json.Marshal(maskedEvent)
-		if err != nil {
-			writeError(w, http.StatusInternalServerError, "Failed to serialize event")
-			return
-		}
-		eventJSONStr := string(eventJSONBytes)
 
 		// Determine trigger (from X-Trigger header or default to HTTP)
 		trigger := store.ExecutionTriggerHTTP
@@ -750,113 +641,123 @@ func ExecuteFunctionHandler(deps ExecuteFunctionDeps) http.HandlerFunc {
 			trigger = store.ExecutionTriggerCron
 		}
 
-		// Create an execution record
-		execution := store.Execution{
-			ID:                executionID,
-			FunctionID:        functionID,
-			FunctionVersionID: version.ID,
-			Status:            store.ExecutionStatusPending,
-			EventJSON:         &eventJSONStr,
-			Trigger:           trigger,
-		}
-
-		_, err = deps.DB.CreateExecution(r.Context(), execution)
+		// Execute via engine
+		result, err := deps.Engine.Execute(r.Context(), engine.ExecutionRequest{
+			FunctionID: functionID,
+			Event:      httpEvent,
+			Trigger:    trigger,
+			BaseURL:    deps.BaseURL,
+		})
+		// Handle engine errors
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, "Failed to create execution record")
+			handleEngineError(w, err)
 			return
 		}
 
-		// Prepare runner dependencies
-		runnerDeps := runner.Dependencies{
-			Logger:       deps.Logger,
-			KV:           deps.KVStore,
-			Env:          deps.EnvStore,
-			HTTP:         deps.HTTPClient,
-			AI:           deps.AIClient,
-			AITracker:    deps.AITracker,
-			Email:        deps.EmailClient,
-			EmailTracker: deps.EmailTracker,
-			Timeout:      deps.ExecutionTimeout,
-		}
-
-		// Execute the function
-		req := runner.Request{
-			Context: execContext,
-			Event:   httpEvent,
-			Code:    version.Code,
-		}
-
-		resp, runErr := runner.Run(r.Context(), runnerDeps, req)
-
-		// Calculate duration
-		duration := time.Since(startTime).Milliseconds()
-
-		// Determine execution status
-		var errorMsg *string
-		status := store.ExecutionStatusSuccess
-
-		if runErr != nil {
-			status = store.ExecutionStatusError
-			errStr := runErr.Error()
-			errorMsg = &errStr
-		} else if resp.HTTP != nil && resp.HTTP.StatusCode >= 400 {
-			// Mark as error if the function returns an error status code
-			status = store.ExecutionStatusError
-		}
-
-		// Save response JSON if function has SaveResponse enabled
-		var responseJSON *string
-		if fn.SaveResponse && resp.HTTP != nil {
-			responseJSONStr := serializeHTTPResponse(resp.HTTP)
-			responseJSON = &responseJSONStr
-		}
-
-		if err := deps.DB.UpdateExecution(r.Context(), executionID, status, &duration, errorMsg, responseJSON); err != nil {
-			slog.Error("Failed to update execution status", "execution_id", executionID, "error", err)
-		}
-
-		// Set custom headers
+		// Set execution metadata headers
 		w.Header().Set("X-Function-Id", functionID)
-		w.Header().Set("X-Function-Version-Id", version.ID)
-		w.Header().Set("X-Execution-Id", executionID)
-		w.Header().Set("X-Execution-Duration-Ms", strconv.FormatInt(duration, 10))
+		w.Header().Set("X-Function-Version-Id", result.FunctionVersionID)
+		w.Header().Set("X-Execution-Id", result.ExecutionID)
+		w.Header().Set("X-Execution-Duration-Ms", strconv.FormatInt(result.Duration.Milliseconds(), 10))
 
-		// If execution failed, log details and return a generic error
-		if runErr != nil {
-			deps.Logger.Error(functionID, runErr.Error())
+		// Handle execution errors
+		if result.Error != nil {
 			slog.Error("Function execution failed",
-				"execution_id", executionID,
+				"execution_id", result.ExecutionID,
 				"function_id", functionID,
-				"error", runErr)
+				"error", result.Error)
 			writeError(w, http.StatusInternalServerError, "Function execution failed")
 			return
 		}
 
-		// Return HTTP response
-		if resp.HTTP != nil {
-			// Set custom headers from function response
-			for key, value := range resp.HTTP.Headers {
-				w.Header().Set(key, value)
-			}
+		// Write HTTP response
+		writeExecutionResponse(w, result)
+	}
+}
 
-			// Set the status code
-			statusCode := resp.HTTP.StatusCode
-			if statusCode == 0 {
-				statusCode = http.StatusOK
-			}
+// parseHTTPEvent creates an HTTPEvent from an HTTP request
+func parseHTTPEvent(r *http.Request, functionID string) (events.HTTPEvent, error) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return events.HTTPEvent{}, err
+	}
 
-			// Write response
-			// Only set default Content-Type if the function didn't provide one
-			if w.Header().Get("Content-Type") == "" {
-				w.Header().Set("Content-Type", "application/json")
-			}
-			w.WriteHeader(statusCode)
-			_, _ = w.Write([]byte(resp.HTTP.Body))
-		} else {
-			// No HTTP response, return 500
-			writeError(w, http.StatusInternalServerError, "Function did not return HTTP response")
+	// Compute relativePath by stripping /fn/{function_id} prefix
+	prefix := "/fn/" + functionID
+	relativePath := strings.TrimPrefix(r.URL.Path, prefix)
+	if relativePath == "" {
+		relativePath = "/"
+	}
+
+	httpEvent := events.HTTPEvent{
+		Method:       r.Method,
+		Path:         r.URL.Path,
+		RelativePath: relativePath,
+		Headers:      make(map[string]string),
+		Body:         string(body),
+		Query:        make(map[string]string),
+	}
+
+	// Copy headers
+	for key, values := range r.Header {
+		if len(values) > 0 {
+			httpEvent.Headers[key] = values[0]
 		}
 	}
+
+	// Copy query parameters
+	for key, values := range r.URL.Query() {
+		if len(values) > 0 {
+			httpEvent.Query[key] = values[0]
+		}
+	}
+
+	return httpEvent, nil
+}
+
+// handleEngineError writes the appropriate HTTP error for engine errors
+func handleEngineError(w http.ResponseWriter, err error) {
+	var fnNotFound *engine.FunctionNotFoundError
+	var fnDisabled *engine.FunctionDisabledError
+	var noVersion *engine.NoActiveVersionError
+
+	switch {
+	case errors.As(err, &fnNotFound):
+		writeError(w, http.StatusNotFound, "Function not found")
+	case errors.As(err, &fnDisabled):
+		writeError(w, http.StatusForbidden, "Function is disabled")
+	case errors.As(err, &noVersion):
+		writeError(w, http.StatusInternalServerError, "No active version found")
+	default:
+		writeError(w, http.StatusInternalServerError, "Internal server error")
+	}
+}
+
+// writeExecutionResponse writes the function's HTTP response to the client
+func writeExecutionResponse(w http.ResponseWriter, result *engine.ExecutionResult) {
+	if result.Response == nil {
+		writeError(w, http.StatusInternalServerError, "Function did not return HTTP response")
+		return
+	}
+
+	// Set custom headers from function response
+	for key, value := range result.Response.Headers {
+		w.Header().Set(key, value)
+	}
+
+	// Set the status code
+	statusCode := result.Response.StatusCode
+	if statusCode == 0 {
+		statusCode = http.StatusOK
+	}
+
+	// Only set default Content-Type if the function didn't provide one
+	if w.Header().Get("Content-Type") == "" {
+		w.Header().Set("Content-Type", "application/json")
+	}
+
+	w.WriteHeader(statusCode)
+	_, _ = w.Write([]byte(result.Response.Body))
 }
 
 // GetNextRunHandler returns a handler for getting the next scheduled run time
