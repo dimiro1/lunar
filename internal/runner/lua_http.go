@@ -1,7 +1,7 @@
 package runner
 
 import (
-	internalhttp "github.com/dimiro1/lunar/internal/http"
+	internalhttp "github.com/dimiro1/lunar/internal/services/http"
 	lua "github.com/yuin/gopher-lua"
 )
 

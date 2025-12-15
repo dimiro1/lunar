@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/dimiro1/lunar/internal/events"
+	"github.com/dimiro1/lunar/internal/runtime/router"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -368,15 +369,15 @@ func TestMatchPath(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			matched, params := matchPath(tt.path, tt.pattern)
+			result := router.Match(tt.path, tt.pattern)
 
-			if matched != tt.expectMatch {
-				t.Errorf("matchPath(%q, %q) matched = %v, want %v", tt.path, tt.pattern, matched, tt.expectMatch)
+			if result.Matched != tt.expectMatch {
+				t.Errorf("router.Match(%q, %q) matched = %v, want %v", tt.path, tt.pattern, result.Matched, tt.expectMatch)
 			}
 
 			if tt.expectMatch && tt.expectedParams != nil {
 				for key, expectedValue := range tt.expectedParams {
-					if got, ok := params[key]; !ok {
+					if got, ok := result.Params[key]; !ok {
 						t.Errorf("Missing param %q", key)
 					} else if got != expectedValue {
 						t.Errorf("Param %q = %q, want %q", key, got, expectedValue)

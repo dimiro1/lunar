@@ -1,16 +1,15 @@
 package runner
 
 import (
-	"strings"
-
+	stdlibstrings "github.com/dimiro1/lunar/internal/runtime/strings"
 	lua "github.com/yuin/gopher-lua"
 )
 
-// registerStrings registers the strings module with string manipulation functions
+// registerStrings registers the strings module with string manipulation functions.
+// This is a thin wrapper around the stdlib/strings package.
 func registerStrings(L *lua.LState) {
 	stringsModule := L.NewTable()
 
-	// Register string functions
 	L.SetField(stringsModule, "trim", L.NewFunction(stringsTrim))
 	L.SetField(stringsModule, "trimLeft", L.NewFunction(stringsTrimLeft))
 	L.SetField(stringsModule, "trimRight", L.NewFunction(stringsTrimRight))
@@ -24,34 +23,27 @@ func registerStrings(L *lua.LState) {
 	L.SetField(stringsModule, "contains", L.NewFunction(stringsContains))
 	L.SetField(stringsModule, "repeat", L.NewFunction(stringsRepeat))
 
-	// Set the strings module as a global
 	L.SetGlobal("strings", stringsModule)
 }
 
 // stringsTrim removes leading and trailing whitespace
 // Usage: local result = strings.trim(str)
 func stringsTrim(L *lua.LState) int {
-	str := L.CheckString(1)
-	result := strings.TrimSpace(str)
-	L.Push(lua.LString(result))
+	L.Push(lua.LString(stdlibstrings.Trim(L.CheckString(1))))
 	return 1
 }
 
 // stringsTrimLeft removes leading whitespace
 // Usage: local result = strings.trimLeft(str)
 func stringsTrimLeft(L *lua.LState) int {
-	str := L.CheckString(1)
-	result := strings.TrimLeft(str, " \t\n\r")
-	L.Push(lua.LString(result))
+	L.Push(lua.LString(stdlibstrings.TrimLeft(L.CheckString(1))))
 	return 1
 }
 
 // stringsTrimRight removes trailing whitespace
 // Usage: local result = strings.trimRight(str)
 func stringsTrimRight(L *lua.LState) int {
-	str := L.CheckString(1)
-	result := strings.TrimRight(str, " \t\n\r")
-	L.Push(lua.LString(result))
+	L.Push(lua.LString(stdlibstrings.TrimRight(L.CheckString(1))))
 	return 1
 }
 
@@ -61,9 +53,9 @@ func stringsSplit(L *lua.LState) int {
 	str := L.CheckString(1)
 	sep := L.CheckString(2)
 
-	parts := strings.Split(str, sep)
+	parts := stdlibstrings.Split(str, sep)
 
-	// Create Lua array
+	// Convert to Lua array
 	result := L.NewTable()
 	for i, part := range parts {
 		result.RawSetInt(i+1, lua.LString(part))
@@ -85,28 +77,21 @@ func stringsJoin(L *lua.LState) int {
 		parts = append(parts, lua.LVAsString(v))
 	})
 
-	result := strings.Join(parts, sep)
-	L.Push(lua.LString(result))
+	L.Push(lua.LString(stdlibstrings.Join(parts, sep)))
 	return 1
 }
 
 // stringsHasPrefix checks if string has prefix
 // Usage: local result = strings.hasPrefix(str, prefix)
 func stringsHasPrefix(L *lua.LState) int {
-	str := L.CheckString(1)
-	prefix := L.CheckString(2)
-	result := strings.HasPrefix(str, prefix)
-	L.Push(lua.LBool(result))
+	L.Push(lua.LBool(stdlibstrings.HasPrefix(L.CheckString(1), L.CheckString(2))))
 	return 1
 }
 
 // stringsHasSuffix checks if string has suffix
 // Usage: local result = strings.hasSuffix(str, suffix)
 func stringsHasSuffix(L *lua.LState) int {
-	str := L.CheckString(1)
-	suffix := L.CheckString(2)
-	result := strings.HasSuffix(str, suffix)
-	L.Push(lua.LBool(result))
+	L.Push(lua.LBool(stdlibstrings.HasSuffix(L.CheckString(1), L.CheckString(2))))
 	return 1
 }
 
@@ -117,47 +102,36 @@ func stringsReplace(L *lua.LState) int {
 	str := L.CheckString(1)
 	old := L.CheckString(2)
 	replacement := L.CheckString(3)
-	n := L.OptInt(4, -1) // default to replace all
+	n := L.OptInt(4, -1)
 
-	result := strings.Replace(str, old, replacement, n)
-	L.Push(lua.LString(result))
+	L.Push(lua.LString(stdlibstrings.Replace(str, old, replacement, n)))
 	return 1
 }
 
 // stringsToLower converts string to lowercase
 // Usage: local result = strings.toLower(str)
 func stringsToLower(L *lua.LState) int {
-	str := L.CheckString(1)
-	result := strings.ToLower(str)
-	L.Push(lua.LString(result))
+	L.Push(lua.LString(stdlibstrings.ToLower(L.CheckString(1))))
 	return 1
 }
 
 // stringsToUpper converts string to uppercase
 // Usage: local result = strings.toUpper(str)
 func stringsToUpper(L *lua.LState) int {
-	str := L.CheckString(1)
-	result := strings.ToUpper(str)
-	L.Push(lua.LString(result))
+	L.Push(lua.LString(stdlibstrings.ToUpper(L.CheckString(1))))
 	return 1
 }
 
 // stringsContains checks if string contains substring
 // Usage: local result = strings.contains(str, substr)
 func stringsContains(L *lua.LState) int {
-	str := L.CheckString(1)
-	substr := L.CheckString(2)
-	result := strings.Contains(str, substr)
-	L.Push(lua.LBool(result))
+	L.Push(lua.LBool(stdlibstrings.Contains(L.CheckString(1), L.CheckString(2))))
 	return 1
 }
 
 // stringsRepeat repeats a string n times
 // Usage: local result = strings.repeat(str, n)
 func stringsRepeat(L *lua.LState) int {
-	str := L.CheckString(1)
-	count := L.CheckInt(2)
-	result := strings.Repeat(str, count)
-	L.Push(lua.LString(result))
+	L.Push(lua.LString(stdlibstrings.Repeat(L.CheckString(1), L.CheckInt(2))))
 	return 1
 }

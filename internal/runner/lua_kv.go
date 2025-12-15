@@ -1,7 +1,7 @@
 package runner
 
 import (
-	"github.com/dimiro1/lunar/internal/kv"
+	"github.com/dimiro1/lunar/internal/services/kv"
 	lua "github.com/yuin/gopher-lua"
 )
 

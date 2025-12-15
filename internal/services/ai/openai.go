@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	internalhttp "github.com/dimiro1/lunar/internal/http"
+	internalhttp "github.com/dimiro1/lunar/internal/services/http"
 )
 
 // openAIProvider implements provider for OpenAI

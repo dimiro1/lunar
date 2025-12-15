@@ -1,22 +1,18 @@
 package runner
 
 import (
-	"encoding/json"
-
+	stdlibjson "github.com/dimiro1/lunar/internal/runtime/json"
 	lua "github.com/yuin/gopher-lua"
 )
 
-// registerJSON registers the json module with encode/decode functions
+// registerJSON registers the json module with encode/decode functions.
+// This is a thin wrapper around the stdlib/json package.
 func registerJSON(L *lua.LState) {
 	jsonModule := L.NewTable()
 
-	// Register json.encode function
 	L.SetField(jsonModule, "encode", L.NewFunction(jsonEncode))
-
-	// Register json.decode function
 	L.SetField(jsonModule, "decode", L.NewFunction(jsonDecode))
 
-	// Set the json module as a global
 	L.SetGlobal("json", jsonModule)
 }
 
@@ -28,15 +24,15 @@ func jsonEncode(L *lua.LState) int {
 	// Convert Lua value to Go value
 	goValue := luaValueToGo(L, value)
 
-	// Marshal to JSON
-	jsonBytes, err := json.Marshal(goValue)
+	// Encode using stdlib
+	jsonStr, err := stdlibjson.Encode(goValue)
 	if err != nil {
 		L.Push(lua.LNil)
 		L.Push(lua.LString(err.Error()))
 		return 2
 	}
 
-	L.Push(lua.LString(jsonBytes))
+	L.Push(lua.LString(jsonStr))
 	return 1
 }
 
@@ -45,9 +41,9 @@ func jsonEncode(L *lua.LState) int {
 func jsonDecode(L *lua.LState) int {
 	jsonStr := L.CheckString(1)
 
-	// Unmarshal JSON to Go value
-	var goValue any
-	if err := json.Unmarshal([]byte(jsonStr), &goValue); err != nil {
+	// Decode using stdlib
+	goValue, err := stdlibjson.Decode(jsonStr)
+	if err != nil {
 		L.Push(lua.LNil)
 		L.Push(lua.LString(err.Error()))
 		return 2
@@ -59,7 +55,7 @@ func jsonDecode(L *lua.LState) int {
 	return 1
 }
 
-// luaValueToGo converts a Lua value to a Go value
+// luaValueToGo converts a Lua value to a Go value (Lua-specific converter)
 func luaValueToGo(L *lua.LState, lv lua.LValue) any {
 	switch v := lv.(type) {
 	case *lua.LNilType:
@@ -107,7 +103,7 @@ func luaValueToGo(L *lua.LState, lv lua.LValue) any {
 	}
 }
 
-// goValueToLua converts a Go value to a Lua value
+// goValueToLua converts a Go value to a Lua value (Lua-specific converter)
 func goValueToLua(L *lua.LState, v any) lua.LValue {
 	switch val := v.(type) {
 	case nil:

@@ -1,12 +1,13 @@
 package runner
 
 import (
-	"strings"
-
 	"github.com/dimiro1/lunar/internal/events"
+	"github.com/dimiro1/lunar/internal/runtime/router"
 	lua "github.com/yuin/gopher-lua"
 )
 
+// registerRouter registers the router module with path matching and building functions.
+// This is a thin wrapper around the stdlib/router package.
 func registerRouter(L *lua.LState, ctx *events.ExecutionContext) {
 	routerModule := L.NewTable()
 
@@ -18,43 +19,35 @@ func registerRouter(L *lua.LState, ctx *events.ExecutionContext) {
 	L.SetGlobal("router", routerModule)
 }
 
+// makeRouterPath creates a function that builds paths for the current function
 func makeRouterPath(functionID string) lua.LGFunction {
 	return func(L *lua.LState) int {
 		pattern := L.CheckString(1)
-		var params map[string]string
-		if L.GetTop() >= 2 && L.Get(2).Type() == lua.LTTable {
-			params = luaTableToStringMap(L, L.CheckTable(2))
-		}
-		fullPath := "/fn/" + functionID + buildPath(pattern, params)
-		L.Push(lua.LString(fullPath))
+		params := extractStringParams(L, 2)
+		L.Push(lua.LString(router.FunctionPath(functionID, pattern, params)))
 		return 1
 	}
 }
 
+// makeRouterURL creates a function that builds URLs for the current function
 func makeRouterURL(functionID, baseURL string) lua.LGFunction {
 	return func(L *lua.LState) int {
 		pattern := L.CheckString(1)
-		var params map[string]string
-		if L.GetTop() >= 2 && L.Get(2).Type() == lua.LTTable {
-			params = luaTableToStringMap(L, L.CheckTable(2))
-		}
-		fullURL := strings.TrimSuffix(baseURL, "/") + "/fn/" + functionID + buildPath(pattern, params)
-		L.Push(lua.LString(fullURL))
+		params := extractStringParams(L, 2)
+		L.Push(lua.LString(router.FunctionURL(baseURL, functionID, pattern, params)))
 		return 1
 	}
 }
 
-func buildPath(pattern string, params map[string]string) string {
-	if len(params) == 0 {
-		return pattern
+// extractStringParams extracts string parameters from the Lua stack
+func extractStringParams(L *lua.LState, argIndex int) map[string]string {
+	if L.GetTop() < argIndex || L.Get(argIndex).Type() != lua.LTTable {
+		return nil
 	}
-	result := pattern
-	for key, value := range params {
-		result = strings.ReplaceAll(result, ":"+key, value)
-	}
-	return result
+	return luaTableToStringMap(L, L.CheckTable(argIndex))
 }
 
+// luaTableToStringMap converts a Lua table to a map of strings
 func luaTableToStringMap(L *lua.LState, tbl *lua.LTable) map[string]string {
 	result := make(map[string]string)
 	tbl.ForEach(func(k, v lua.LValue) {
@@ -65,77 +58,32 @@ func luaTableToStringMap(L *lua.LState, tbl *lua.LTable) map[string]string {
 	return result
 }
 
+// routerMatch checks if a path matches a pattern
+// Usage: local matched = router.match(path, pattern)
 func routerMatch(L *lua.LState) int {
 	path := L.CheckString(1)
 	pattern := L.CheckString(2)
 
-	matched, _ := matchPath(path, pattern)
-	L.Push(lua.LBool(matched))
+	result := router.Match(path, pattern)
+	L.Push(lua.LBool(result.Matched))
 	return 1
 }
 
+// routerParams extracts parameters from a path using a pattern
+// Usage: local params = router.params(path, pattern)
 func routerParams(L *lua.LState) int {
 	path := L.CheckString(1)
 	pattern := L.CheckString(2)
 
-	matched, params := matchPath(path, pattern)
+	result := router.Match(path, pattern)
 
 	paramsTable := L.NewTable()
-	if matched {
-		for key, value := range params {
+	if result.Matched {
+		for key, value := range result.Params {
 			L.SetField(paramsTable, key, lua.LString(value))
 		}
 	}
 
 	L.Push(paramsTable)
 	return 1
-}
-
-// matchPath matches a path against a pattern. Syntax: :name for params, * for wildcard.
-func matchPath(path, pattern string) (bool, map[string]string) {
-	params := make(map[string]string)
-
-	path = strings.TrimSuffix(path, "/")
-	pattern = strings.TrimSuffix(pattern, "/")
-	if path == "" {
-		path = "/"
-	}
-	if pattern == "" {
-		pattern = "/"
-	}
-
-	pathSegments := splitPath(path)
-	patternSegments := splitPath(pattern)
-	hasWildcard := len(patternSegments) > 0 && patternSegments[len(patternSegments)-1] == "*"
-
-	if hasWildcard {
-		patternSegments = patternSegments[:len(patternSegments)-1]
-		if len(pathSegments) <= len(patternSegments) {
-			return false, nil
-		}
-	} else if len(pathSegments) != len(patternSegments) {
-		return false, nil
-	}
-
-	for i, patternSeg := range patternSegments {
-		pathSeg := pathSegments[i]
-		if strings.HasPrefix(patternSeg, ":") {
-			params[patternSeg[1:]] = pathSeg
-		} else if pathSeg != patternSeg {
-			return false, nil
-		}
-	}
-
-	return true, params
-}
-
-func splitPath(path string) []string {
-	parts := strings.Split(path, "/")
-	segments := make([]string, 0, len(parts))
-	for _, part := range parts {
-		if part != "" {
-			segments = append(segments, part)
-		}
-	}
-	return segments
 }

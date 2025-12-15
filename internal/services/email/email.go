@@ -3,7 +3,7 @@ package email
 import (
 	"net/url"
 
-	"github.com/dimiro1/lunar/internal/env"
+	"github.com/dimiro1/lunar/internal/services/env"
 	"github.com/resend/resend-go/v3"
 )
 

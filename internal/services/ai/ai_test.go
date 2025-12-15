@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/dimiro1/lunar/internal/env"
-	internalhttp "github.com/dimiro1/lunar/internal/http"
+	"github.com/dimiro1/lunar/internal/services/env"
+	internalhttp "github.com/dimiro1/lunar/internal/services/http"
 )
 
 func TestNewDefaultClient(t *testing.T) {

@@ -1,30 +1,27 @@
 package runner
 
 import (
-	"time"
-
+	stdlibtime "github.com/dimiro1/lunar/internal/runtime/time"
 	lua "github.com/yuin/gopher-lua"
 )
 
-// registerTime registers the time module with time-related functions
+// registerTime registers the time module with time-related functions.
+// This is a thin wrapper around the stdlib/time package.
 func registerTime(L *lua.LState) {
 	timeModule := L.NewTable()
 
-	// Register time functions
 	L.SetField(timeModule, "now", L.NewFunction(timeNow))
 	L.SetField(timeModule, "format", L.NewFunction(timeFormat))
 	L.SetField(timeModule, "parse", L.NewFunction(timeParse))
-	L.SetField(timeModule, "sleep", L.NewFunction(timeSleep))
+	L.SetField(timeModule, "sleep", L.NewFunction(timeSleep(L)))
 
-	// Set the time module as a global
 	L.SetGlobal("time", timeModule)
 }
 
 // timeNow returns the current Unix timestamp in seconds
 // Usage: local timestamp = time.now()
 func timeNow(L *lua.LState) int {
-	now := time.Now().Unix()
-	L.Push(lua.LNumber(now))
+	L.Push(lua.LNumber(stdlibtime.Now()))
 	return 1
 }
 
@@ -35,9 +32,7 @@ func timeFormat(L *lua.LState) int {
 	timestamp := L.CheckNumber(1)
 	layout := L.CheckString(2)
 
-	t := time.Unix(int64(timestamp), 0)
-	formatted := t.Format(layout)
-
+	formatted := stdlibtime.Format(int64(timestamp), layout)
 	L.Push(lua.LString(formatted))
 	return 1
 }
@@ -49,30 +44,25 @@ func timeParse(L *lua.LState) int {
 	timeStr := L.CheckString(1)
 	layout := L.CheckString(2)
 
-	t, err := time.Parse(layout, timeStr)
+	timestamp, err := stdlibtime.Parse(timeStr, layout)
 	if err != nil {
 		L.Push(lua.LNil)
 		L.Push(lua.LString(err.Error()))
 		return 2
 	}
 
-	L.Push(lua.LNumber(t.Unix()))
+	L.Push(lua.LNumber(timestamp))
 	L.Push(lua.LNil)
 	return 2
 }
 
-// timeSleep sleeps for the specified number of milliseconds
+// timeSleep returns a function that sleeps for the specified number of milliseconds
 // Note: This will block the Lua execution
 // Usage: time.sleep(1000)  -- sleep for 1 second
-func timeSleep(L *lua.LState) int {
-	milliseconds := L.CheckNumber(1)
-	duration := time.Duration(milliseconds) * time.Millisecond
-
-	// Check if context is cancelled to respect timeouts
-	select {
-	case <-L.Context().Done():
-		return 0
-	case <-time.After(duration):
+func timeSleep(L *lua.LState) lua.LGFunction {
+	return func(L *lua.LState) int {
+		milliseconds := L.CheckNumber(1)
+		stdlibtime.Sleep(L.Context(), int64(milliseconds))
 		return 0
 	}
 }

@@ -8,7 +8,7 @@ import { paths } from "../routes.js";
 import { i18n, localeNames, t } from "../i18n/index.js";
 
 /**
- * @typedef {import('../types.js').LunarFunction} lunarFunction
+ * @typedef {import('../types.js').LunarFunction} LunarFunction
  */
 
 /**
@@ -419,7 +419,10 @@ export const CommandPalette = {
                     ]),
                     item.type === "function" &&
                     item.disabled &&
-                    m("span.command-palette__item-badge", t("common.disabled")),
+                    m(
+                      "span.command-palette__item-badge",
+                      t("common.disabled"),
+                    ),
                   ],
                 )
               ),
