@@ -28,7 +28,7 @@ type Store interface {
 // MemoryStore is an in-memory implementation of Store
 type MemoryStore struct {
 	data      map[string]map[string]string // functionID -> key -> value
-	StoreName string
+	storeName string                       // Optional store name for named stores
 }
 
 // NewMemoryStore creates a new in-memory KV store
@@ -46,8 +46,8 @@ func (m *MemoryStore) Open(storeName string) (Store, error) {
 // Get retrieves a value by functionID and key
 func (m *MemoryStore) Get(functionID, key string) (string, error) {
 	storeName := functionID
-	if m.StoreName != "" {
-		storeName = m.StoreName
+	if m.storeName != "" {
+		storeName = m.storeName
 	}
 
 	ns, exists := m.data[storeName]
@@ -65,8 +65,8 @@ func (m *MemoryStore) Get(functionID, key string) (string, error) {
 // Set stores a key-value pair for a functionID
 func (m *MemoryStore) Set(functionID, key, value string) error {
 	storeName := functionID
-	if m.StoreName != "" {
-		storeName = m.StoreName
+	if m.storeName != "" {
+		storeName = m.storeName
 	}
 
 	if _, exists := m.data[storeName]; !exists {
@@ -79,8 +79,8 @@ func (m *MemoryStore) Set(functionID, key, value string) error {
 // Delete removes a key-value pair for a functionID
 func (m *MemoryStore) Delete(functionID, key string) error {
 	storeName := functionID
-	if m.StoreName != "" {
-		storeName = m.StoreName
+	if m.storeName != "" {
+		storeName = m.storeName
 	}
 
 	if ns, exists := m.data[storeName]; exists {
@@ -95,19 +95,19 @@ func (m *MemoryStore) OpenNamed(storeName string) error {
 		return &Error{Message: "storeName cannot be empty"}
 	}
 
-	m.StoreName = storeName
+	m.storeName = storeName
 	return nil
 }
 
-// CloseNamed clears the StoreName for the MemoryStore instance (for interface compatibility)
+// CloseNamed clears the storeName for the MemoryStore instance (for interface compatibility)
 func (m *MemoryStore) CloseNamed() {
-	m.StoreName = ""
+	m.storeName = ""
 }
 
 // SQLiteStore is a SQLite-backed implementation of Store
 type SQLiteStore struct {
 	db        *sql.DB
-	StoreName string
+	storeName string // Optional store name for named stores
 }
 
 // NewSQLiteStore creates a new SQLite-backed KV store
@@ -118,8 +118,8 @@ func NewSQLiteStore(db *sql.DB) *SQLiteStore {
 // Get retrieves a value by functionID and key
 func (s *SQLiteStore) Get(functionID, key string) (string, error) {
 	storeName := functionID
-	if s.StoreName != "" {
-		storeName = s.StoreName
+	if s.storeName != "" {
+		storeName = s.storeName
 	}
 
 	var value string
@@ -141,8 +141,8 @@ func (s *SQLiteStore) Get(functionID, key string) (string, error) {
 // Set stores a key-value pair for a functionID
 func (s *SQLiteStore) Set(functionID, key, value string) error {
 	storeName := functionID
-	if s.StoreName != "" {
-		storeName = s.StoreName
+	if s.storeName != "" {
+		storeName = s.storeName
 	}
 
 	_, err := s.db.Exec(
@@ -158,8 +158,8 @@ func (s *SQLiteStore) Set(functionID, key, value string) error {
 // Delete removes a key-value pair for a functionID
 func (s *SQLiteStore) Delete(functionID, key string) error {
 	storeName := functionID
-	if s.StoreName != "" {
-		storeName = s.StoreName
+	if s.storeName != "" {
+		storeName = s.storeName
 	}
 
 	_, err := s.db.Exec(
@@ -172,17 +172,17 @@ func (s *SQLiteStore) Delete(functionID, key string) error {
 	return nil
 }
 
-// OpenNamed sets the StoreName for the SQLiteStore instance, allowing for namespacing of stores
+// OpenNamed sets the storeName for the SQLiteStore instance, allowing for namespacing of stores
 func (s *SQLiteStore) OpenNamed(storeName string) error {
 	if storeName == "" {
 		return &Error{Message: "storeName cannot be empty"}
 	}
 
-	s.StoreName = storeName
+	s.storeName = storeName
 	return nil
 }
 
-// CloseNamed clears the StoreName for the SQLiteStore instance
+// CloseNamed clears the storeName for the SQLiteStore instance
 func (s *SQLiteStore) CloseNamed() {
-	s.StoreName = ""
+	s.storeName = ""
 }
