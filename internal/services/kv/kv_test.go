@@ -134,6 +134,43 @@ func TestSQLiteStore_DeleteNonExistent(t *testing.T) {
 	}
 }
 
+func TestSQLiteStore_GetAndSetWithNamedStore(t *testing.T) {
+	db := setupTestDB(t)
+	store := NewSQLiteStore(db)
+
+	// Open a named store
+	err := store.OpenNamed("test-store")
+	if err != nil {
+		t.Fatalf("Failed to open named store: %v", err)
+	}
+
+	// Set a value in the named store. The functionID is ignored when StoreName is set,
+	// so we can use any functionID here.
+	err = store.Set("func-123", "key1", "value1")
+	if err != nil {
+		t.Fatalf("Failed to set value in named store: %v", err)
+	}
+
+	// Get the value from the named store. The functionID is ignored when StoreName is set,
+	// so we can use any functionID here.
+	value, err := store.Get("func-123", "key1")
+	if err != nil {
+		t.Fatalf("Failed to get value from named store: %v", err)
+	}
+
+	if value != "value1" {
+		t.Errorf("Expected value 'value1' from named store, got '%s'", value)
+	}
+
+	// Close the named store. This just clears the StoreName, so subsequent calls will use functionID again.
+	// It is important to test that the named store doesn't affect the default functionID-based storage.
+	store.CloseNamed()
+	value, err = store.Get("func-123", "key1")
+	if err == nil {
+		t.Error("Expected error for key in default store after closing named store, got nil")
+	}
+}
+
 func TestSQLiteStore_FunctionIsolation(t *testing.T) {
 	db := setupTestDB(t)
 	store := NewSQLiteStore(db)

@@ -341,6 +341,16 @@ export function getLuaAPISections() {
               name: "kv.delete(key)",
               type: "function",
               description: t("luaApi.io.items.kvDelete"),
+              },
+            {
+              name: "kv.openNamed(name)",
+                type: "function",
+                description: t("luaApi.io.items.kvOpenNamed"),
+            },
+            {
+              name: "kv.closeNamed()",
+              type: "function",
+              description: t("luaApi.io.items.kvCloseNamed"),
             },
           ],
         },

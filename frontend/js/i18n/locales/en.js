@@ -506,6 +506,8 @@ export default {
         kvGet: "Get value from store",
         kvSet: "Set key-value pair",
         kvDelete: "Delete key from store",
+        kvOpenNamed: "Open named store",
+        kvCloseNamed: "Close named store",
         envGet: "Get environment variable",
         httpGet: "GET request",
         httpPost: "POST request",

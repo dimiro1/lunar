@@ -46,5 +46,24 @@ func registerKV(L *lua.LState, kvStore kv.Store, functionID string) {
 		return 1
 	}))
 
+	// kv.openNamed(storeName)
+	L.SetField(kvTable, "openNamed", L.NewFunction(func(L *lua.LState) int {
+		storeName := L.CheckString(1)
+		err := kvStore.OpenNamed(storeName)
+		if err != nil {
+			L.Push(lua.LFalse)
+			return 1
+		}
+		L.Push(lua.LTrue)
+		return 1
+	}))
+
+	// kv.closeNamed()
+	L.SetField(kvTable, "closeNamed", L.NewFunction(func(L *lua.LState) int {
+		kvStore.CloseNamed()
+		L.Push(lua.LTrue)
+		return 1
+	}))
+
 	L.SetGlobal("kv", kvTable)
 }

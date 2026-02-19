@@ -117,6 +117,16 @@ const API_DOCS = {
     snippet: 'kv.delete("${1:key}")',
     description: "Delete a key from the store",
   },
+  "kv.openNamed": {
+    signature: "kv.openNamed(name: string)",
+    snippet: 'kv.openNamed("${1:name}")',
+    description: "Open a named key-value store",
+  },
+  "kv.closeNamed": {
+    signature: "kv.closeNamed()",
+    snippet: 'kv.closeNamed()',
+    description: "Close a named key-value store",
+  },
   "env.get": {
     signature: "env.get(key: string): string | nil",
     snippet: 'env.get("${1:key}")',
