@@ -74,20 +74,16 @@ Persistent storage scoped to function ID:
 - kv.get(key: string): string | nil - Retrieve value, returns nil if not found
 - kv.set(key: string, value: string): boolean - Set key-value pair, returns success
 - kv.delete(key: string): boolean - Delete key, returns success
-- kv.openNamed(storeName: string): error - Switch to a named store
-- kv.closeNamed() - Switch from named store to default, function-scoped store
-
+- kv.getGlobal(key: string): error - Retrieve value from global store, returns nil if not found
+- kv.setGlobal(key: string, value: string): boolean - Set key-value pair, returns success
+- kv.deleteGlobal(key: string): boolean - Delete key from global store, returns success
 Example:
 ```lua
-local count = kv.get("counter") or "0"
+local count = kv.get("counter") or 0
 kv.set("counter", tostring(tonumber(count) + 1))
 
-kv.openNamed("shared")
-kv.set("counter", "42")
-local sharedCount = kv.get("counter") or "0" -- should be 42
-kv.closeNamed()
-
-local originalCount = kv.get("counter") or "0" -- should be 1
+local sharedCount = kv.getGlobal("sharedCounter") or 0
+kv.setGlobal("sharedCounter", sharedGlobal + 1)
 ```
 
 ### Environment Variables (env)

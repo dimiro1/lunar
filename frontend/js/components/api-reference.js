@@ -343,14 +343,19 @@ export function getLuaAPISections() {
               description: t("luaApi.io.items.kvDelete"),
               },
             {
-              name: "kv.openNamed(name)",
+              name: "kv.getGlobal(key)",
                 type: "function",
-                description: t("luaApi.io.items.kvOpenNamed"),
+                description: t("luaApi.io.items.kvGetGlobal"),
             },
             {
-              name: "kv.closeNamed()",
+              name: "kv.setGlobal(key, value)",
               type: "function",
-              description: t("luaApi.io.items.kvCloseNamed"),
+              description: t("luaApi.io.items.kvSetGlobal"),
+              },
+            {
+              name: "kv.deleteGlobal(key)",
+              type: "function",
+              description: t("luaApi.io.items.kvDeleteGlobal"),
             },
           ],
         },

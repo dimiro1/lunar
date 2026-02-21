@@ -134,40 +134,36 @@ func TestSQLiteStore_DeleteNonExistent(t *testing.T) {
 	}
 }
 
-func TestSQLiteStore_GetAndSetWithNamedStore(t *testing.T) {
+func TestSQLiteStore_GetAndSetWithGlobalStore(t *testing.T) {
 	db := setupTestDB(t)
 	store := NewSQLiteStore(db)
 
-	// Open a named store
-	err := store.OpenNamed("test-store")
+	// Set a value in the global store.
+	err := store.SetGlobal("key1", "value1")
 	if err != nil {
-		t.Fatalf("Failed to open named store: %v", err)
+		t.Fatalf("Failed to set value in global store: %v", err)
 	}
 
-	// Set a value in the named store. The functionID is ignored when StoreName is set,
-	// so we can use any functionID here.
-	err = store.Set("func-123", "key1", "value1")
+	// Get the value from the global store.
+	value, err := store.GetGlobal("key1")
 	if err != nil {
-		t.Fatalf("Failed to set value in named store: %v", err)
-	}
-
-	// Get the value from the named store. The functionID is ignored when StoreName is set,
-	// so we can use any functionID here.
-	value, err := store.Get("func-123", "key1")
-	if err != nil {
-		t.Fatalf("Failed to get value from named store: %v", err)
+		t.Fatalf("Failed to get value from global store: %v", err)
 	}
 
 	if value != "value1" {
-		t.Errorf("Expected value 'value1' from named store, got '%s'", value)
+		t.Errorf("Expected value 'value1' from global store, got '%s'", value)
 	}
 
-	// Close the named store. This just clears the StoreName, so subsequent calls will use functionID again.
-	// It is important to test that the named store doesn't affect the default functionID-based storage.
-	store.CloseNamed()
-	value, err = store.Get("func-123", "key1")
-	if err == nil {
-		t.Error("Expected error for key in default store after closing named store, got nil")
+	// Delete a key from the global store
+	err = store.DeleteGlobal("key1")
+	if err != nil {
+		t.Errorf("Expected no error for deleting key from global store, got %v", err)
+	}
+
+	// Delete a non-existent key from the global store
+	err = store.DeleteGlobal("key1")
+	if err != nil {
+		t.Errorf("Expected no error for deleting key from global store, got %v", err)
 	}
 }
 

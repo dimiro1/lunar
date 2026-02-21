@@ -21,14 +21,14 @@ type Store interface {
 	Get(functionID, key string) (string, error)
 	Set(functionID, key, value string) error
 	Delete(functionID, key string) error
-	OpenNamed(storeName string) error
-	CloseNamed()
+	GetGlobal(key string) (string, error)
+	SetGlobal(key, value string) error
+	DeleteGlobal(key string) error
 }
 
 // MemoryStore is an in-memory implementation of Store
 type MemoryStore struct {
-	data      map[string]map[string]string // functionID -> key -> value
-	storeName string                       // Optional store name for named stores
+	data map[string]map[string]string // functionID -> key -> value
 }
 
 // NewMemoryStore creates a new in-memory KV store
@@ -43,14 +43,8 @@ func (m *MemoryStore) Open(storeName string) (Store, error) {
 	return NewMemoryStore(), nil
 }
 
-// Get retrieves a value by functionID and key
 func (m *MemoryStore) Get(functionID, key string) (string, error) {
-	storeName := functionID
-	if m.storeName != "" {
-		storeName = m.storeName
-	}
-
-	ns, exists := m.data[storeName]
+	ns, exists := m.data[functionID]
 	if !exists {
 		return "", &Error{Message: fmt.Sprintf("key not found: %s", key)}
 	}
@@ -64,50 +58,51 @@ func (m *MemoryStore) Get(functionID, key string) (string, error) {
 
 // Set stores a key-value pair for a functionID
 func (m *MemoryStore) Set(functionID, key, value string) error {
-	storeName := functionID
-	if m.storeName != "" {
-		storeName = m.storeName
+	if _, exists := m.data[functionID]; !exists {
+		m.data[functionID] = make(map[string]string)
 	}
-
-	if _, exists := m.data[storeName]; !exists {
-		m.data[storeName] = make(map[string]string)
-	}
-	m.data[storeName][key] = value
+	m.data[functionID][key] = value
 	return nil
 }
 
 // Delete removes a key-value pair for a functionID
 func (m *MemoryStore) Delete(functionID, key string) error {
-	storeName := functionID
-	if m.storeName != "" {
-		storeName = m.storeName
-	}
-
-	if ns, exists := m.data[storeName]; exists {
+	if ns, exists := m.data[functionID]; exists {
 		delete(ns, key)
 	}
 	return nil
 }
 
-// OpenNamed opens a new in-memory KV store with a given name (for interface compatibility)
-func (m *MemoryStore) OpenNamed(storeName string) error {
-	if storeName == "" {
-		return &Error{Message: "storeName cannot be empty"}
+// GetGlobal retrieves a value from the global key-value store
+func (m *MemoryStore) GetGlobal(key string) (string, error) {
+	if key == "" {
+		return "", &Error{Message: "key cannot be empty"}
 	}
 
-	m.storeName = storeName
-	return nil
+	return m.Get("", key)
 }
 
-// CloseNamed clears the storeName for the MemoryStore instance (for interface compatibility)
-func (m *MemoryStore) CloseNamed() {
-	m.storeName = ""
+// SetGlobal sets a value in the global key-value store
+func (m *MemoryStore) SetGlobal(key, value string) error {
+	if key == "" {
+		return &Error{Message: "key cannot be empty"}
+	}
+
+	return m.Set("", key, value)
+}
+
+// DeleteGlobal removes a key-value pair from the global key-value store
+func (m *MemoryStore) DeleteGlobal(key string) error {
+	if key == "" {
+		return &Error{Message: "key cannot be empty"}
+	}
+
+	return m.Delete("", key)
 }
 
 // SQLiteStore is a SQLite-backed implementation of Store
 type SQLiteStore struct {
-	db        *sql.DB
-	storeName string // Optional store name for named stores
+	db *sql.DB
 }
 
 // NewSQLiteStore creates a new SQLite-backed KV store
@@ -117,15 +112,10 @@ func NewSQLiteStore(db *sql.DB) *SQLiteStore {
 
 // Get retrieves a value by functionID and key
 func (s *SQLiteStore) Get(functionID, key string) (string, error) {
-	storeName := functionID
-	if s.storeName != "" {
-		storeName = s.storeName
-	}
-
 	var value string
 	err := s.db.QueryRow(
 		"SELECT value FROM kv_store WHERE function_id = ? AND key = ?",
-		storeName, key,
+		functionID, key,
 	).Scan(&value)
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -140,14 +130,9 @@ func (s *SQLiteStore) Get(functionID, key string) (string, error) {
 
 // Set stores a key-value pair for a functionID
 func (s *SQLiteStore) Set(functionID, key, value string) error {
-	storeName := functionID
-	if s.storeName != "" {
-		storeName = s.storeName
-	}
-
 	_, err := s.db.Exec(
 		"INSERT OR REPLACE INTO kv_store (function_id, key, value) VALUES (?, ?, ?)",
-		storeName, key, value,
+		functionID, key, value,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to set value: %w", err)
@@ -157,14 +142,9 @@ func (s *SQLiteStore) Set(functionID, key, value string) error {
 
 // Delete removes a key-value pair for a functionID
 func (s *SQLiteStore) Delete(functionID, key string) error {
-	storeName := functionID
-	if s.storeName != "" {
-		storeName = s.storeName
-	}
-
 	_, err := s.db.Exec(
 		"DELETE FROM kv_store WHERE function_id = ? AND key = ?",
-		storeName, key,
+		functionID, key,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to delete value: %w", err)
@@ -172,17 +152,29 @@ func (s *SQLiteStore) Delete(functionID, key string) error {
 	return nil
 }
 
-// OpenNamed sets the storeName for the SQLiteStore instance, allowing for namespacing of stores
-func (s *SQLiteStore) OpenNamed(storeName string) error {
-	if storeName == "" {
-		return &Error{Message: "storeName cannot be empty"}
+// GetGlobal retrieves a value from the global key-value store
+func (s *SQLiteStore) GetGlobal(key string) (string, error) {
+	if key == "" {
+		return "", &Error{Message: "key cannot be empty"}
 	}
 
-	s.storeName = storeName
-	return nil
+	return s.Get("", key)
 }
 
-// CloseNamed clears the storeName for the SQLiteStore instance
-func (s *SQLiteStore) CloseNamed() {
-	s.storeName = ""
+// SetGlobal sets a value in the global key-value store
+func (s *SQLiteStore) SetGlobal(key, value string) error {
+	if key == "" {
+		return &Error{Message: "key cannot be empty"}
+	}
+
+	return s.Set("", key, value)
+}
+
+// DeleteGlobal removes a key-value pair from the global key-value store
+func (s *SQLiteStore) DeleteGlobal(key string) error {
+	if key == "" {
+		return &Error{Message: "key cannot be empty"}
+	}
+
+	return s.Delete("", key)
 }

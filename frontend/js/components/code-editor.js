@@ -117,15 +117,20 @@ const API_DOCS = {
     snippet: 'kv.delete("${1:key}")',
     description: "Delete a key from the store",
   },
-  "kv.openNamed": {
-    signature: "kv.openNamed(name: string)",
-    snippet: 'kv.openNamed("${1:name}")',
-    description: "Open a named key-value store",
+  "kv.getGlobal": {
+    signature: "kv.getGlobal(key: string): string | nil",
+    snippet: 'kv.getGlobal("${1:key}")',
+    description: "Get a value from the global key-value store. Returns nil if key does not exist.",
   },
-  "kv.closeNamed": {
-    signature: "kv.closeNamed()",
-    snippet: 'kv.closeNamed()',
-    description: "Close a named key-value store",
+  "kv.setGlobal": {
+    signature: "kv.setGlobal(key: string, value: string)",
+    snippet: 'kv.setGlobal("${1:key}", "${2:value}")',
+    description: "Set a key-value pair in the global store",
+  },
+  "kv.deleteGlobal": {
+    signature: "kv.deleteGlobal(key: string)",
+    snippet: 'kv.deleteGlobal("${1:key}")',
+    description: "Delete a key from the global store",
   },
   "env.get": {
     signature: "env.get(key: string): string | nil",

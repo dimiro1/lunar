@@ -290,15 +290,13 @@ end
 	luaCodeNamed := `
 function handler(ctx, event)
 	kv.set("key1", "value1") -- This should go to the default store
-	kv.openNamed("mystore")
-	kv.set("key1", "value2")
-	local val = kv.get("key1")
-	kv.closeNamed()
-    local orginalVal = kv.get("key1") -- Should retrieve from default store
+	kv.setGlobal("key1", "value2") -- This should go to the global store
+	local val = kv.get("key1") -- Should retrieve from default store
+	local globalVal = kv.getGlobal("key1") -- Should retrieve from global store
 
 	return {
 		statusCode = 200,
-		body = "Retrieved: " .. val .. ", " .. orginalVal
+		body = "Retrieved: " .. val .. ", " .. globalVal
 	}
 end
 `
@@ -308,8 +306,8 @@ end
 		t.Fatalf("Run failed: %v", err)
 	}
 
-	if resp.HTTP.Body != "Retrieved: value2, value1" {
-		t.Errorf("expected body 'Retrieved: value2', got %q", resp.HTTP.Body)
+	if resp.HTTP.Body != "Retrieved: value1, value2" {
+		t.Errorf("expected body 'Retrieved: value1, value2', got %q", resp.HTTP.Body)
 	}
 }
 
