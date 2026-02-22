@@ -38,11 +38,6 @@ func NewMemoryStore() *MemoryStore {
 	}
 }
 
-// Open opens a new in-memory KV store (for interface compatibility)
-func (m *MemoryStore) Open(storeName string) (Store, error) {
-	return NewMemoryStore(), nil
-}
-
 func (m *MemoryStore) Get(functionID, key string) (string, error) {
 	ns, exists := m.data[functionID]
 	if !exists {
