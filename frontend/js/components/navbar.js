@@ -183,7 +183,11 @@ export const NavbarSearch = {
         class: className,
         onclick,
       },
-      [m("span", placeholder), shortcut && m(Kbd, { small: true }, shortcut)],
+      [
+        m.trust(icons.magnifyingGlass()),
+        m("span", placeholder),
+        shortcut && m(Kbd, { small: true }, shortcut),
+      ],
     );
   },
 };
@@ -272,19 +276,18 @@ export const Header = {
     const { breadcrumb, onLogout, onSearch } = vnode.attrs;
 
     return m(Navbar, [
-      m(NavbarSection, [
-        m(NavbarBrand, { name: t("nav.dashboard"), href: "#!/" }),
-        breadcrumb &&
-        m(
-          "span.navbar__breadcrumb-separator",
-          { "aria-hidden": "true" },
-          "/",
-        ),
-        breadcrumb &&
-        m(NavbarBreadcrumb, {
-          items: [{ label: breadcrumb, active: true }],
-        }),
-      ]),
+      m(NavbarBrand, { name: t("nav.dashboard"), href: "#!/" }),
+      breadcrumb &&
+      m(
+        "span.navbar__breadcrumb-separator",
+        { "aria-hidden": "true" },
+        "/",
+      ),
+      breadcrumb &&
+      m(NavbarBreadcrumb, {
+        items: [{ label: breadcrumb, active: true }],
+      }),
+
       m(NavbarSection, [
         m(NavbarSearch, {
           placeholder: t("nav.search"),
