@@ -3489,4 +3489,17 @@ pre {
   .pagination {
     display: grid;
   }
+
+  .navbar__breadcrumb-separator,
+  .navbar__breadcrumb {
+    display: none;
+  }
+
+  .template-cards {
+    grid-template-columns: unset;
+  }
+
+  .create-function-actions {
+    display: grid;
+  }
 }
