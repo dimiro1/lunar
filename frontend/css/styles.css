@@ -153,7 +153,6 @@ main {
 /* ============================================
    NAVBAR
    ============================================ */
-
 .navbar {
   border-bottom: 1px solid var(--color-border);
   background-color: rgba(9, 9, 11, 0.8);
@@ -1498,7 +1497,6 @@ main {
 
 .template-cards {
   display: grid;
-  grid-template-columns: unset;
   gap: 1rem;
 }
 

@@ -190,18 +190,18 @@ export const FunctionCreate = {
           m(
             Button,
             {
-              variant: ButtonVariant.GHOST,
-              href: "#!/functions",
-            },
-            t("common.cancel"),
-          ),
-          m(
-            Button,
-            {
               variant: ButtonVariant.PRIMARY,
               onclick: FunctionCreate.createFunction,
             },
             t("create.createButton"),
+          ),
+          m(
+            Button,
+            {
+              variant: ButtonVariant.GHOST,
+              href: "#!/functions",
+            },
+            t("common.cancel"),
           ),
         ]),
       ]),
