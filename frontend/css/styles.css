@@ -39,10 +39,6 @@
   --text-xl: 1.25rem;
   --text-2xl: 1.5rem;
   --text-3xl: 1.875rem;
-
-  /* Breakpoints */
-  --tablet-width: 765px;
-
   /* W3C Accessibility*/
   --min-interactive-element-size: 44px;
 }
@@ -68,7 +64,7 @@ main {
   max-width: 80rem;
   margin: 0 auto;
   width: 100%;
-  padding: 1.5rem;
+  padding: 1rem;
 }
 
 ::selection {
@@ -167,7 +163,7 @@ main {
   z-index: 50;
   display: flex;
   align-items: center;
-  padding: 1rem 1.5rem;
+  padding: 1rem;
   justify-content: space-between;
 }
 
@@ -209,7 +205,7 @@ main {
 }
 
 .navbar__breadcrumb {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 0.5rem;
 }
@@ -225,6 +221,7 @@ main {
 }
 
 .navbar__breadcrumb-separator {
+  display: none;
   color: var(--color-border);
 }
 
@@ -245,10 +242,12 @@ main {
   font-size: var(--text-sm);
   cursor: pointer;
   min-height: var(--min-interactive-element-size);
-  min-width: 240px;
+  min-width: var(--min-interactive-element-size);
+  place-content: center;
 }
 
 .navbar__search span {
+  display: none;
   flex: 1;
   text-align: left;
 }
@@ -1199,7 +1198,7 @@ main {
 
 .pagination {
   padding: 0.75rem 1rem;
-  display: flex;
+  display: grid;
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
@@ -1300,7 +1299,7 @@ main {
 
 .layout-with-sidebar {
   display: grid;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: 1fr;
   gap: 24px;
   align-items: start;
 }
@@ -1314,8 +1313,8 @@ main {
    ============================================ */
 
 .docs-sidebar {
-  position: sticky;
-  top: 80px;
+  position: static;
+  max-height: none;
   background: var(--color-surface-30);
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -1488,7 +1487,7 @@ main {
 }
 
 .create-function-actions {
-  display: flex;
+  display: grid;
   gap: 0.5rem;
   margin-top: 2rem;
 }
@@ -1499,7 +1498,7 @@ main {
 
 .template-cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: unset;
   gap: 1rem;
 }
 
@@ -3159,9 +3158,9 @@ pre {
   grid-template-columns: 1fr;
 }
 
-@media (max-width: 768px) {
+@media (min-width: 768px) {
   .ai-request-viewer__panels {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 }
 
@@ -3263,9 +3262,9 @@ pre {
   grid-template-columns: 1fr;
 }
 
-@media (max-width: 768px) {
+@media (min-width: 768px) {
   .email-request-viewer__panels {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 }
 
@@ -3315,11 +3314,12 @@ pre {
 }
 
 .language-selector__label {
+  display: none;
   font-weight: 500;
 }
 
 .language-selector__chevron {
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   width: 0.75rem;
@@ -3449,57 +3449,58 @@ pre {
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
-/* ============================================
-   RESPONSIVE
-   ============================================ */
-
-@media (max-width: 768px) {
+@media (min-width: 768px) {
   .layout-with-sidebar {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 320px;
   }
 
   .docs-sidebar {
-    position: static;
-    max-height: none;
+    position: sticky;
+    top: 80px;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
   }
 
   .navbar {
-    padding: 1rem;
+    padding: 1rem 1.5rem;
   }
 
   .navbar__search {
-    min-width: var(--min-interactive-element-size);
-    place-content: center;
+    min-width: 240px;
+    place-content: unset;
   }
 
-  .navbar__search span,
+  .navbar__search span {
+    display: flex;
+  }
+
   .navbar__search .kbd {
-    display: none;
+    display: flex;
   }
 
   .language-selector__label,
   .language-selector__chevron {
-    display: none;
+    display: flex;
   }
 
   main {
-    padding: 1rem;
+    padding: 1.5rem;
   }
 
   .pagination {
-    display: grid;
+    display: flex;
   }
 
   .navbar__breadcrumb-separator,
   .navbar__breadcrumb {
-    display: none;
+    display: flex;
   }
 
   .template-cards {
-    grid-template-columns: unset;
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .create-function-actions {
-    display: grid;
+    display: flex;
   }
 }
