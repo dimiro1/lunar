@@ -174,7 +174,12 @@ func (s *SQLiteStore) ListKeys(functionID string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to list keys: %w", err)
 	}
-	defer rows.Close()
+
+	defer func() {
+		if err := rows.Close(); err != nil {
+			fmt.Printf("failed to close rows: %v\n", err)
+		}
+	}()
 
 	var keys []string
 	for rows.Next() {

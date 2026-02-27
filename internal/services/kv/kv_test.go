@@ -241,10 +241,22 @@ func TestSQLiteStore_ListKeys(t *testing.T) {
 	}
 
 	// Add some keys to the store
-	store.Set(fake_functionID, "key1", "value1")
-	store.Set(fake_functionID, "key2", "value2")
-	store.Set(fake_functionID, "key3", "value3")
-	store.Set(fake_functionID, "key4", "value4")
+	err = store.Set(fake_functionID, "key1", "value1")
+	if err != nil {
+		t.Fatalf("Set failed: %v", err)
+	}
+	err = store.Set(fake_functionID, "key2", "value2")
+	if err != nil {
+		t.Fatalf("Set failed: %v", err)
+	}
+	err = store.Set(fake_functionID, "key3", "value3")
+	if err != nil {
+		t.Fatalf("Set failed: %v", err)
+	}
+	err = store.Set(fake_functionID, "key4", "value4")
+	if err != nil {
+		t.Fatalf("Set failed: %v", err)
+	}
 
 	foundKeys, err = store.ListKeys(fake_functionID)
 	if err != nil {
@@ -256,7 +268,10 @@ func TestSQLiteStore_ListKeys(t *testing.T) {
 	}
 
 	// Delete a key and check the list again
-	store.Delete(fake_functionID, "key2")
+	err = store.Delete(fake_functionID, "key2")
+	if err != nil {
+		t.Fatalf("Delete failed: %v", err)
+	}
 	foundKeys, err = store.ListKeys(fake_functionID)
 	if err != nil {
 		t.Fatalf("ListKeys failed: %v", err)

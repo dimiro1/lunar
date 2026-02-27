@@ -595,10 +595,22 @@ func TestRun_KV_ListKeys(t *testing.T) {
 	}
 
 	// Add some keys to function-1 store
-	kvStore.Set("function-1", "a-key-1", "another-value-1")
-	kvStore.Set("function-1", "a-key-2", "another-value-2")
-	kvStore.Set("function-1", "a-key-3", "another-value-3")
-	kvStore.Set("function-1", "a-key-4", "another-value-4")
+	err = kvStore.Set("function-1", "a-key-1", "another-value-1")
+	if err != nil {
+		t.Fatalf("Set failed: %v", err)
+	}
+	err = kvStore.Set("function-1", "a-key-2", "another-value-2")
+	if err != nil {
+		t.Fatalf("Set failed: %v", err)
+	}
+	err = kvStore.Set("function-1", "a-key-3", "another-value-3")
+	if err != nil {
+		t.Fatalf("Set failed: %v", err)
+	}
+	err = kvStore.Set("function-1", "a-key-4", "another-value-4")
+	if err != nil {
+		t.Fatalf("Set failed: %v", err)
+	}
 
 	keysList, err = kvStore.ListKeys("function-1")
 	if err != nil {
