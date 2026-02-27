@@ -21,9 +21,11 @@ type Store interface {
 	Get(functionID, key string) (string, error)
 	Set(functionID, key, value string) error
 	Delete(functionID, key string) error
+	ListKeys(functionID string) ([]string, error)
 	GetGlobal(key string) (string, error)
 	SetGlobal(key, value string) error
 	DeleteGlobal(key string) error
+	ListGlobalKeys() ([]string, error)
 }
 
 // MemoryStore is an in-memory implementation of Store
@@ -68,6 +70,19 @@ func (m *MemoryStore) Delete(functionID, key string) error {
 	return nil
 }
 
+func (m *MemoryStore) ListKeys(functionID string) ([]string, error) {
+	ns, exists := m.data[functionID]
+	if !exists {
+		return nil, &Error{Message: fmt.Sprintf("functionID not found: %s", functionID)}
+	}
+
+	keys := make([]string, 0, len(ns))
+	for key := range ns {
+		keys = append(keys, key)
+	}
+	return keys, nil
+}
+
 // GetGlobal retrieves a value from the global key-value store
 func (m *MemoryStore) GetGlobal(key string) (string, error) {
 	if key == "" {
@@ -93,6 +108,11 @@ func (m *MemoryStore) DeleteGlobal(key string) error {
 	}
 
 	return m.Delete("", key)
+}
+
+// ListGlobalKeys lists all keys in the global key-value store
+func (m *MemoryStore) ListGlobalKeys() ([]string, error) {
+	return m.ListKeys("")
 }
 
 // SQLiteStore is a SQLite-backed implementation of Store
@@ -147,6 +167,30 @@ func (s *SQLiteStore) Delete(functionID, key string) error {
 	return nil
 }
 
+func (s *SQLiteStore) ListKeys(functionID string) ([]string, error) {
+	rows, err := s.db.Query(
+		"SELECT key FROM kv_store WHERE function_id = ?", functionID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list keys: %w", err)
+	}
+	defer rows.Close()
+
+	var keys []string
+	for rows.Next() {
+		var key string
+		if err := rows.Scan(&key); err != nil {
+			return nil, fmt.Errorf("failed to scan key: %w", err)
+		}
+		keys = append(keys, key)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows iteration error: %w", err)
+	}
+
+	return keys, nil
+}
+
 // GetGlobal retrieves a value from the global key-value store
 func (s *SQLiteStore) GetGlobal(key string) (string, error) {
 	if key == "" {
@@ -172,4 +216,9 @@ func (s *SQLiteStore) DeleteGlobal(key string) error {
 	}
 
 	return s.Delete("", key)
+}
+
+// ListGlobalKeys lists all keys in the global key-value store
+func (s *SQLiteStore) ListGlobalKeys() ([]string, error) {
+	return s.ListKeys("")
 }

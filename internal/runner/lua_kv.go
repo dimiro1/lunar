@@ -46,6 +46,22 @@ func registerKV(L *lua.LState, kvStore kv.Store, functionID string) {
 		return 1
 	}))
 
+	// kv.listKeys()
+	L.SetField(kvTable, "listKeys", L.NewFunction(func(L *lua.LState) int {
+		keys, err := kvStore.ListKeys(functionID)
+		if err != nil {
+			L.Push(lua.LNil)
+			return 1
+		}
+		luaKeys := L.NewTable()
+		for _, key := range keys {
+			L.SetField(luaKeys, key, lua.LString(key))
+		}
+		L.Push(luaKeys)
+
+		return 1
+	}))
+
 	// kv.getGlobal(key)
 	L.SetField(kvTable, "getGlobal", L.NewFunction(func(L *lua.LState) int {
 		key := L.CheckString(1)
@@ -80,6 +96,22 @@ func registerKV(L *lua.LState, kvStore kv.Store, functionID string) {
 			return 1
 		}
 		L.Push(lua.LTrue)
+		return 1
+	}))
+
+	// kv.listGlobalKeys()
+	L.SetField(kvTable, "listGlobalKeys", L.NewFunction(func(L *lua.LState) int {
+		keys, err := kvStore.ListGlobalKeys()
+		if err != nil {
+			L.Push(lua.LNil)
+			return 1
+		}
+		luaKeys := L.NewTable()
+		for _, key := range keys {
+			L.SetField(luaKeys, key, lua.LString(key))
+		}
+		L.Push(luaKeys)
+
 		return 1
 	}))
 

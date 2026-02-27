@@ -224,3 +224,55 @@ func TestSQLiteStore_FunctionIsolation(t *testing.T) {
 		t.Error("Expected error for deleted key in func-123, got nil")
 	}
 }
+
+func TestSQLiteStore_ListKeys(t *testing.T) {
+	db := setupTestDB(t)
+	store := NewSQLiteStore(db)
+
+	fake_functionID := "testing-list-keys-testonly"
+
+	foundKeys, err := store.ListKeys(fake_functionID)
+	if err != nil {
+		t.Fatalf("ListKeys failed: %v", err)
+	}
+	if len(foundKeys) != 0 {
+		t.Errorf("expected empty store but it was populated: %v", foundKeys)
+	}
+
+	// Add some keys to the store
+	store.Set(fake_functionID, "key1", "value1")
+	store.Set(fake_functionID, "key2", "value2")
+	store.Set(fake_functionID, "key3", "value3")
+	store.Set(fake_functionID, "key4", "value4")
+
+	foundKeys, err = store.ListKeys(fake_functionID)
+	if err != nil {
+		t.Fatalf("ListKeys failed: %v", err)
+	}
+	if len(foundKeys) != 4 || foundKeys[0] != "key1" || foundKeys[1] != "key2" || foundKeys[2] != "key3" || foundKeys[3] != "key4" {
+		t.Errorf("expected keys ['key1', 'key2', 'key3', 'key4'], got %v", foundKeys)
+	}
+
+	// Delete a key and check the list again
+	store.Delete(fake_functionID, "key2")
+	foundKeys, err = store.ListKeys(fake_functionID)
+	if err != nil {
+		t.Fatalf("ListKeys failed: %v", err)
+	}
+	if len(foundKeys) != 3 || foundKeys[0] != "key1" || foundKeys[1] != "key3" || foundKeys[2] != "key4" {
+		t.Errorf("expected keys ['key1', 'key3', 'key4'], got %v", foundKeys)
+	}
+
+	// Delete all keys and check the list again
+	store.Delete(fake_functionID, "key1")
+	store.Delete(fake_functionID, "key3")
+	store.Delete(fake_functionID, "key4")
+	foundKeys, err = store.ListKeys(fake_functionID)
+
+	if err != nil {
+		t.Fatalf("ListKeys failed: %v", err)
+	}
+	if len(foundKeys) != 0 {
+		t.Errorf("expected empty store but it was populated: %v", foundKeys)
+	}
+}
