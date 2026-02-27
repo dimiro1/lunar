@@ -587,8 +587,8 @@ func TestRun_KV_ListKeys(t *testing.T) {
 	kvStore := kv.NewMemoryStore()
 
 	keysList, err := kvStore.ListKeys("function-1")
-	if err != nil {
-		t.Fatalf("ListKeys failed: %v", err)
+	if err == nil {
+		t.Fatalf("ListKeys should have returned an error for non-existent function store, got nil")
 	}
 	if len(keysList) != 0 {
 		t.Errorf("expected empty store but it was populated")
