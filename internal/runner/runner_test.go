@@ -591,7 +591,7 @@ func TestRun_KV_ListKeys(t *testing.T) {
 		t.Fatalf("ListKeys failed: %v", err)
 	}
 	if len(keysList) != 0 {
-		t.Errorf("expected empty store but it was populated", keysList)
+		t.Errorf("expected empty store but it was populated")
 	}
 
 	// Add some keys to function-1 store
