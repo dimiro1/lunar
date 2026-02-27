@@ -54,8 +54,10 @@ func registerKV(L *lua.LState, kvStore kv.Store, functionID string) {
 			return 1
 		}
 		luaKeys := L.NewTable()
+		index := 0
 		for _, key := range keys {
-			L.SetField(luaKeys, key, lua.LString(key))
+			index++
+			L.SetTable(luaKeys, lua.LNumber(index), lua.LString(key))
 		}
 		L.Push(luaKeys)
 
@@ -107,8 +109,10 @@ func registerKV(L *lua.LState, kvStore kv.Store, functionID string) {
 			return 1
 		}
 		luaKeys := L.NewTable()
+		index := 0
 		for _, key := range keys {
-			L.SetField(luaKeys, key, lua.LString(key))
+			index++
+			L.SetTable(luaKeys, lua.LNumber(index), lua.LString(key))
 		}
 		L.Push(luaKeys)
 
