@@ -3,6 +3,7 @@ package kv
 import (
 	"database/sql"
 	"os"
+	"sort"
 	"testing"
 
 	"github.com/dimiro1/lunar/internal/migrate"
@@ -249,6 +250,7 @@ func TestSQLiteStore_ListKeys(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ListKeys failed: %v", err)
 	}
+	sort.Strings(foundKeys)
 	if len(foundKeys) != 4 || foundKeys[0] != "key1" || foundKeys[1] != "key2" || foundKeys[2] != "key3" || foundKeys[3] != "key4" {
 		t.Errorf("expected keys ['key1', 'key2', 'key3', 'key4'], got %v", foundKeys)
 	}
@@ -259,6 +261,7 @@ func TestSQLiteStore_ListKeys(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ListKeys failed: %v", err)
 	}
+	sort.Strings(foundKeys)
 	if len(foundKeys) != 3 || foundKeys[0] != "key1" || foundKeys[1] != "key3" || foundKeys[2] != "key4" {
 		t.Errorf("expected keys ['key1', 'key3', 'key4'], got %v", foundKeys)
 	}
