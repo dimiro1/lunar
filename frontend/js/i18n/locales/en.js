@@ -71,6 +71,7 @@ export default {
     executions: "Executions",
     settings: "Settings",
     test: "Test",
+    data: "KV Store",
   },
 
   // Function creation
@@ -111,6 +112,18 @@ export default {
       description: "Start with empty template",
     },
   },
+
+kvStore: {
+    title: "Key-Value Store",
+    functionScoped: "Function-Scoped",
+    global: "Global",
+    addEntry: "Add Entry",
+    saveChanges: "Save Changes",
+    noEntries: "No key-value entries yet.",
+    keyPlaceholder: "KEY",
+    valuePlaceholder: "Value",
+    variablesCount: "{{count}} entries",
+    },
 
   // Settings page
   settings: {
@@ -227,6 +240,7 @@ export default {
     failedToUpdate: "Failed to update status",
     executionFailed: "Execution failed",
     scheduleUpdated: "Schedule updated successfully",
+    kvSaved: "Data saved successfully",
   },
 
   // Pagination

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"maps"
 )
 
 // Error represents a KV store error
@@ -26,6 +27,8 @@ type Store interface {
 	SetGlobal(key, value string) error
 	DeleteGlobal(key string) error
 	ListGlobalKeys() ([]string, error)
+	All(functionID string) (map[string]string, error)
+	AllGlobal() (map[string]string, error)
 }
 
 // MemoryStore is an in-memory implementation of Store
@@ -40,6 +43,7 @@ func NewMemoryStore() *MemoryStore {
 	}
 }
 
+// Get retrieves a value by functionID and key
 func (m *MemoryStore) Get(functionID, key string) (string, error) {
 	ns, exists := m.data[functionID]
 	if !exists {
@@ -70,6 +74,7 @@ func (m *MemoryStore) Delete(functionID, key string) error {
 	return nil
 }
 
+// ListKeys lists all keys for a given functionID
 func (m *MemoryStore) ListKeys(functionID string) ([]string, error) {
 	ns, exists := m.data[functionID]
 	if !exists {
@@ -113,6 +118,24 @@ func (m *MemoryStore) DeleteGlobal(key string) error {
 // ListGlobalKeys lists all keys in the global key-value store
 func (m *MemoryStore) ListGlobalKeys() ([]string, error) {
 	return m.ListKeys("")
+}
+
+// All returns all key-value pairs for a given functionID
+func (m *MemoryStore) All(functionID string) (map[string]string, error) {
+	ns, exists := m.data[functionID]
+	if !exists {
+		return nil, &Error{Message: fmt.Sprintf("functionID not found: %s", functionID)}
+	}
+
+	// Return a copy to prevent modification
+	result := make(map[string]string, len(ns))
+	maps.Copy(result, ns)
+	return result, nil
+}
+
+// AllGlobal returns all key-value pairs in the global store
+func (m *MemoryStore) AllGlobal() (map[string]string, error) {
+	return m.All("")
 }
 
 // SQLiteStore is a SQLite-backed implementation of Store
@@ -167,6 +190,7 @@ func (s *SQLiteStore) Delete(functionID, key string) error {
 	return nil
 }
 
+// ListKeys lists all keys for a given functionID
 func (s *SQLiteStore) ListKeys(functionID string) ([]string, error) {
 	rows, err := s.db.Query(
 		"SELECT key FROM kv_store WHERE function_id = ?", functionID,
@@ -226,4 +250,36 @@ func (s *SQLiteStore) DeleteGlobal(key string) error {
 // ListGlobalKeys lists all keys in the global key-value store
 func (s *SQLiteStore) ListGlobalKeys() ([]string, error) {
 	return s.ListKeys("")
+}
+
+// All returns all key-value pairs for a given functionID
+func (s *SQLiteStore) All(functionID string) (map[string]string, error) {
+	rows, err := s.db.Query(
+		"SELECT key, value FROM kv_store WHERE function_id = ?", functionID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query kv store: %w", err)
+	}
+	defer func() {
+		if err := rows.Close(); err != nil {
+			fmt.Printf("failed to close rows: %v\n", err)
+		}
+	}()
+	result := make(map[string]string)
+	for rows.Next() {
+		var key, value string
+		if err := rows.Scan(&key, &value); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+		result[key] = value
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows iteration error: %w", err)
+	}
+	return result, nil
+}
+
+// AllGlobal returns all key-value pairs in the global store
+func (s *SQLiteStore) AllGlobal() (map[string]string, error) {
+	return s.All("")
 }

@@ -99,6 +99,8 @@ type Function struct {
 	SaveResponse  bool              `json:"save_response"`
 	CreatedAt     int64             `json:"created_at"`
 	UpdatedAt     int64             `json:"updated_at"`
+	ScopedData    map[string]string `json:"scoped_data"`
+	GlobalData    map[string]string `json:"global_data"`
 }
 
 // FunctionVersion represents a specific version of a function

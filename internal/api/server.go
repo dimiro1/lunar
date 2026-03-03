@@ -5,15 +5,15 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dimiro1/lunar/internal/services/ai"
 	internalcron "github.com/dimiro1/lunar/internal/cron"
-	"github.com/dimiro1/lunar/internal/services/email"
 	"github.com/dimiro1/lunar/internal/engine"
+	"github.com/dimiro1/lunar/internal/runner"
+	"github.com/dimiro1/lunar/internal/services/ai"
+	"github.com/dimiro1/lunar/internal/services/email"
 	"github.com/dimiro1/lunar/internal/services/env"
 	internalhttp "github.com/dimiro1/lunar/internal/services/http"
 	"github.com/dimiro1/lunar/internal/services/kv"
 	"github.com/dimiro1/lunar/internal/services/logger"
-	"github.com/dimiro1/lunar/internal/runner"
 	"github.com/dimiro1/lunar/internal/store"
 	"github.com/rs/xid"
 )
@@ -31,6 +31,7 @@ type Server struct {
 	frontendHandler http.Handler
 	apiKey          string
 	httpServer      *http.Server
+	kvStore         kv.Store
 }
 
 // ServerConfig holds configuration for creating a Server
@@ -100,6 +101,7 @@ func NewServer(config ServerConfig) *Server {
 		scheduler:       config.Scheduler,
 		frontendHandler: config.FrontendHandler,
 		apiKey:          config.APIKey,
+		kvStore:         config.KVStore,
 	}
 
 	s.setupRoutes()
@@ -124,11 +126,12 @@ func (s *Server) setupRoutes() {
 	// Function Management - only need DB
 	s.mux.Handle("POST /api/functions", authMiddleware(http.HandlerFunc(CreateFunctionHandler(s.db))))
 	s.mux.Handle("GET /api/functions", authMiddleware(http.HandlerFunc(ListFunctionsHandler(s.db))))
-	s.mux.Handle("GET /api/functions/{id}", authMiddleware(http.HandlerFunc(GetFunctionHandler(s.db, s.envStore))))
+	s.mux.Handle("GET /api/functions/{id}", authMiddleware(http.HandlerFunc(GetFunctionHandler(s.db, s.envStore, s.kvStore))))
 	s.mux.Handle("PUT /api/functions/{id}", authMiddleware(http.HandlerFunc(UpdateFunctionHandler(s.db, s.scheduler))))
 	s.mux.Handle("DELETE /api/functions/{id}", authMiddleware(http.HandlerFunc(DeleteFunctionHandler(s.db))))
 	s.mux.Handle("PUT /api/functions/{id}/env", authMiddleware(http.HandlerFunc(UpdateEnvVarsHandler(s.db, s.envStore))))
 	s.mux.Handle("GET /api/functions/{id}/next-run", authMiddleware(http.HandlerFunc(GetNextRunHandler(s.db))))
+	s.mux.Handle("POST /api/functions/{id}/kv", authMiddleware(http.HandlerFunc(UpdateKvStoreHandler(s.db, s.kvStore))))
 
 	// Version Management - only need DB
 	s.mux.Handle("GET /api/functions/{id}/versions", authMiddleware(http.HandlerFunc(ListVersionsHandler(s.db))))

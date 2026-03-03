@@ -173,6 +173,21 @@ export const API = {
       }),
 
     /**
+     * Updates kv store entries for a function.
+     * @param {string} id - Function ID
+     * @param {Object} updateData - Update data
+     * @param {boolean} updateData.global - Whether the update is for global KV entries
+     * @param {Array<{key: string, value: string}>} updateData.kvEntries - KV entries to update
+     * @returns {Promise<LunarFunction>} The updated function
+     */
+    updateKvStore: (id, updateData) =>
+      apiRequest({
+        method: "POST",
+        url: `/api/functions/${id}/kv`,
+        body: updateData,
+      }),
+    
+    /**
      * Gets the next scheduled run time for a function.
      * @param {string} id - Function ID
      * @returns {Promise<NextRunResponse>} Next run information

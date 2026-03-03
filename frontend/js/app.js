@@ -18,6 +18,7 @@ import { FunctionVersions } from "./views/function-versions.js";
 import { FunctionExecutions } from "./views/function-executions.js";
 import { FunctionSettings } from "./views/function-settings.js";
 import { FunctionTest } from "./views/function-test.js";
+import { FunctionData } from "./views/function-data.js";
 import { ExecutionDetail } from "./views/execution-detail.js";
 import { VersionDiff } from "./views/version-diff.js";
 import { Preview } from "./views/preview.js";
@@ -146,5 +147,13 @@ m.route(document.getElementById("app"), "/functions", {
   "/preview/:component": {
     render: (vnode) =>
       m(Layout, { breadcrumb: "Component Preview" }, m(Preview, vnode.attrs)),
+  },
+  "/functions/:id/kv": {
+    render: (vnode) =>
+      m(
+        Layout,
+        { breadcrumb: "Key-Value Store", breadcrumbKey: "kvStore.title" },
+        m(FunctionData, { ...vnode.attrs, key: vnode.attrs.id }),
+      ),
   },
 });

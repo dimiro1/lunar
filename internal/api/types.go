@@ -48,6 +48,18 @@ type UpdateEnvVarsRequest struct {
 	EnvVars map[string]string `json:"env_vars"`
 }
 
+// KVPair represents a key-value pair for the KV store
+type KVPair struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+// UpdateKvStoreRequest is the request body for updating the KV store
+type UpdateKvStoreRequest struct {
+	Global    bool     `json:"global"`
+	KVEntries []KVPair `json:"kvEntries"`
+}
+
 // ListFunctionsResponse is the response for listing functions
 type ListFunctionsResponse struct {
 	Functions []store.FunctionWithActiveVersion `json:"functions"`

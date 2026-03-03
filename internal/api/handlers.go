@@ -16,6 +16,7 @@ import (
 	"github.com/dimiro1/lunar/internal/services/ai"
 	"github.com/dimiro1/lunar/internal/services/email"
 	"github.com/dimiro1/lunar/internal/services/env"
+	"github.com/dimiro1/lunar/internal/services/kv"
 	"github.com/dimiro1/lunar/internal/services/logger"
 	"github.com/dimiro1/lunar/internal/store"
 	"github.com/rs/xid"
@@ -164,7 +165,7 @@ func ListFunctionsHandler(database store.DB) http.HandlerFunc {
 }
 
 // GetFunctionHandler returns a handler for getting a specific function
-func GetFunctionHandler(database store.DB, envStore env.Store) http.HandlerFunc {
+func GetFunctionHandler(database store.DB, envStore env.Store, kvStore kv.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 
@@ -187,6 +188,23 @@ func GetFunctionHandler(database store.DB, envStore env.Store) http.HandlerFunc 
 			return
 		}
 		fn.EnvVars = envVars
+
+		// Get current kv entries from kv store
+		scopedKvEntries, err := kvStore.All(id)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "Failed to get current function-scoped kv entries")
+			return
+		}
+
+		// Get current global kv entries from kv store
+		globalKvEntries, err := kvStore.AllGlobal()
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "Failed to get current global kv entries")
+			return
+		}
+
+		fn.ScopedData = scopedKvEntries
+		fn.GlobalData = globalKvEntries
 
 		resp := store.FunctionWithActiveVersion{
 			Function:      fn,
@@ -308,6 +326,78 @@ func UpdateEnvVarsHandler(database store.DB, envStore env.Store) http.HandlerFun
 		for key, value := range req.EnvVars {
 			if err := envStore.Set(id, key, value); err != nil {
 				writeError(w, http.StatusInternalServerError, "Failed to set env var")
+				return
+			}
+		}
+
+		// Get the active version to return
+		activeVersion, err := database.GetActiveVersion(r.Context(), id)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "Failed to get active version")
+			return
+		}
+
+		writeJSON(w, http.StatusOK, activeVersion)
+	}
+}
+
+// UpdateKvStoreHandler returns a handler for updating key-value store entries
+func UpdateKvStoreHandler(database store.DB, kvStore kv.Store) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+
+		var req UpdateKvStoreRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeError(w, http.StatusBadRequest, "Invalid request body")
+			return
+		}
+
+		// Validate request
+		if err := ValidateUpdateKvStoreRequest(&req); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// Verify function exists
+		_, err := database.GetFunction(r.Context(), id)
+		if err != nil {
+			writeError(w, http.StatusNotFound, "Function not found")
+			return
+		}
+
+		useStore := id
+		if req.Global {
+			useStore = ""
+		}
+
+		// Get current kv entries from kv store
+		currentKvEntries, err := kvStore.All(useStore)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "Failed to get current kv entries")
+			return
+		}
+
+		// Delete removed kv entries
+		for key, _ := range currentKvEntries {
+			found := false
+			for _, kv := range req.KVEntries {
+				if kv.Key == key && req.Global == false {
+					found = true
+					break
+				}
+			}
+			if !found {
+				if err := kvStore.Delete(useStore, key); err != nil {
+					writeError(w, http.StatusInternalServerError, "Failed to delete kv entry")
+					return
+				}
+			}
+		}
+
+		// Set new/updated kv entries
+		for _, kv := range req.KVEntries {
+			if err := kvStore.Set(useStore, kv.Key, kv.Value); err != nil {
+				writeError(w, http.StatusInternalServerError, "Failed to set kv entry")
 				return
 			}
 		}

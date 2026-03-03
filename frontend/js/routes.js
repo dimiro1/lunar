@@ -60,6 +60,13 @@ export const routes = {
   functionTest: (id) => `#!/functions/${id}/test`,
 
   /**
+   * Function data page.
+   * @param {string} id - Function ID
+   * @returns {string} Route URL
+   */
+  functionData: (id) => `#!/functions/${id}/kv`,
+  
+  /**
    * Version diff comparison page.
    * @param {string} id - Function ID
    * @param {number} v1 - First version number
@@ -150,6 +157,13 @@ export const paths = {
    */
   functionTest: (id) => `/functions/${id}/test`,
 
+  /**
+   * Function data page.
+   * @param {string} id - Function ID
+   * @returns {string} Path
+   */
+  functionData: (id) => `/functions/${id}/kv`,
+  
   /**
    * Version diff comparison page.
    * @param {string} id - Function ID

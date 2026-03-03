@@ -24,6 +24,10 @@ const (
 	MaxEnvVarValueLength = 10000
 	// MaxEnvVars is the maximum number of environment variables per function
 	MaxEnvVars = 100
+	// MaxStoreKeyLength is the maximum length for store keys
+	MaxStoreKeyLength = 100
+	// MaxStoreValueLength is the maximum length for store values
+	MaxStoreValueLength = 10000
 )
 
 var AllowedRetentionDays = []int{7, 15, 30, 365}
@@ -281,4 +285,63 @@ func validateCronStatus(status string) error {
 		Field:   "cron_status",
 		Message: fmt.Sprintf("cron_status must be one of: %v", AllowedCronStatuses),
 	}
+}
+
+// validateStoreKey validates a store key
+func validateStoreKey(key string) error {
+	trimmed := strings.TrimSpace(key)
+	if trimmed == "" {
+		return &ValidationError{Field: "key", Message: "key cannot be empty"}
+	}
+	if len(key) > MaxStoreKeyLength {
+		return &ValidationError{
+			Field:   "key",
+			Message: fmt.Sprintf("key cannot be longer than %d characters", MaxStoreKeyLength),
+		}
+	}
+	// Additional validation: keys should only contain alphanumeric and underscores
+	if !isValidEnvVarKey(key) {
+		return &ValidationError{
+			Field:   "key",
+			Message: "key can only contain letters, numbers, and underscores",
+		}
+	}
+	return nil
+}
+
+// validateStoreValue validates a store value
+func validateStoreValue(value string) error {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return &ValidationError{Field: "value", Message: "value cannot be empty"}
+	}
+	if len(value) > MaxStoreValueLength {
+		return &ValidationError{
+			Field:   "value",
+			Message: fmt.Sprintf("value cannot be longer than %d characters", MaxStoreValueLength),
+		}
+	}
+	return nil
+}
+
+// ValidateUpdateKvStoreRequest validates an UpdateKvStoreRequest
+func ValidateUpdateKvStoreRequest(req *UpdateKvStoreRequest) error {
+	if req == nil {
+		return &ValidationError{Field: "request", Message: "request cannot be nil"}
+	}
+
+	if req.KVEntries == nil {
+		return &ValidationError{Field: "kvEntries", Message: "kvEntries cannot be nil"}
+	}
+
+	for _, kv := range req.KVEntries {
+		if err := validateStoreKey(kv.Key); err != nil {
+			return err
+		}
+		if err := validateStoreValue(kv.Value); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

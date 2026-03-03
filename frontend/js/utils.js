@@ -35,6 +35,7 @@ export const getFunctionTabs = (funcId) => [
     href: routes.functionSettings(funcId),
   },
   { id: "test", label: t("tabs.test"), href: routes.functionTest(funcId) },
+  { id: "data", label: t("tabs.data"), href: routes.functionData(funcId) },
 ];
 
 /**
