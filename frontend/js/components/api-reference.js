@@ -348,6 +348,11 @@ export function getLuaAPISections() {
               description: t("luaApi.io.items.kvListKeys"),
             },
             {
+              name: "kv.all()",
+              type: "function",
+              description: t("luaApi.io.items.kvAll"),
+            },
+            {
               name: "kv.getGlobal(key)",
               type: "function",
               description: t("luaApi.io.items.kvGetGlobal"),
@@ -366,7 +371,12 @@ export function getLuaAPISections() {
               name: "kv.listGlobalKeys()",
               type: "function",
               description: t("luaApi.io.items.kvListGlobalKeys"),
-            }
+            },
+            {
+              name: "kv.allGlobal()",
+              type: "function",
+              description: t("luaApi.io.items.kvAllGlobal"),
+            },
           ],
         },
         {

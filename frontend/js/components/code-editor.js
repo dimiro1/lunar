@@ -116,11 +116,16 @@ const API_DOCS = {
     signature: "kv.delete(key: string)",
     snippet: 'kv.delete("${1:key}")',
     description: "Delete a key from the store",
-    },
+  },
   "kv.listKeys": {
     signature: "kv.listKeys(): table",
     snippet: "kv.listKeys()",
     description: "List all keys in the key-value store",
+  },
+  "kv.all": {
+    signature: "kv.all(): table",
+    snippet: "kv.all()",
+    description: "Get all function-scoped key-value pairs from the store",
   },
   "kv.getGlobal": {
     signature: "kv.getGlobal(key: string): string | nil",
@@ -141,6 +146,11 @@ const API_DOCS = {
     signature: "kv.listGlobalKeys(): table",
     snippet: "kv.listGlobalKeys()",
     description: "List all keys in the global key-value store",
+  },
+  "kv.allGlobal": {
+    signature: "kv.allGlobal(): table",
+    snippet: "kv.allGlobal()",
+    description: "Get all global key-value pairs from the store",
   },
   "env.get": {
     signature: "env.get(key: string): string | nil",

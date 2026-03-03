@@ -805,6 +805,63 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /api/functions/{id}/kv:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Unique identifier of the function
+        schema:
+          type: string
+      - 
+    post:
+      tags:
+        - Functions
+      summary: Update key-value store
+      description: Updates the key-value store for a function or global store.
+      operationId: updateKV
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateKVRequest"
+            examples:
+              setKV:
+                summary: Set key-value pairs
+                value:
+                  kv:
+                    counter: 1
+                    visitor_email: "fakeuser@fake.com"
+      responses:
+        "200":
+          description: Key-value pairs updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FunctionVersion"
+        "400":
+          description: Validation error (invalid request body or field constraints violated)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalidKey:
+                  summary: Invalid key
+                  value:
+                    error: "key: key can only contain letters, numbers, and underscores"
+                tooManyVars:
+                  summary: Too many key-value pairs
+                  value:
+                    error: "kv: cannot have more than 100 key-value pairs"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /api/executions/{id}:
     parameters:
       - name: id
@@ -1638,6 +1695,30 @@ components:
           example:
             API_KEY: "new-secret"
             DATABASE_URL: "postgresql://localhost/db"
+          maxProperties: 100
+
+    UpdateKVRequest:
+      type: object
+      required:
+        - global
+        - kv
+      properties:
+        global:
+          type: boolean
+          description: Whether the KV pairs are global or function-scoped
+          example: true
+        kv:
+          type: object
+          additionalProperties:
+            type: string
+            maxLength: 10000
+          description: |
+            Key-value pairs to set in the function's KV store (max 100 pairs).
+            Keys must contain only letters, numbers, and underscores (max 100 chars).
+            Values can be up to 10,000 characters.
+          example:
+            counter: "42"
+            visitor_email: "fakeuser@fake.com"
           maxProperties: 100
 
     FunctionWithActiveVersion:

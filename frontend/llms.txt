@@ -75,10 +75,12 @@ Persistent storage scoped to function ID:
 - kv.set(key: string, value: string): boolean - Set key-value pair, returns success
 - kv.delete(key: string): boolean - Delete key, returns success
 - kv.listKeys(): string[] - Return a list of all keys in the function store
+- kv.all(): table | nil - Return all items in function-scoped store
 - kv.getGlobal(key: string): error - Retrieve value from global store, returns nil if not found
 - kv.setGlobal(key: string, value: string): boolean - Set key-value pair, returns success
 - kv.deleteGlobal(key: string): boolean - Delete key from global store, returns success
 - kv.listGlobalKeys(): string[] - Return a list of all keys in the global store
+- kv.allGlobal(): table | nil - Return all items in global store
 Example:
 ```lua
 local count = kv.get("counter") or 0
