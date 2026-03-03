@@ -255,7 +255,7 @@ func (s *SQLiteStore) ListGlobalKeys() ([]string, error) {
 // All returns all key-value pairs for a given functionID
 func (s *SQLiteStore) All(functionID string) (map[string]string, error) {
 	rows, err := s.db.Query(
-		"SELECT key, value FROM kv_store WHERE function_id = ?", functionID,
+		"SELECT key, value FROM kv_store WHERE function_id = ? ORDER BY key", functionID,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query kv store: %w", err)

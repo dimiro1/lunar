@@ -621,6 +621,44 @@ func TestRun_KV_ListKeys(t *testing.T) {
 	}
 }
 
+func TestRun_KV_All(t *testing.T) {
+	kvStore := kv.NewMemoryStore()
+
+	keysList, err := kvStore.ListKeys("function-1")
+	if err == nil {
+		t.Fatalf("ListKeys should have returned an error for non-existent function store, got nil")
+	}
+	if len(keysList) != 0 {
+		t.Errorf("expected empty store but it was populated")
+	}
+
+	// Add some keys to function-1 store
+	err = kvStore.Set("function-1", "a-key-1", "another-value-1")
+	if err != nil {
+		t.Fatalf("Set failed: %v", err)
+	}
+	err = kvStore.Set("function-1", "a-key-2", "another-value-2")
+	if err != nil {
+		t.Fatalf("Set failed: %v", err)
+	}
+	err = kvStore.Set("function-1", "a-key-3", "another-value-3")
+	if err != nil {
+		t.Fatalf("Set failed: %v", err)
+	}
+	err = kvStore.Set("function-1", "a-key-4", "another-value-4")
+	if err != nil {
+		t.Fatalf("Set failed: %v", err)
+	}
+
+	kvAll, err := kvStore.All("function-1")
+	if err != nil {
+		t.Fatalf("All failed: %v", err)
+	}
+	if len(kvAll) != 4 || kvAll["a-key-1"] != "another-value-1" || kvAll["a-key-2"] != "another-value-2" || kvAll["a-key-3"] != "another-value-3" || kvAll["a-key-4"] != "another-value-4" {
+		t.Errorf("expected pairs 'a-key-1': 'another-value-1', 'a-key-2': 'another-value-2', 'a-key-3': 'another-value-3', 'a-key-4': 'another-value-4', got %v", kvAll)
+	}
+}
+
 func TestRun_JSON_Decode(t *testing.T) {
 	deps := Dependencies{
 		Logger: logger.NewMemoryLogger(),

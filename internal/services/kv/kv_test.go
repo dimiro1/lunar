@@ -281,6 +281,27 @@ func TestSQLiteStore_ListKeys(t *testing.T) {
 		t.Errorf("expected keys ['key1', 'key3', 'key4'], got %v", foundKeys)
 	}
 
+	// Test retrieving all entries and verify keys match
+	allEntries, err := store.All(fake_functionID)
+	if err != nil {
+		t.Fatalf("All failed: %v", err)
+	}
+
+	if len(allEntries) != 3 {
+		t.Errorf("expected 3 entries from All, got %d", len(allEntries))
+	}
+
+	expectedEntries := map[string]string{
+		"key1": "value1",
+		"key3": "value3",
+		"key4": "value4",
+	}
+	for k, v := range expectedEntries {
+		if allEntries[k] != v {
+			t.Errorf("expected entry %s: %s, got %s", k, v, allEntries[k])
+		}
+	}
+
 	// Delete all keys and check the list again
 	err = store.Delete(fake_functionID, "key1")
 	if err != nil {
