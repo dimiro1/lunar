@@ -56,6 +56,7 @@ dev:
 install-tools:
 	@echo "Installing development tools..."
 	@go install github.com/air-verse/air@latest
+	@go install github.com/goreleaser/goreleaser/v2@latest
 
 fmt-frontend:
 	@echo "Formatting frontend..."
