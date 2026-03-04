@@ -240,7 +240,7 @@ export const FunctionData = {
 
       // Content
       m(TabContent, [
-        m(".settings-tab-container", [
+        m(".kv-tab-container", [
           // Function-scoped key-value store
           m(Card, { style: "margin-bottom: 1.5rem" }, [
             m(CardHeader, {
