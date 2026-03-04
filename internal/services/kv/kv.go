@@ -122,10 +122,7 @@ func (m *MemoryStore) ListGlobalKeys() ([]string, error) {
 
 // All returns all key-value pairs for a given functionID
 func (m *MemoryStore) All(functionID string) (map[string]string, error) {
-	ns, exists := m.data[functionID]
-	if !exists {
-		return nil, &Error{Message: fmt.Sprintf("functionID not found: %s", functionID)}
-	}
+	ns, _ := m.data[functionID]
 
 	// Return a copy to prevent modification
 	result := make(map[string]string, len(ns))
