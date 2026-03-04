@@ -122,7 +122,7 @@ func (m *MemoryStore) ListGlobalKeys() ([]string, error) {
 
 // All returns all key-value pairs for a given functionID
 func (m *MemoryStore) All(functionID string) (map[string]string, error) {
-	ns, _ := m.data[functionID]
+	ns := m.data[functionID]
 
 	// Return a copy to prevent modification
 	result := make(map[string]string, len(ns))

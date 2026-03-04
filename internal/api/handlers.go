@@ -378,10 +378,10 @@ func UpdateKvStoreHandler(database store.DB, kvStore kv.Store) http.HandlerFunc 
 		}
 
 		// Delete removed kv entries
-		for key, _ := range currentKvEntries {
+		for key := range currentKvEntries {
 			found := false
 			for _, kv := range req.KVEntries {
-				if kv.Key == key && req.Global == false {
+				if kv.Key == key && req.Global {
 					found = true
 					break
 				}
