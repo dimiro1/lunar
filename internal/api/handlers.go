@@ -365,6 +365,10 @@ func UpdateKvStoreHandler(database store.DB, kvStore kv.Store) http.HandlerFunc 
 			return
 		}
 
+		// This function handles both function-scoped and global kv entries.
+		// If req.Global is true, we use an empty string as the functionID in the kv store
+		// to represent global entries. Otherwise, we use the function ID for function-scoped
+		// entries.
 		useStore := id
 		if req.Global {
 			useStore = ""
@@ -386,6 +390,8 @@ func UpdateKvStoreHandler(database store.DB, kvStore kv.Store) http.HandlerFunc 
 					break
 				}
 			}
+			// If the key from the store is not found in the request, it means it was removed
+			// and we should delete it from the store.
 			if !found {
 				if err := kvStore.Delete(useStore, key); err != nil {
 					writeError(w, http.StatusInternalServerError, "Failed to delete kv entry")
