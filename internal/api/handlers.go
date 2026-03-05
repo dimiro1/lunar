@@ -381,7 +381,7 @@ func UpdateKvStoreHandler(database store.DB, kvStore kv.Store) http.HandlerFunc 
 		for key := range currentKvEntries {
 			found := false
 			for _, kv := range req.KVEntries {
-				if kv.Key == key && req.Global {
+				if kv.Key == key {
 					found = true
 					break
 				}
