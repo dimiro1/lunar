@@ -299,13 +299,6 @@ func validateStoreKey(key string) error {
 			Message: fmt.Sprintf("key cannot be longer than %d characters", MaxStoreKeyLength),
 		}
 	}
-	// Additional validation: keys should only contain alphanumeric and underscores
-	if !isValidEnvVarKey(key) {
-		return &ValidationError{
-			Field:   "key",
-			Message: "key can only contain letters, numbers, and underscores",
-		}
-	}
 	return nil
 }
 
