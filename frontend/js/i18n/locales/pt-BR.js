@@ -72,6 +72,7 @@ export default {
     executions: "Execuções",
     settings: "Configurações",
     test: "Teste",
+    data: "Dados Chave-Valor",
   },
 
   // Function creation
@@ -113,6 +114,18 @@ export default {
     },
   },
 
+  kvStore: {
+    title: "Dados Chave-Valor",
+    functionScoped: "Escopo da Função",
+    global: "Global",
+    addEntry: "Adicionar Entrada",
+    saveChanges: "Salvar Alterações",
+    noEntries: "Nenhuma entrada chave-valor ainda.",
+    keyPlaceholder: "CHAVE",
+    valuePlaceholder: "Valor",
+    variablesCount: "{{count}} entradas",
+  },
+    
   // Settings page
   settings: {
     generalConfig: "Configuração Geral",
@@ -229,6 +242,7 @@ export default {
     failedToUpdate: "Falha ao atualizar status",
     executionFailed: "Execução falhou",
     scheduleUpdated: "Agendamento atualizado com sucesso",
+    kvSaved: "Dados salvos com sucesso",
   },
 
   // Pagination
@@ -512,6 +526,10 @@ export default {
         kvGetGlobal: "Obter valor do armazenamento global",
         kvSetGlobal: "Definir par chave-valor no armazenamento global",
         kvDeleteGlobal: "Excluir chave do armazenamento global",
+        kvListKeys: "Listar todas as chaves do armazenamento",
+        kvAll: "Obter todos os pares chave-valor da função",
+        kvListGlobalKeys: "Listar todas as chaves do armazenamento global",
+        kvAllGlobal: "Obter todos os pares chave-valor globais",
         envGet: "Obter variável de ambiente",
         httpGet: "Requisição GET",
         httpPost: "Requisição POST",
