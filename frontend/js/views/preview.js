@@ -74,6 +74,7 @@ import {
 import { AIRequestViewer } from "../components/ai-request-viewer.js";
 import { EmailRequestViewer } from "../components/email-request-viewer.js";
 import { CodeEditor } from "../components/code-editor.js";
+import { CodeDisplay } from "../components/code-display.js";
 
 /**
  * @typedef {import('../components/env-editor.js').EnvVar} EnvVar
@@ -180,6 +181,7 @@ export const Preview = {
     "diff-viewer",
     "ai-request-viewer",
     "email-request-viewer",
+    "code-display",
   ],
 
   /**
@@ -263,6 +265,8 @@ export const Preview = {
         return Preview.renderAIRequestViewer();
       case "email-request-viewer":
         return Preview.renderEmailRequestViewer();
+      case "code-display":
+        return Preview.renderCodeDisplay();
       default:
         return m("p", "Component not found");
     }
@@ -1262,6 +1266,43 @@ end`;
       m(Card, { style: "max-width: 900px;" }, [
         m(CardContent, { noPadding: true }, [
           m(EmailRequestViewer, { requests: [], noBorder: true }),
+        ]),
+      ]),
+    ]);
+  },
+
+  /**
+   * Renders code display component previews.
+   * @returns {Object} Mithril vnode
+   */
+  renderCodeDisplay: () => {
+    return m(".preview-section", [
+      m("h3", "With Label"),
+      m(Card, { style: "max-width: 400px; margin-bottom: 1rem;" }, [
+        m(CardContent, [
+          m(CodeDisplay, {
+            label: "Verification Code",
+            value: "ABCD-1234",
+          }),
+        ]),
+      ]),
+
+      m("h3", "Without Label"),
+      m(Card, { style: "max-width: 400px; margin-bottom: 1rem;" }, [
+        m(CardContent, [
+          m(CodeDisplay, {
+            value: "XKCD-9876",
+          }),
+        ]),
+      ]),
+
+      m("h3", "Long Code"),
+      m(Card, { style: "max-width: 400px;" }, [
+        m(CardContent, [
+          m(CodeDisplay, {
+            label: "Device Code",
+            value: "A1B2-C3D4-E5F6",
+          }),
         ]),
       ]),
     ]);

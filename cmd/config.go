@@ -1,13 +1,13 @@
 package main
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"strconv"
 	"time"
+
+	"github.com/dimiro1/lunar/internal/token"
 )
 
 type Config struct {
@@ -48,11 +48,7 @@ func loadTimeout(getenv func(string) string) time.Duration {
 }
 
 func generateAPIKey() (string, error) {
-	randomBytes := make([]byte, 32)
-	if _, err := rand.Read(randomBytes); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(randomBytes), nil
+	return token.Generate()
 }
 
 func loadAPIKey(getenv func(string) string, dataDir string) (string, error) {

@@ -3439,6 +3439,49 @@ pre {
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
+/* ============================================
+   CODE DISPLAY
+   ============================================ */
+
+.code-display {
+  text-align: center;
+}
+
+.code-display__label {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.code-display__value {
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  color: var(--color-text);
+  padding: 1.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+/* ============================================
+   CENTERED PAGE (for pages with navbar)
+   ============================================ */
+
+.centered-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 56px);
+  padding: 1rem;
+}
+
+.centered-page__card {
+  width: 100%;
+  max-width: 400px;
+}
+
 /* KV Tab */
 .kv-tab-container {
   display: flex;

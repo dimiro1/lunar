@@ -101,6 +101,26 @@ export const API = {
         method: "POST",
         url: "/api/auth/logout",
       }),
+
+    getDeviceApproveStatus: (code) =>
+      apiRequest({
+        method: "GET",
+        url: `/api/auth/device-approve?code=${code}`,
+      }),
+
+    approveDevice: (deviceCode, action) =>
+      apiRequest({
+        method: "POST",
+        url: "/api/auth/device-approve",
+        body: { device_code: deviceCode, action },
+      }),
+  },
+
+  tokens: {
+    list: () => apiRequest({ method: "GET", url: "/api/tokens" }),
+
+    revoke: (id) =>
+      apiRequest({ method: "POST", url: `/api/tokens/${id}/revoke` }),
   },
 
   /**

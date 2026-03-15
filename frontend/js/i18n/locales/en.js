@@ -32,6 +32,8 @@ export default {
     dashboard: "Dashboard",
     logout: "Logout",
     search: "Search",
+    functions: "Functions",
+    clients: "Clients",
   },
 
   // Login page
@@ -222,6 +224,7 @@ export default {
       viewExecutions: "View execution logs",
       configureFunction: "Configure function",
       testFunction: "Test function",
+      viewClients: "View connected clients",
       switchLanguage: "Switch language",
     },
     currentLanguage: "(current)",
@@ -577,5 +580,36 @@ export default {
         randomId: "Unique sortable ID",
       },
     },
+  },
+
+  // Connected clients
+  clients: {
+    title: "Connected Clients",
+    allClients: "All Clients",
+    totalCount: "{{count}} clients total",
+    noClients: "No connected clients.",
+    name: "Name",
+    created: "Created",
+    lastUsed: "Last Used",
+    status: "Status",
+    actions: "Actions",
+    revoke: "Revoke",
+    revokeConfirm: "Are you sure you want to revoke this token?",
+    active: "Active",
+    revoked: "Revoked",
+    neverUsed: "Never",
+  },
+
+  // Device authorization
+  deviceApprove: {
+    title: "Device Authorization",
+    description: "A CLI client is requesting access to your Lunar instance.",
+    userCode: "Verify this code matches your CLI:",
+    allow: "Allow",
+    deny: "Deny",
+    approved: "CLI client has been authorized. You can close this page.",
+    denied: "Access denied. The CLI will not be authorized.",
+    expired: "This authorization request has expired or is invalid.",
+    notFound: "Authorization request not found.",
   },
 };

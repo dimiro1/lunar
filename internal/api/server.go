@@ -32,6 +32,8 @@ type Server struct {
 	apiKey          string
 	httpServer      *http.Server
 	kvStore         kv.Store
+	deviceAuth      *DeviceAuthStore
+	baseURL         string
 }
 
 // ServerConfig holds configuration for creating a Server
@@ -102,6 +104,8 @@ func NewServer(config ServerConfig) *Server {
 		frontendHandler: config.FrontendHandler,
 		apiKey:          config.APIKey,
 		kvStore:         config.KVStore,
+		deviceAuth:      NewDeviceAuthStore(),
+		baseURL:         config.BaseURL,
 	}
 
 	s.setupRoutes()
@@ -114,6 +118,10 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("POST /api/auth/login", HandleLogin(s.apiKey))
 	s.mux.HandleFunc("POST /api/auth/logout", HandleLogout())
 
+	// Device auth flow (no auth required for request and poll)
+	s.mux.HandleFunc("POST /api/auth/device-request", HandleDeviceRequest(s.deviceAuth, s.baseURL))
+	s.mux.HandleFunc("GET /api/auth/device-token", HandleDeviceToken(s.deviceAuth))
+
 	// API documentation (no authentication required)
 	s.mux.HandleFunc("GET /docs", docsPageHandler)
 	s.mux.HandleFunc("HEAD /docs", docsPageHandler)
@@ -121,7 +129,7 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("HEAD /docs/openapi.yaml", openAPISpecHandler)
 
 	// Protected API routes - wrap with auth middleware
-	authMiddleware := AuthMiddleware(s.apiKey)
+	authMiddleware := AuthMiddleware(s.apiKey, s.db)
 
 	// Function Management - only need DB
 	s.mux.Handle("POST /api/functions", authMiddleware(http.HandlerFunc(CreateFunctionHandler(s.db))))
@@ -146,6 +154,14 @@ func (s *Server) setupRoutes() {
 	s.mux.Handle("GET /api/executions/{id}/logs", authMiddleware(http.HandlerFunc(GetExecutionLogsHandler(s.db, s.logger))))
 	s.mux.Handle("GET /api/executions/{id}/ai-requests", authMiddleware(http.HandlerFunc(GetExecutionAIRequestsHandler(s.db, s.aiTracker))))
 	s.mux.Handle("GET /api/executions/{id}/email-requests", authMiddleware(http.HandlerFunc(GetExecutionEmailRequestsHandler(s.db, s.emailTracker))))
+
+	// Device approval (auth required - user must be logged in)
+	s.mux.Handle("GET /api/auth/device-approve", authMiddleware(http.HandlerFunc(HandleDeviceApproveStatus(s.deviceAuth))))
+	s.mux.Handle("POST /api/auth/device-approve", authMiddleware(http.HandlerFunc(HandleDeviceApprove(s.deviceAuth, s.db))))
+
+	// API token management (auth required)
+	s.mux.Handle("GET /api/tokens", authMiddleware(http.HandlerFunc(HandleListAPITokens(s.db))))
+	s.mux.Handle("POST /api/tokens/{id}/revoke", authMiddleware(http.HandlerFunc(HandleRevokeAPIToken(s.db))))
 
 	// Runtime Execution - needs all dependencies (NO AUTH - public endpoint)
 	// Register both exact match and wildcard patterns for routing support

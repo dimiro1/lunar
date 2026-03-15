@@ -83,6 +83,19 @@ export const routes = {
   execution: (id) => `#!/executions/${id}`,
 
   /**
+   * Device authorization approval page.
+   * @param {string} code - Device code
+   * @returns {string} Route URL
+   */
+  deviceApprove: (code) => `#!/device-approve/${code}`,
+
+  /**
+   * Connected clients page.
+   * @returns {string} Route URL
+   */
+  clients: () => "#!/clients",
+
+  /**
    * Login page.
    * @returns {string} Route URL
    */
@@ -179,6 +192,19 @@ export const paths = {
    * @returns {string} Path
    */
   execution: (id) => `/executions/${id}`,
+
+  /**
+   * Device authorization approval page.
+   * @param {string} code - Device code
+   * @returns {string} Path
+   */
+  deviceApprove: (code) => `/device-approve/${code}`,
+
+  /**
+   * Connected clients page.
+   * @returns {string} Path
+   */
+  clients: () => "/clients",
 
   /**
    * Login page.

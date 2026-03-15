@@ -171,6 +171,13 @@ export const CommandPalette = {
         path: paths.functionCreate(),
         icon: "plus",
       },
+      {
+        type: "nav",
+        label: t("clients.title"),
+        description: t("commandPalette.actions.viewClients"),
+        path: paths.clients(),
+        icon: "network",
+      },
     ];
 
     // Function items with actions for each function

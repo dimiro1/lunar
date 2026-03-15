@@ -292,6 +292,16 @@ export const Header = {
           onclick: onSearch,
         }),
         m(NavbarDivider),
+        m(NavbarAction, {
+          label: t("nav.functions"),
+          href: "#!/functions",
+        }),
+        m(NavbarDivider),
+        m(NavbarAction, {
+          label: t("nav.clients"),
+          href: "#!/clients",
+        }),
+        m(NavbarDivider),
         m(LanguageSelector),
         m(NavbarDivider),
         m(NavbarAction, {

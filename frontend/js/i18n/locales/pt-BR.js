@@ -32,6 +32,8 @@ export default {
     dashboard: "Painel",
     logout: "Sair",
     search: "Buscar",
+    functions: "Funções",
+    clients: "Clientes",
   },
 
   // Login page
@@ -224,6 +226,7 @@ export default {
       viewExecutions: "Ver logs de execução",
       configureFunction: "Configurar função",
       testFunction: "Testar função",
+      viewClients: "Ver clientes conectados",
       switchLanguage: "Mudar idioma",
     },
     currentLanguage: "(atual)",
@@ -580,5 +583,38 @@ export default {
         randomId: "ID único ordenável",
       },
     },
+  },
+
+  // Clientes conectados
+  clients: {
+    title: "Clientes Conectados",
+    allClients: "Todos os Clientes",
+    totalCount: "{{count}} clientes no total",
+    noClients: "Nenhum cliente conectado.",
+    name: "Nome",
+    created: "Criado em",
+    lastUsed: "Último uso",
+    status: "Status",
+    actions: "Ações",
+    revoke: "Revogar",
+    revokeConfirm: "Tem certeza que deseja revogar este token?",
+    active: "Ativo",
+    revoked: "Revogado",
+    neverUsed: "Nunca",
+  },
+
+  // Autorização de dispositivo
+  deviceApprove: {
+    title: "Autorização de Dispositivo",
+    description:
+      "Um cliente CLI está solicitando acesso à sua instância Lunar.",
+    userCode: "Verifique se este código corresponde ao do seu CLI:",
+    allow: "Permitir",
+    deny: "Negar",
+    approved:
+      "Cliente CLI autorizado com sucesso. Você pode fechar esta página.",
+    denied: "Acesso negado. O CLI não será autorizado.",
+    expired: "Esta solicitação de autorização expirou ou é inválida.",
+    notFound: "Solicitação de autorização não encontrada.",
   },
 };

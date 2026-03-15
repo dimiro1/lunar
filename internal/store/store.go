@@ -14,6 +14,7 @@ var (
 	ErrNoActiveVersion           = errors.New("no active version")
 	ErrExecutionNotFound         = errors.New("execution not found")
 	ErrCannotDeleteActiveVersion = errors.New("cannot delete active version")
+	ErrAPITokenNotFound          = errors.New("api token not found")
 )
 
 // DB defines the database interface for the Lunar API.
@@ -89,4 +90,21 @@ type DB interface {
 
 	// Ping verifies the database connection is alive.
 	Ping(ctx context.Context) error
+
+	// CreateAPIToken stores a new API token.
+	CreateAPIToken(ctx context.Context, token APIToken) (APIToken, error)
+
+	// GetAPITokenByHash retrieves a non-revoked API token by its hash.
+	// Returns ErrAPITokenNotFound if no matching token exists.
+	GetAPITokenByHash(ctx context.Context, tokenHash string) (APIToken, error)
+
+	// ListAPITokens returns all API tokens ordered by creation date.
+	ListAPITokens(ctx context.Context) ([]APIToken, error)
+
+	// RevokeAPIToken marks an API token as revoked.
+	// Returns ErrAPITokenNotFound if the token does not exist.
+	RevokeAPIToken(ctx context.Context, id string) error
+
+	// UpdateAPITokenLastUsed updates the last_used timestamp for a token.
+	UpdateAPITokenLastUsed(ctx context.Context, id string, timestamp int64) error
 }

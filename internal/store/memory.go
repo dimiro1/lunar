@@ -15,6 +15,7 @@ type MemoryDB struct {
 	functions  map[string]Function
 	versions   map[string][]FunctionVersion // functionID -> versions
 	executions map[string]Execution         // id -> execution
+	apiTokens  map[string]APIToken          // id -> token
 }
 
 // NewMemoryDB creates a new in-memory database
@@ -23,6 +24,7 @@ func NewMemoryDB() *MemoryDB {
 		functions:  make(map[string]Function),
 		versions:   make(map[string][]FunctionVersion),
 		executions: make(map[string]Execution),
+		apiTokens:  make(map[string]APIToken),
 	}
 }
 
@@ -422,6 +424,70 @@ func (db *MemoryDB) ListFunctionsWithActiveCron(_ context.Context) ([]Function, 
 	}
 
 	return functions, nil
+}
+
+// API Token operations
+
+func (db *MemoryDB) CreateAPIToken(_ context.Context, token APIToken) (APIToken, error) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	token.CreatedAt = time.Now().Unix()
+	db.apiTokens[token.ID] = token
+	return token, nil
+}
+
+func (db *MemoryDB) GetAPITokenByHash(_ context.Context, tokenHash string) (APIToken, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+
+	for _, token := range db.apiTokens {
+		if token.TokenHash == tokenHash && !token.Revoked {
+			return token, nil
+		}
+	}
+
+	return APIToken{}, ErrAPITokenNotFound
+}
+
+func (db *MemoryDB) ListAPITokens(_ context.Context) ([]APIToken, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+
+	tokens := make([]APIToken, 0, len(db.apiTokens))
+	for _, token := range db.apiTokens {
+		tokens = append(tokens, token)
+	}
+
+	return tokens, nil
+}
+
+func (db *MemoryDB) RevokeAPIToken(_ context.Context, id string) error {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	token, ok := db.apiTokens[id]
+	if !ok {
+		return ErrAPITokenNotFound
+	}
+
+	token.Revoked = true
+	db.apiTokens[id] = token
+	return nil
+}
+
+func (db *MemoryDB) UpdateAPITokenLastUsed(_ context.Context, id string, timestamp int64) error {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	token, ok := db.apiTokens[id]
+	if !ok {
+		return ErrAPITokenNotFound
+	}
+
+	token.LastUsed = &timestamp
+	db.apiTokens[id] = token
+	return nil
 }
 
 // Health check

@@ -161,6 +161,16 @@ type PaginationInfo struct {
 	Offset int   `json:"offset"` // Items skipped
 }
 
+// APIToken represents a stored API token for CLI authentication
+type APIToken struct {
+	ID        string `json:"id"`
+	TokenHash string `json:"-"`
+	Name      string `json:"name"`
+	CreatedAt int64  `json:"created_at"`
+	LastUsed  *int64 `json:"last_used,omitempty"`
+	Revoked   bool   `json:"revoked"`
+}
+
 // UpdateFunctionRequest is the request body for updating a function
 type UpdateFunctionRequest struct {
 	Name          *string `json:"name,omitempty"`

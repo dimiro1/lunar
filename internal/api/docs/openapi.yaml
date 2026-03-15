@@ -26,6 +26,10 @@ tags:
     description: Function execution history and logs
   - name: Runtime
     description: Function execution endpoints
+  - name: Device Authorization
+    description: OAuth 2.0-style device authorization flow for CLI authentication
+  - name: API Tokens
+    description: API token management for connected clients
 
 security:
   - CookieAuth: []
@@ -1063,6 +1067,314 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /api/auth/device-request:
+    post:
+      tags:
+        - Device Authorization
+      summary: Initiate device authorization flow
+      description: |
+        Starts the device authorization flow. Returns a device code and user code.
+        The CLI opens a browser to the approval URL where the user can authorize the device.
+        This endpoint does not require authentication.
+      operationId: deviceRequest
+      security: []
+      responses:
+        "200":
+          description: Device authorization request created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceRequestResponse"
+              examples:
+                success:
+                  summary: Successful device request
+                  value:
+                    device_code: "crs1abc2def3ghi4"
+                    user_code: "ABCD-EFGH"
+                    approval_url: "http://localhost:3000/#!/device-approve/crs1abc2def3ghi4"
+                    expires_in: 300
+                    interval: 5
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/auth/device-approve:
+    get:
+      tags:
+        - Device Authorization
+      summary: Get device authorization request status
+      description: |
+        Returns the status of a pending device authorization request.
+        Used by the SPA to display the approval page with the user code.
+      operationId: deviceApproveStatus
+      parameters:
+        - name: code
+          in: query
+          required: true
+          description: The device code from the authorization request
+          schema:
+            type: string
+            example: "crs1abc2def3ghi4"
+      responses:
+        "200":
+          description: Device authorization status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceApproveStatusResponse"
+              examples:
+                pending:
+                  summary: Pending approval
+                  value:
+                    device_code: "crs1abc2def3ghi4"
+                    user_code: "ABCD-EFGH"
+                    status: "pending"
+                    expires_at: 1672531500
+        "404":
+          description: Device authorization request not found or expired
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                notFound:
+                  summary: Request not found
+                  value:
+                    error: "device auth request not found"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      tags:
+        - Device Authorization
+      summary: Approve or deny a device authorization request
+      description: |
+        Allows the authenticated user to approve or deny a pending device authorization request.
+        On approval, generates an API token and stores its hash in the database.
+        The raw token is returned to the polling CLI via the device-token endpoint.
+      operationId: deviceApprove
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeviceApproveRequest"
+            examples:
+              allow:
+                summary: Approve device
+                value:
+                  device_code: "crs1abc2def3ghi4"
+                  action: "allow"
+              deny:
+                summary: Deny device
+                value:
+                  device_code: "crs1abc2def3ghi4"
+                  action: "deny"
+      responses:
+        "200":
+          description: Device authorization action processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - approved
+                      - denied
+                    example: "approved"
+        "400":
+          description: Invalid request (bad action or request already processed)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalidAction:
+                  summary: Invalid action
+                  value:
+                    error: "invalid action, must be 'allow' or 'deny'"
+                alreadyProcessed:
+                  summary: Already processed
+                  value:
+                    error: "device auth request already processed"
+        "404":
+          description: Device authorization request not found or expired
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/auth/device-token:
+    get:
+      tags:
+        - Device Authorization
+      summary: Poll for device authorization token
+      description: |
+        Polled by the CLI to check if the user has approved the device authorization request.
+        Returns the token when approved, or the current status if still pending or denied.
+        This endpoint does not require authentication.
+      operationId: deviceToken
+      security: []
+      parameters:
+        - name: code
+          in: query
+          required: true
+          description: The device code from the authorization request
+          schema:
+            type: string
+            example: "crs1abc2def3ghi4"
+      responses:
+        "200":
+          description: Device token status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceTokenResponse"
+              examples:
+                pending:
+                  summary: Still waiting for user approval
+                  value:
+                    status: "pending"
+                approved:
+                  summary: Approved - token returned
+                  value:
+                    status: "approved"
+                    token: "a1b2c3d4e5f6..."
+                denied:
+                  summary: User denied the request
+                  value:
+                    status: "denied"
+        "400":
+          description: Missing device code parameter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                missingCode:
+                  summary: Missing code
+                  value:
+                    error: "missing code parameter"
+        "404":
+          description: Device authorization request not found or expired
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                notFound:
+                  summary: Not found
+                  value:
+                    error: "device auth request not found"
+
+  /api/tokens:
+    get:
+      tags:
+        - API Tokens
+      summary: List all API tokens
+      description: Returns a list of all API tokens (connected clients) with their metadata. Token hashes are never returned.
+      operationId: listTokens
+      responses:
+        "200":
+          description: List of API tokens
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAPITokensResponse"
+              examples:
+                success:
+                  summary: Tokens list
+                  value:
+                    tokens:
+                      - id: "crs1abc2def3ghi4"
+                        name: "CLI Device crs1abc2"
+                        created_at: 1672531200
+                        last_used: 1672617600
+                        revoked: false
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/tokens/{id}/revoke:
+    post:
+      tags:
+        - API Tokens
+      summary: Revoke an API token
+      description: Revokes an API token, preventing it from being used for future authentication. This action cannot be undone.
+      operationId: revokeToken
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The unique identifier of the API token to revoke
+          schema:
+            type: string
+            example: "crs1abc2def3ghi4"
+      responses:
+        "200":
+          description: Token revoked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "revoked"
+        "404":
+          description: Token not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                notFound:
+                  summary: Token not found
+                  value:
+                    error: "token not found"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /fn/{function_id}:
     parameters:
       - name: function_id
@@ -2037,3 +2349,142 @@ components:
           type: integer
           description: Number of items skipped
           example: 0
+
+    DeviceRequestResponse:
+      type: object
+      required:
+        - device_code
+        - user_code
+        - approval_url
+        - expires_in
+        - interval
+      properties:
+        device_code:
+          type: string
+          description: Unique device code used to identify this authorization request
+          example: "crs1abc2def3ghi4"
+        user_code:
+          type: string
+          description: Short alphanumeric code displayed to the user for verification
+          example: "ABCD-EFGH"
+        approval_url:
+          type: string
+          description: URL where the user should approve the device authorization
+          example: "http://localhost:3000/#!/device-approve/crs1abc2def3ghi4"
+        expires_in:
+          type: integer
+          description: Number of seconds until this authorization request expires
+          example: 300
+        interval:
+          type: integer
+          description: Recommended polling interval in seconds for the device-token endpoint
+          example: 5
+
+    DeviceApproveRequest:
+      type: object
+      required:
+        - device_code
+        - action
+      properties:
+        device_code:
+          type: string
+          description: The device code from the authorization request
+          example: "crs1abc2def3ghi4"
+        action:
+          type: string
+          description: The action to take on the authorization request
+          enum:
+            - allow
+            - deny
+          example: "allow"
+
+    DeviceApproveStatusResponse:
+      type: object
+      required:
+        - device_code
+        - user_code
+        - status
+        - expires_at
+      properties:
+        device_code:
+          type: string
+          description: The device code for this authorization request
+          example: "crs1abc2def3ghi4"
+        user_code:
+          type: string
+          description: The user verification code
+          example: "ABCD-EFGH"
+        status:
+          type: string
+          description: Current status of the authorization request
+          enum:
+            - pending
+            - approved
+            - denied
+          example: "pending"
+        expires_at:
+          type: integer
+          format: int64
+          description: Unix timestamp when this authorization request expires
+          example: 1672531500
+
+    DeviceTokenResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          description: Current status of the authorization request
+          enum:
+            - pending
+            - approved
+            - denied
+          example: "pending"
+        token:
+          type: string
+          description: The API token (only present when status is "approved"). This is the only time the raw token is returned.
+          example: "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
+
+    APIToken:
+      type: object
+      required:
+        - id
+        - name
+        - created_at
+        - revoked
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the API token
+          example: "crs1abc2def3ghi4"
+        name:
+          type: string
+          description: Human-readable name for the token
+          example: "CLI Device crs1abc2"
+        created_at:
+          type: integer
+          format: int64
+          description: Unix timestamp when the token was created
+          example: 1672531200
+        last_used:
+          type: integer
+          format: int64
+          nullable: true
+          description: Unix timestamp when the token was last used (null if never used)
+          example: 1672617600
+        revoked:
+          type: boolean
+          description: Whether the token has been revoked
+          example: false
+
+    ListAPITokensResponse:
+      type: object
+      required:
+        - tokens
+      properties:
+        tokens:
+          type: array
+          items:
+            $ref: "#/components/schemas/APIToken"
+          description: List of API tokens

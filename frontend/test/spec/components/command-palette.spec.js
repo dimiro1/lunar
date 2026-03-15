@@ -106,6 +106,17 @@ describe("CommandPalette", () => {
       expect(createItem).toBeTruthy();
     });
 
+    it("includes clients nav item", () => {
+      CommandPalette.query = "";
+      CommandPalette.updateResults();
+
+      const clientsItem = CommandPalette.results.find(
+        (r) => r.type === "nav" && r.path === "/clients",
+      );
+      expect(clientsItem).toBeTruthy();
+      expect(clientsItem.icon).toBe("network");
+    });
+
     it("resets selectedIndex when out of bounds", () => {
       CommandPalette.query = "";
       CommandPalette.updateResults();

@@ -22,6 +22,8 @@ import { FunctionData } from "./views/function-data.js";
 import { ExecutionDetail } from "./views/execution-detail.js";
 import { VersionDiff } from "./views/version-diff.js";
 import { Preview } from "./views/preview.js";
+import { DeviceApprove } from "./views/device-approve.js";
+import { ConnectedClients } from "./views/connected-clients.js";
 import { API } from "./api.js";
 
 /**
@@ -155,5 +157,17 @@ m.route(document.getElementById("app"), "/functions", {
         { breadcrumb: "Key-Value Store", breadcrumbKey: "kvStore.title" },
         m(FunctionData, { ...vnode.attrs, key: vnode.attrs.id }),
       ),
+  },
+  "/device-approve/:code": {
+    render: (vnode) =>
+      m(
+        Layout,
+        { breadcrumbKey: "deviceApprove.title" },
+        m(DeviceApprove, { ...vnode.attrs, key: vnode.attrs.code }),
+      ),
+  },
+  "/clients": {
+    render: () =>
+      m(Layout, { breadcrumbKey: "clients.title" }, m(ConnectedClients)),
   },
 });

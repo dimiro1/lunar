@@ -711,6 +711,101 @@ func (db *SQLiteDB) DeleteOldExecutions(ctx context.Context, beforeTimestamp int
 	return rowsAffected, nil
 }
 
+// API Token operations
+
+func (db *SQLiteDB) CreateAPIToken(ctx context.Context, token APIToken) (APIToken, error) {
+	token.CreatedAt = time.Now().Unix()
+
+	query := `INSERT INTO api_tokens (id, token_hash, name, created_at, revoked)
+	          VALUES (?, ?, ?, ?, 0)`
+
+	_, err := db.db.ExecContext(ctx, query, token.ID, token.TokenHash, token.Name, token.CreatedAt)
+	if err != nil {
+		return APIToken{}, fmt.Errorf("failed to insert api token: %w", err)
+	}
+
+	return token, nil
+}
+
+func (db *SQLiteDB) GetAPITokenByHash(ctx context.Context, tokenHash string) (APIToken, error) {
+	query := `SELECT id, token_hash, name, created_at, last_used, revoked
+	          FROM api_tokens WHERE token_hash = ? AND revoked = 0`
+
+	var token APIToken
+	var lastUsed sql.NullInt64
+
+	err := db.db.QueryRowContext(ctx, query, tokenHash).Scan(
+		&token.ID, &token.TokenHash, &token.Name, &token.CreatedAt, &lastUsed, &token.Revoked,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return APIToken{}, ErrAPITokenNotFound
+	}
+	if err != nil {
+		return APIToken{}, fmt.Errorf("failed to query api token: %w", err)
+	}
+
+	if lastUsed.Valid {
+		token.LastUsed = &lastUsed.Int64
+	}
+
+	return token, nil
+}
+
+func (db *SQLiteDB) ListAPITokens(ctx context.Context) ([]APIToken, error) {
+	query := `SELECT id, token_hash, name, created_at, last_used, revoked
+	          FROM api_tokens ORDER BY created_at DESC`
+
+	rows, err := db.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query api tokens: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var tokens []APIToken
+	for rows.Next() {
+		var token APIToken
+		var lastUsed sql.NullInt64
+
+		if err := rows.Scan(&token.ID, &token.TokenHash, &token.Name, &token.CreatedAt, &lastUsed, &token.Revoked); err != nil {
+			return nil, fmt.Errorf("failed to scan api token: %w", err)
+		}
+
+		if lastUsed.Valid {
+			token.LastUsed = &lastUsed.Int64
+		}
+
+		tokens = append(tokens, token)
+	}
+
+	return tokens, rows.Err()
+}
+
+func (db *SQLiteDB) RevokeAPIToken(ctx context.Context, id string) error {
+	result, err := db.db.ExecContext(ctx, "UPDATE api_tokens SET revoked = 1 WHERE id = ?", id)
+	if err != nil {
+		return fmt.Errorf("failed to revoke api token: %w", err)
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rows == 0 {
+		return ErrAPITokenNotFound
+	}
+
+	return nil
+}
+
+func (db *SQLiteDB) UpdateAPITokenLastUsed(ctx context.Context, id string, timestamp int64) error {
+	_, err := db.db.ExecContext(ctx, "UPDATE api_tokens SET last_used = ? WHERE id = ?", timestamp, id)
+	if err != nil {
+		return fmt.Errorf("failed to update api token last_used: %w", err)
+	}
+	return nil
+}
+
 // Health check
 
 func (db *SQLiteDB) Ping(ctx context.Context) error {
