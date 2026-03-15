@@ -136,7 +136,9 @@ func TestHandleDeviceToken_Pending(t *testing.T) {
 	server.Handler().ServeHTTP(wCreate, reqCreate)
 
 	var createResp DeviceRequestResponse
-	json.NewDecoder(wCreate.Body).Decode(&createResp)
+	if err := json.NewDecoder(wCreate.Body).Decode(&createResp); err != nil {
+		t.Fatalf("failed to decode create response: %v", err)
+	}
 
 	// Poll for token - should be pending
 	req := httptest.NewRequest(http.MethodGet, "/api/auth/device-token?code="+createResp.DeviceCode, nil)
@@ -148,7 +150,9 @@ func TestHandleDeviceToken_Pending(t *testing.T) {
 	}
 
 	var tokenResp DeviceTokenResponse
-	json.NewDecoder(w.Body).Decode(&tokenResp)
+	if err := json.NewDecoder(w.Body).Decode(&tokenResp); err != nil {
+		t.Fatalf("failed to decode token response: %v", err)
+	}
 
 	if tokenResp.Status != "pending" {
 		t.Errorf("expected status pending, got %s", tokenResp.Status)
@@ -192,7 +196,9 @@ func TestHandleDeviceApproveFlow(t *testing.T) {
 	server.Handler().ServeHTTP(wCreate, reqCreate)
 
 	var createResp DeviceRequestResponse
-	json.NewDecoder(wCreate.Body).Decode(&createResp)
+	if err := json.NewDecoder(wCreate.Body).Decode(&createResp); err != nil {
+		t.Fatalf("failed to decode create response: %v", err)
+	}
 
 	// Step 2: Get approve status (requires auth)
 	reqStatus := makeAuthRequest(http.MethodGet, "/api/auth/device-approve?code="+createResp.DeviceCode, nil)
@@ -204,7 +210,9 @@ func TestHandleDeviceApproveFlow(t *testing.T) {
 	}
 
 	var statusResp DeviceApproveStatusResponse
-	json.NewDecoder(wStatus.Body).Decode(&statusResp)
+	if err := json.NewDecoder(wStatus.Body).Decode(&statusResp); err != nil {
+		t.Fatalf("failed to decode status response: %v", err)
+	}
 
 	if statusResp.Status != "pending" {
 		t.Errorf("expected status pending, got %s", statusResp.Status)
@@ -239,7 +247,9 @@ func TestHandleDeviceApproveFlow(t *testing.T) {
 	}
 
 	var tokenResp DeviceTokenResponse
-	json.NewDecoder(wToken.Body).Decode(&tokenResp)
+	if err := json.NewDecoder(wToken.Body).Decode(&tokenResp); err != nil {
+		t.Fatalf("failed to decode token response: %v", err)
+	}
 
 	if tokenResp.Status != "approved" {
 		t.Errorf("expected status approved, got %s", tokenResp.Status)
@@ -269,7 +279,9 @@ func TestHandleDeviceDenyFlow(t *testing.T) {
 	server.Handler().ServeHTTP(wCreate, reqCreate)
 
 	var createResp DeviceRequestResponse
-	json.NewDecoder(wCreate.Body).Decode(&createResp)
+	if err := json.NewDecoder(wCreate.Body).Decode(&createResp); err != nil {
+		t.Fatalf("failed to decode create response: %v", err)
+	}
 
 	// Deny the request
 	denyBody, _ := json.Marshal(DeviceApproveRequest{
@@ -290,7 +302,9 @@ func TestHandleDeviceDenyFlow(t *testing.T) {
 	server.Handler().ServeHTTP(wToken, reqToken)
 
 	var tokenResp DeviceTokenResponse
-	json.NewDecoder(wToken.Body).Decode(&tokenResp)
+	if err := json.NewDecoder(wToken.Body).Decode(&tokenResp); err != nil {
+		t.Fatalf("failed to decode token response: %v", err)
+	}
 
 	if tokenResp.Status != "denied" {
 		t.Errorf("expected status denied, got %s", tokenResp.Status)
@@ -334,7 +348,9 @@ func TestHandleDeviceApprove_InvalidAction(t *testing.T) {
 	server.Handler().ServeHTTP(wCreate, reqCreate)
 
 	var createResp DeviceRequestResponse
-	json.NewDecoder(wCreate.Body).Decode(&createResp)
+	if err := json.NewDecoder(wCreate.Body).Decode(&createResp); err != nil {
+		t.Fatalf("failed to decode create response: %v", err)
+	}
 
 	// Try invalid action
 	body, _ := json.Marshal(DeviceApproveRequest{
@@ -364,7 +380,9 @@ func TestHandleListAPITokens(t *testing.T) {
 	}
 
 	var resp map[string][]store.APIToken
-	json.NewDecoder(w.Body).Decode(&resp)
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
 
 	if len(resp["tokens"]) != 0 {
 		t.Errorf("expected 0 tokens, got %d", len(resp["tokens"]))
@@ -381,7 +399,9 @@ func TestHandleRevokeAPIToken(t *testing.T) {
 	server.Handler().ServeHTTP(wCreate, reqCreate)
 
 	var createResp DeviceRequestResponse
-	json.NewDecoder(wCreate.Body).Decode(&createResp)
+	if err := json.NewDecoder(wCreate.Body).Decode(&createResp); err != nil {
+		t.Fatalf("failed to decode create response: %v", err)
+	}
 
 	// Approve
 	approveBody, _ := json.Marshal(DeviceApproveRequest{
@@ -398,7 +418,9 @@ func TestHandleRevokeAPIToken(t *testing.T) {
 	server.Handler().ServeHTTP(wToken, reqToken)
 
 	var tokenResp DeviceTokenResponse
-	json.NewDecoder(wToken.Body).Decode(&tokenResp)
+	if err := json.NewDecoder(wToken.Body).Decode(&tokenResp); err != nil {
+		t.Fatalf("failed to decode token response: %v", err)
+	}
 
 	// List tokens to get the ID
 	reqList := makeAuthRequest(http.MethodGet, "/api/tokens", nil)
@@ -406,7 +428,9 @@ func TestHandleRevokeAPIToken(t *testing.T) {
 	server.Handler().ServeHTTP(wList, reqList)
 
 	var listResp map[string][]store.APIToken
-	json.NewDecoder(wList.Body).Decode(&listResp)
+	if err := json.NewDecoder(wList.Body).Decode(&listResp); err != nil {
+		t.Fatalf("failed to decode list response: %v", err)
+	}
 
 	if len(listResp["tokens"]) != 1 {
 		t.Fatalf("expected 1 token, got %d", len(listResp["tokens"]))
