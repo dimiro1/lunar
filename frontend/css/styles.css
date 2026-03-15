@@ -3465,23 +3465,6 @@ pre {
   background: var(--color-surface);
 }
 
-/* ============================================
-   CENTERED PAGE (for pages with navbar)
-   ============================================ */
-
-.centered-page {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: calc(100vh - 56px);
-  padding: 1rem;
-}
-
-.centered-page__card {
-  width: 100%;
-  max-width: 400px;
-}
-
 /* KV Tab */
 .kv-tab-container {
   display: flex;

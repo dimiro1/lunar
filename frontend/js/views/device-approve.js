@@ -10,7 +10,11 @@ import { Card, CardContent, CardHeader } from "../components/card.js";
 import { CodeDisplay } from "../components/code-display.js";
 
 function renderContainer(...children) {
-  return m(".centered-page", m(".centered-page__card", children));
+  return m(
+    ".fade-in",
+    { style: "max-width: 480px; margin: 0 auto;" },
+    children,
+  );
 }
 
 export const DeviceApprove = {
@@ -53,17 +57,19 @@ export const DeviceApprove = {
   view() {
     if (this.loading) {
       return renderContainer(
-        m(Card, m(CardContent, m("p", t("common.loading")))),
+        m(Card, [
+          m(CardHeader, { title: t("deviceApprove.title") }),
+          m(CardContent, m("p", t("common.loading"))),
+        ]),
       );
     }
 
     if (this.error) {
       return renderContainer(
-        m(
-          Card,
+        m(Card, [
           m(CardHeader, { title: t("deviceApprove.title") }),
           m(CardContent, m("p.text--danger", this.error)),
-        ),
+        ]),
       );
     }
 
@@ -73,27 +79,24 @@ export const DeviceApprove = {
         : t("deviceApprove.denied");
 
       return renderContainer(
-        m(
-          Card,
+        m(Card, [
           m(CardHeader, { title: t("deviceApprove.title") }),
           m(CardContent, m("p", message)),
-        ),
+        ]),
       );
     }
 
     if (this.auth.status !== "pending") {
       return renderContainer(
-        m(
-          Card,
+        m(Card, [
           m(CardHeader, { title: t("deviceApprove.title") }),
           m(CardContent, m("p", t("deviceApprove.expired"))),
-        ),
+        ]),
       );
     }
 
     return renderContainer(
-      m(
-        Card,
+      m(Card, [
         m(CardHeader, { title: t("deviceApprove.title") }),
         m(CardContent, [
           m(
@@ -133,7 +136,7 @@ export const DeviceApprove = {
             ],
           ),
         ]),
-      ),
+      ]),
     );
   },
 };
