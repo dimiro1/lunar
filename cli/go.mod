@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/alecthomas/chroma/v2 v2.23.1
 	github.com/charmbracelet/lipgloss v1.1.0
-	github.com/dimiro1/lunar v0.0.0-00010101000000-000000000000
+	github.com/dimiro1/lunar v0.0.0-20260418140741-706e11e5d097
 	github.com/oapi-codegen/oapi-codegen/v2 v2.6.0
 	github.com/oapi-codegen/runtime v1.4.0
 	github.com/spf13/cobra v1.10.2
@@ -14,8 +14,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.49.1
 )
-
-replace github.com/dimiro1/lunar => ../
 
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect

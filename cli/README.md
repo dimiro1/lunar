@@ -180,4 +180,5 @@ go build -o lunar-cli .
 go install github.com/dimiro1/lunar/cli@latest
 ```
 
-If you are working from a local source checkout, prefer `go build -o lunar-cli .`.
+If you are working from a local source checkout, the repository uses a `go.work`
+workspace for local multi-module development. Prefer `go build -o lunar-cli .`.

@@ -33,11 +33,23 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
+      - name: Download CLI dependencies
+        working-directory: cli
+        run: go mod download
+
       - name: Verify dependencies
+        run: go mod verify
+
+      - name: Verify CLI dependencies
+        working-directory: cli
         run: go mod verify
 
       - name: Run tests
         run: go test -v -race -coverprofile=coverage.txt -covermode=atomic $(go list ./... | grep -v /e2e)
+
+      - name: Run CLI tests
+        working-directory: cli
+        run: go test -v ./...
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
@@ -50,7 +62,15 @@ jobs:
       - name: Build
         run: go build -v -o lunar ./cmd
 
+      - name: Build CLI
+        working-directory: cli
+        run: go build -v -o lunar-cli .
+
       - name: Run vet
+        run: go vet ./...
+
+      - name: Run vet on CLI
+        working-directory: cli
         run: go vet ./...
 
       - name: Run golangci-lint

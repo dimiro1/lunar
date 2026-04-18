@@ -14,8 +14,8 @@ data/
 # Output of the go coverage tool
 *.out
 
-# Go workspace file
-go.work
+# Go workspace metadata
+go.work.sum
 
 # Build artifacts
 /bin/
