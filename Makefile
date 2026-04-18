@@ -1,4 +1,4 @@
-.PHONY: build build-cli generate-cli test lint clean run help dev install-tools fmt-frontend test-frontend test-e2e test-all vendor-js docker fix
+.PHONY: build build-cli generate-cli test lint clean run help dev install-tools fmt-frontend test-frontend test-cli-integration test-e2e test-all vendor-js docker fix
 
 BINARY_NAME=lunar
 CLI_BINARY_NAME=lunar-cli
@@ -47,11 +47,11 @@ generate-cli:
 test:
 	@echo "Running tests..."
 	@go test $$(go list ./... | grep -v /e2e)
-	@cd cli && go test ./cmd/... ./config/...
+	@cd cli && go test ./...
 
 test-cli-integration:
 	@echo "Running CLI integration tests (requires no server running on the test port)..."
-	@cd cli && go test -tags integration -v -timeout 60s ./integration/...
+	@cd cli/integration && go test -tags integration -v -timeout 60s ./...
 
 lint:
 	@echo "Running linter..."

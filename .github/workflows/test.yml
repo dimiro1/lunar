@@ -37,11 +37,19 @@ jobs:
         working-directory: cli
         run: go mod download
 
+      - name: Download CLI integration dependencies
+        working-directory: cli/integration
+        run: go mod download
+
       - name: Verify dependencies
         run: go mod verify
 
       - name: Verify CLI dependencies
         working-directory: cli
+        run: go mod verify
+
+      - name: Verify CLI integration dependencies
+        working-directory: cli/integration
         run: go mod verify
 
       - name: Run tests
@@ -50,6 +58,10 @@ jobs:
       - name: Run CLI tests
         working-directory: cli
         run: go test -v ./...
+
+      - name: Run CLI integration tests
+        working-directory: cli/integration
+        run: go test -tags integration -v -timeout 60s ./...
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5

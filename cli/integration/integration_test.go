@@ -7,7 +7,7 @@
 //
 // Run with:
 //
-//	go test -tags integration -v ./integration/...
+//	go test -tags integration -v ./...
 package integration
 
 import (
