@@ -26,6 +26,8 @@ import (
 )
 
 func main() {
+	initLogger()
+
 	dataDir, err := initDataDir(os.Getenv)
 	if err != nil {
 		slog.Error("Failed to create data directory", "error", err)
@@ -50,9 +52,16 @@ func main() {
 		}
 	}()
 
-	if _, err := db.Exec("PRAGMA foreign_keys = ON"); err != nil {
-		slog.Error("Failed to enable foreign keys", "error", err)
-		os.Exit(1)
+	pragmas := []string{
+		"PRAGMA foreign_keys = ON",
+		"PRAGMA journal_mode = WAL",
+		"PRAGMA busy_timeout = 5000",
+	}
+	for _, pragma := range pragmas {
+		if _, err := db.Exec(pragma); err != nil {
+			slog.Error("Failed to set pragma", "pragma", pragma, "error", err)
+			os.Exit(1)
+		}
 	}
 
 	// Run database migrations

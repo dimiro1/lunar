@@ -118,6 +118,7 @@ func CreateFunctionHandler(database store.DB) http.HandlerFunc {
 
 		createdFn, err := database.CreateFunction(r.Context(), fn)
 		if err != nil {
+			slog.Error("Failed to create function", "error", err)
 			writeError(w, http.StatusInternalServerError, "Failed to create function")
 			return
 		}
@@ -125,6 +126,7 @@ func CreateFunctionHandler(database store.DB) http.HandlerFunc {
 		// Create the first version
 		version, err := database.CreateVersion(r.Context(), createdFn.ID, req.Code, nil)
 		if err != nil {
+			slog.Error("Failed to create initial version", "error", err, "function_id", createdFn.ID)
 			writeError(w, http.StatusInternalServerError, "Failed to create initial version")
 			return
 		}
@@ -146,6 +148,7 @@ func ListFunctionsHandler(database store.DB) http.HandlerFunc {
 
 		functions, total, err := database.ListFunctions(r.Context(), params)
 		if err != nil {
+			slog.Error("Failed to list functions", "error", err)
 			writeError(w, http.StatusInternalServerError, "Failed to list functions")
 			return
 		}
@@ -177,6 +180,7 @@ func GetFunctionHandler(database store.DB, envStore env.Store, kvStore kv.Store)
 
 		activeVersion, err := database.GetActiveVersion(r.Context(), id)
 		if err != nil {
+			slog.Error("Failed to get active version", "error", err, "function_id", id)
 			writeError(w, http.StatusInternalServerError, "No active version found")
 			return
 		}
@@ -184,6 +188,7 @@ func GetFunctionHandler(database store.DB, envStore env.Store, kvStore kv.Store)
 		// Get env vars from the env store
 		envVars, err := envStore.All(id)
 		if err != nil {
+			slog.Error("Failed to get env vars", "error", err, "function_id", id)
 			writeError(w, http.StatusInternalServerError, "Failed to get env vars")
 			return
 		}
@@ -192,6 +197,7 @@ func GetFunctionHandler(database store.DB, envStore env.Store, kvStore kv.Store)
 		// Get current kv entries from kv store
 		scopedKvEntries, err := kvStore.All(id)
 		if err != nil {
+			slog.Error("Failed to get function-scoped kv entries", "error", err, "function_id", id)
 			writeError(w, http.StatusInternalServerError, "Failed to get current function-scoped kv entries")
 			return
 		}
@@ -199,6 +205,7 @@ func GetFunctionHandler(database store.DB, envStore env.Store, kvStore kv.Store)
 		// Get current global kv entries from kv store
 		globalKvEntries, err := kvStore.AllGlobal()
 		if err != nil {
+			slog.Error("Failed to get global kv entries", "error", err)
 			writeError(w, http.StatusInternalServerError, "Failed to get current global kv entries")
 			return
 		}
@@ -236,6 +243,7 @@ func UpdateFunctionHandler(database store.DB, scheduler *internalcron.FunctionSc
 		if req.Code != nil {
 			_, err := database.CreateVersion(r.Context(), id, *req.Code, nil)
 			if err != nil {
+				slog.Error("Failed to create new version", "error", err, "function_id", id)
 				writeError(w, http.StatusInternalServerError, "Failed to create new version")
 				return
 			}
@@ -248,6 +256,7 @@ func UpdateFunctionHandler(database store.DB, scheduler *internalcron.FunctionSc
 		if req.Name != nil || req.Description != nil || req.Disabled != nil || req.RetentionDays != nil || req.CronSchedule != nil || req.CronStatus != nil || req.SaveResponse != nil {
 			err := database.UpdateFunction(r.Context(), id, req)
 			if err != nil {
+				slog.Error("Failed to update function", "error", err, "function_id", id)
 				writeError(w, http.StatusNotFound, "Function not found")
 				return
 			}
@@ -273,6 +282,7 @@ func DeleteFunctionHandler(database store.DB) http.HandlerFunc {
 		id := r.PathValue("id")
 
 		if err := database.DeleteFunction(r.Context(), id); err != nil {
+			slog.Error("Failed to delete function", "error", err, "function_id", id)
 			writeError(w, http.StatusInternalServerError, "Failed to delete function")
 			return
 		}
@@ -308,6 +318,7 @@ func UpdateEnvVarsHandler(database store.DB, envStore env.Store) http.HandlerFun
 		// Get current env vars from env store
 		currentEnvVars, err := envStore.All(id)
 		if err != nil {
+			slog.Error("Failed to get current env vars", "error", err, "function_id", id)
 			writeError(w, http.StatusInternalServerError, "Failed to get current env vars")
 			return
 		}
@@ -316,6 +327,7 @@ func UpdateEnvVarsHandler(database store.DB, envStore env.Store) http.HandlerFun
 		for key := range currentEnvVars {
 			if _, exists := req.EnvVars[key]; !exists {
 				if err := envStore.Delete(id, key); err != nil {
+					slog.Error("Failed to delete env var", "error", err, "function_id", id, "key", key)
 					writeError(w, http.StatusInternalServerError, "Failed to delete env var")
 					return
 				}
@@ -325,6 +337,7 @@ func UpdateEnvVarsHandler(database store.DB, envStore env.Store) http.HandlerFun
 		// Set new/updated env vars
 		for key, value := range req.EnvVars {
 			if err := envStore.Set(id, key, value); err != nil {
+				slog.Error("Failed to set env var", "error", err, "function_id", id, "key", key)
 				writeError(w, http.StatusInternalServerError, "Failed to set env var")
 				return
 			}
@@ -333,6 +346,7 @@ func UpdateEnvVarsHandler(database store.DB, envStore env.Store) http.HandlerFun
 		// Get the active version to return
 		activeVersion, err := database.GetActiveVersion(r.Context(), id)
 		if err != nil {
+			slog.Error("Failed to get active version after env update", "error", err, "function_id", id)
 			writeError(w, http.StatusInternalServerError, "Failed to get active version")
 			return
 		}
@@ -377,6 +391,7 @@ func UpdateKvStoreHandler(database store.DB, kvStore kv.Store) http.HandlerFunc 
 		// Get current kv entries from kv store
 		currentKvEntries, err := kvStore.All(useStore)
 		if err != nil {
+			slog.Error("Failed to get current kv entries", "error", err, "function_id", id)
 			writeError(w, http.StatusInternalServerError, "Failed to get current kv entries")
 			return
 		}
@@ -385,6 +400,7 @@ func UpdateKvStoreHandler(database store.DB, kvStore kv.Store) http.HandlerFunc 
 		for key := range currentKvEntries {
 			if _, ok := req.Kv[key]; !ok {
 				if err := kvStore.Delete(useStore, key); err != nil {
+					slog.Error("Failed to delete kv entry", "error", err, "function_id", id, "key", key)
 					writeError(w, http.StatusInternalServerError, "Failed to delete kv entry")
 					return
 				}
@@ -394,6 +410,7 @@ func UpdateKvStoreHandler(database store.DB, kvStore kv.Store) http.HandlerFunc 
 		// Set new/updated kv entries
 		for key, value := range req.Kv {
 			if err := kvStore.Set(useStore, key, value); err != nil {
+				slog.Error("Failed to set kv entry", "error", err, "function_id", id, "key", key)
 				writeError(w, http.StatusInternalServerError, "Failed to set kv entry")
 				return
 			}
@@ -402,6 +419,7 @@ func UpdateKvStoreHandler(database store.DB, kvStore kv.Store) http.HandlerFunc 
 		// Get the active version to return
 		activeVersion, err := database.GetActiveVersion(r.Context(), id)
 		if err != nil {
+			slog.Error("Failed to get active version after kv update", "error", err, "function_id", id)
 			writeError(w, http.StatusInternalServerError, "Failed to get active version")
 			return
 		}
@@ -424,6 +442,7 @@ func ListVersionsHandler(database store.DB) http.HandlerFunc {
 
 		versions, total, err := database.ListVersions(r.Context(), id, params)
 		if err != nil {
+			slog.Error("Failed to list versions", "error", err, "function_id", id)
 			writeError(w, http.StatusInternalServerError, "Failed to list versions")
 			return
 		}
@@ -476,6 +495,7 @@ func ActivateVersionHandler(database store.DB) http.HandlerFunc {
 				writeError(w, http.StatusNotFound, "Version not found")
 				return
 			}
+			slog.Error("Failed to activate version", "error", err, "version_id", versionID)
 			writeError(w, http.StatusInternalServerError, "Failed to activate version")
 			return
 		}
@@ -499,6 +519,7 @@ func DeleteVersionHandler(database store.DB) http.HandlerFunc {
 				writeError(w, http.StatusBadRequest, "Cannot delete active version")
 				return
 			}
+			slog.Error("Failed to delete version", "error", err, "version_id", versionID)
 			writeError(w, http.StatusInternalServerError, "Failed to delete version")
 			return
 		}
@@ -816,6 +837,7 @@ func handleEngineError(w http.ResponseWriter, err error) {
 	case errors.As(err, &noVersion):
 		writeError(w, http.StatusInternalServerError, "No active version found")
 	default:
+		slog.Error("Unexpected engine error", "error", err)
 		writeError(w, http.StatusInternalServerError, "Internal server error")
 	}
 }

@@ -104,6 +104,24 @@ func initDataDir(getenv func(string) string) (string, error) {
 	return dataDir, nil
 }
 
+func initLogger() {
+	levelStr := os.Getenv("LOG_LEVEL")
+	var level slog.Level
+	switch levelStr {
+	case "DEBUG", "debug":
+		level = slog.LevelDebug
+	case "WARN", "warn":
+		level = slog.LevelWarn
+	case "ERROR", "error":
+		level = slog.LevelError
+	default:
+		level = slog.LevelInfo
+	}
+
+	handler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level})
+	slog.SetDefault(slog.New(handler))
+}
+
 func loadConfig(getenv func(string) string, dataDir string) (Config, error) {
 	port := loadPort(getenv)
 	dataDir = loadDataDir(getenv, dataDir)
