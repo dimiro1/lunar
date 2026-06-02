@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/caarlos0/env/v11"
 	"github.com/dimiro1/lunar/lunar-cli/client"
 	"github.com/dimiro1/lunar/lunar-cli/config"
 	"github.com/spf13/cobra"
@@ -24,6 +25,13 @@ var (
 	apiToken  string
 )
 
+// envConfig holds CLI settings sourced from environment variables. They override
+// the config file but are themselves overridden by command-line flags.
+type envConfig struct {
+	Server string `env:"LUNAR_SERVER"`
+	Token  string `env:"LUNAR_TOKEN"`
+}
+
 var rootCmd = &cobra.Command{
 	Use:   "lunar-cli",
 	Short: "Lunar CLI – manage your Lunar FaaS functions",
@@ -32,12 +40,16 @@ var rootCmd = &cobra.Command{
 		serverURL = cfg.Server
 		apiToken = cfg.Token
 
-		if v := os.Getenv("LUNAR_SERVER"); v != "" {
-			serverURL = v
+		// Environment variables override the config file.
+		envCfg, _ := env.ParseAs[envConfig]()
+		if envCfg.Server != "" {
+			serverURL = envCfg.Server
 		}
-		if v := os.Getenv("LUNAR_TOKEN"); v != "" {
-			apiToken = v
+		if envCfg.Token != "" {
+			apiToken = envCfg.Token
 		}
+
+		// Flags override everything.
 		if cmd.Root().PersistentFlags().Changed("server") {
 			serverURL = flagServer
 		}
