@@ -52,7 +52,13 @@ type ServerConfig struct {
 	BaseURL          string
 }
 
-// NewServer creates a new API server with full configuration
+// NewServer creates a new API server with full configuration. It constructs the
+// AI/email clients, Lua runtime, and execution engine from the supplied
+// ingredients, then assembles the server.
+//
+// The fx wiring in module.go builds those same collaborators as independent graph
+// nodes and calls newServer directly, so this constructor remains the
+// convenience entry point used by tests and any non-fx caller.
 func NewServer(config ServerConfig) *Server {
 	// Create AI and Email clients
 	aiClient := ai.NewDefaultClient(config.HTTPClient, config.EnvStore)
@@ -87,25 +93,56 @@ func NewServer(config ServerConfig) *Server {
 		IDGenerator:      func() string { return xid.New().String() },
 	})
 
-	execDeps := &ExecuteFunctionDeps{
-		Engine:  eng,
-		BaseURL: config.BaseURL,
-	}
+	return newServer(serverDeps{
+		DB:              config.DB,
+		Engine:          eng,
+		Logger:          config.Logger,
+		KVStore:         config.KVStore,
+		EnvStore:        config.EnvStore,
+		AITracker:       config.AITracker,
+		EmailTracker:    config.EmailTracker,
+		Scheduler:       config.Scheduler,
+		FrontendHandler: config.FrontendHandler,
+		APIKey:          config.APIKey,
+		BaseURL:         config.BaseURL,
+	})
+}
 
+// serverDeps are the fully-constructed collaborators a Server needs. Unlike
+// ServerConfig — which carries the raw ingredients used to build the engine —
+// serverDeps takes the engine.Engine already assembled. This is the seam the fx
+// graph injects through.
+type serverDeps struct {
+	DB              store.DB
+	Engine          engine.Engine
+	Logger          logger.Logger
+	KVStore         kv.Store
+	EnvStore        env.Store
+	AITracker       ai.Tracker
+	EmailTracker    email.Tracker
+	Scheduler       *internalcron.FunctionScheduler
+	FrontendHandler http.Handler
+	APIKey          string
+	BaseURL         string
+}
+
+// newServer assembles a Server from its constructed dependencies and registers
+// the routes.
+func newServer(d serverDeps) *Server {
 	s := &Server{
 		mux:             http.NewServeMux(),
-		db:              config.DB,
-		execDeps:        execDeps,
-		envStore:        config.EnvStore,
-		logger:          config.Logger,
-		aiTracker:       config.AITracker,
-		emailTracker:    config.EmailTracker,
-		scheduler:       config.Scheduler,
-		frontendHandler: config.FrontendHandler,
-		apiKey:          config.APIKey,
-		kvStore:         config.KVStore,
+		db:              d.DB,
+		execDeps:        &ExecuteFunctionDeps{Engine: d.Engine, BaseURL: d.BaseURL},
+		envStore:        d.EnvStore,
+		logger:          d.Logger,
+		aiTracker:       d.AITracker,
+		emailTracker:    d.EmailTracker,
+		scheduler:       d.Scheduler,
+		frontendHandler: d.FrontendHandler,
+		apiKey:          d.APIKey,
+		kvStore:         d.KVStore,
 		deviceAuth:      NewDeviceAuthStore(),
-		baseURL:         config.BaseURL,
+		baseURL:         d.BaseURL,
 	}
 
 	s.setupRoutes()

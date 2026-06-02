@@ -3,6 +3,7 @@ module github.com/dimiro1/lunar
 go 1.26.0
 
 require (
+	github.com/caarlos0/env/v11 v11.4.1
 	github.com/chromedp/chromedp v0.14.2
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/google/uuid v1.6.0
@@ -11,6 +12,7 @@ require (
 	github.com/rs/xid v1.6.0
 	github.com/sergi/go-diff v1.4.0
 	github.com/yuin/gopher-lua v1.1.1
+	go.uber.org/fx v1.24.0
 	modernc.org/sqlite v1.45.0
 )
 
@@ -25,6 +27,9 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
+	go.uber.org/dig v1.19.0 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
+	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/exp v0.0.0-20260212183809-81e46e3db34a // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	modernc.org/libc v1.67.7 // indirect
