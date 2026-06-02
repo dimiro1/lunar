@@ -15,10 +15,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - name: Set up Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: "1.26"
+      - name: Set up mise
+        uses: jdx/mise-action@v2
 
       - name: Cache Go modules
         uses: actions/cache@v4
@@ -72,11 +70,10 @@ jobs:
           fail_ci_if_error: false
 
       - name: Build
-        run: go build -v -o lunar ./cmd
+        run: mise run build
 
       - name: Build CLI
-        working-directory: lunar-cli
-        run: go build -v -o lunar-cli .
+        run: mise run build-cli
 
       - name: Run vet
         run: go vet ./...
@@ -86,9 +83,7 @@ jobs:
         run: go vet ./...
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: latest
+        run: mise run lint
 
   e2e:
     name: E2E Tests
@@ -98,10 +93,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - name: Set up Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: "1.26"
+      - name: Set up mise
+        uses: jdx/mise-action@v2
 
       - name: Cache Go modules
         uses: actions/cache@v4
@@ -122,4 +115,4 @@ jobs:
           chrome-version: stable
 
       - name: Run e2e tests
-        run: make test-e2e
+        run: mise run test-e2e

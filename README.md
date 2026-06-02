@@ -65,18 +65,18 @@ A lightweight, self-hosted Function-as-a-Service platform written in Go with Lua
 
 ### Prerequisites
 
-- Go 1.26 or newer
-- `make`
+- [mise](https://mise.jdx.dev/) — manages the toolchain (Go, golangci-lint, deno, air, goreleaser) and runs project tasks
 - Chrome or Chromium if you plan to run the E2E test suite
 
-For CLI internals and code generation details, see [cli/README.md](cli/README.md).
+Run `mise tasks` to see every available task. For CLI internals and code generation details, see [cli/README.md](cli/README.md).
 
 ### Building from Source
 
 ```bash
 git clone https://github.com/dimiro1/lunar.git
 cd lunar
-make build
+mise install   # fetch the pinned tool versions
+mise run build
 ```
 
 ### Running
@@ -85,18 +85,10 @@ make build
 ./build/lunar
 ```
 
-For local development, you can also install the optional contributor tools:
+For local development with live reload (`air` is provided by mise — no extra install step):
 
 ```bash
-make install-tools
-```
-
-This installs `air` for live reload and `goreleaser` for release packaging.
-
-Then start the development server with:
-
-```bash
-make dev
+mise run dev
 ```
 
 The application will be available at `http://localhost:3000`.
@@ -420,9 +412,8 @@ lunar-cli invoke <function-id> --method POST --body -   # read body from stdin
 The CLI commands are auto-generated from `internal/api/docs/openapi.yaml`. When the API changes, regenerate with:
 
 ```bash
-cd cli
-go generate ./...
-go build ./...
+mise run generate-cli
+mise run build-cli
 ```
 
 ## Testing
@@ -432,7 +423,7 @@ go build ./...
 Run the Go unit tests:
 
 ```bash
-make test
+mise run test
 ```
 
 ### Frontend Tests (Jasmine)
@@ -440,7 +431,7 @@ make test
 The frontend uses [Jasmine](https://jasmine.github.io/) for unit testing, running directly in the browser without Node.js dependencies.
 
 ```bash
-make test-frontend
+mise run test-frontend
 ```
 
 This starts a local Go server and opens the test runner at `http://localhost:8888/test/SpecRunner.html`. Tests cover:
@@ -455,7 +446,7 @@ End-to-end tests use [chromedp](https://github.com/chromedp/chromedp) to run a h
 Make sure Chrome or Chromium is installed before running them.
 
 ```bash
-make test-e2e
+mise run test-e2e
 ```
 
 E2E tests cover:
@@ -467,10 +458,10 @@ E2E tests cover:
 ### Run All Tests
 
 ```bash
-make test-all
+mise run test-all
 ```
 
-This runs Go unit tests and E2E tests. Run `make test-frontend` separately to open the browser-based Jasmine tests.
+This runs Go unit tests and E2E tests. Run `mise run test-frontend` separately to open the browser-based Jasmine tests.
 
 ## Architecture
 
@@ -481,7 +472,7 @@ This runs Go unit tests and E2E tests. Run `make test-frontend` separately to op
 
 ### Frontend Dependencies
 
-JavaScript dependencies are vendored in `frontend/vendor/` (no npm required). Versions are managed in the Makefile:
+JavaScript dependencies are vendored in `frontend/vendor/` (no npm required). Versions are managed in `mise.toml`:
 
 | Library | Purpose |
 |---------|---------|
@@ -490,10 +481,10 @@ JavaScript dependencies are vendored in `frontend/vendor/` (no npm required). Ve
 | Highlight.js | Syntax highlighting |
 | Jasmine | Frontend testing |
 
-To update dependencies, edit the version variables in the Makefile and run:
+To update dependencies, edit the version variables in `mise.toml` and run:
 
 ```bash
-make vendor-js
+mise run vendor-js
 ```
 
 ## Contributing
