@@ -1,0 +1,176 @@
+min_version = "2024.1.0"
+
+# Toolchain — pinned for reproducible builds across machines and CI.
+# Run `mise install` to fetch everything. `mise up` bumps to latest.
+[tools]
+go = "1.26.3"
+golangci-lint = "2.12.2"
+deno = "2.8.1"
+goreleaser = "2.16.0"
+air = "1.65.3"
+
+# Frontend vendored dependency versions (used by the vendor-js task).
+[env]
+BINARY_NAME = "lunar"
+CLI_BINARY_NAME = "lunar-cli"
+BUILD_DIR = "build"
+MITHRIL_VERSION = "2.3.8"
+MONACO_VERSION = "0.55.1"
+HIGHLIGHTJS_VERSION = "11.11.1"
+JASMINE_VERSION = "6.0.1"
+
+# ---------------------------------------------------------------------------
+# Build
+# ---------------------------------------------------------------------------
+
+[tasks.build]
+description = "Build the server"
+run = [
+  "mkdir -p $BUILD_DIR",
+  "go build -o $BUILD_DIR/$BINARY_NAME ./cmd",
+]
+sources = ["cmd/**/*.go", "internal/**/*.go", "frontend/**/*", "go.mod", "go.sum"]
+outputs = ["build/lunar"]
+
+[tasks.build-cli]
+description = "Build the CLI"
+dir = "lunar-cli"
+run = [
+  "mkdir -p ../$BUILD_DIR",
+  "go build -o ../$BUILD_DIR/$CLI_BINARY_NAME .",
+]
+
+[tasks.generate-cli]
+description = "Regenerate CLI from openapi.yaml (go generate)"
+dir = "lunar-cli"
+run = "go generate ./..."
+
+# ---------------------------------------------------------------------------
+# Test
+# ---------------------------------------------------------------------------
+
+[tasks.test]
+description = "Run Go unit tests (server + CLI)"
+run = [
+  "go test $(go list ./... | grep -v /e2e)",
+  "cd lunar-cli && go test ./...",
+]
+
+[tasks.test-cli-integration]
+description = "Run CLI integration tests against a real server"
+dir = "lunar-cli/integration"
+run = "go test -tags integration -v -timeout 60s ./..."
+
+[tasks.test-frontend]
+description = "Open Jasmine frontend tests in browser"
+run = "go run ./cmd/testserver"
+
+[tasks.test-e2e]
+description = "Run E2E tests with headless Chrome"
+run = "go test -v ./e2e/..."
+
+[tasks.test-all]
+description = "Run all Go tests (unit + e2e)"
+depends = ["test", "test-e2e"]
+
+# ---------------------------------------------------------------------------
+# Quality
+# ---------------------------------------------------------------------------
+
+[tasks.lint]
+description = "Run golangci-lint"
+run = "golangci-lint run"
+
+[tasks.fmt-frontend]
+description = "Format frontend JS files with deno fmt"
+run = "deno fmt --ignore=frontend/vendor frontend/"
+
+[tasks.fix]
+description = "Run go fix (modernize) on all packages"
+run = [
+  "go fix -fixtool=$(go env GOTOOLDIR)/fix ./...",
+  "cd lunar-cli && go fix -fixtool=$(go env GOTOOLDIR)/fix ./...",
+]
+
+[tasks.all]
+description = "Run lint, test, and build"
+depends = ["lint", "test", "build"]
+
+# ---------------------------------------------------------------------------
+# Run / dev
+# ---------------------------------------------------------------------------
+
+[tasks.run]
+description = "Build and run the application"
+run = "go run ./cmd"
+
+[tasks.dev]
+description = "Start development mode with air (live reload)"
+run = "air"
+
+[tasks.docker]
+description = "Run with Docker Compose"
+run = "docker compose up"
+
+[tasks.clean]
+description = "Remove build artifacts"
+run = [
+  "rm -rf $BUILD_DIR",
+  "rm -f cli/cmd/*.gen.go cli/client/client.gen.go",
+]
+
+# ---------------------------------------------------------------------------
+# Release
+# ---------------------------------------------------------------------------
+
+[tasks.tag]
+description = "Tag and push a server release, e.g. `mise run tag v0.5.2`"
+usage = '''
+arg "<version>" help="Release version, e.g. v0.5.2"
+'''
+run = '''
+git tag "$usage_version"
+git push origin "$usage_version"
+echo "Tagged and pushed $usage_version. GoReleaser will create lunar-cli/$usage_version."
+'''
+
+# ---------------------------------------------------------------------------
+# Frontend vendoring
+# ---------------------------------------------------------------------------
+
+[tasks.vendor-js]
+description = "Download/update vendored JS dependencies"
+run = '''
+set -e
+echo "Cleaning old vendored JS dependencies..."
+rm -rf frontend/vendor/{mithril,monaco-editor,highlight.js,jasmine}
+
+echo "Downloading vendored JS dependencies..."
+mkdir -p frontend/vendor/{mithril,monaco-editor,highlight.js/styles,highlight.js/languages,jasmine}
+
+echo "Downloading Mithril.js $MITHRIL_VERSION..."
+curl -sL -o frontend/vendor/mithril/mithril.min.js \
+  "https://unpkg.com/mithril@$MITHRIL_VERSION/mithril.min.js"
+
+echo "Downloading Monaco Editor $MONACO_VERSION..."
+curl -sL "https://registry.npmjs.org/monaco-editor/-/monaco-editor-$MONACO_VERSION.tgz" | \
+  tar -xz -C frontend/vendor/monaco-editor --strip-components=1 package/min
+
+echo "Downloading Highlight.js $HIGHLIGHTJS_VERSION..."
+curl -sL -o frontend/vendor/highlight.js/highlight.min.js \
+  "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/$HIGHLIGHTJS_VERSION/highlight.min.js"
+curl -sL -o frontend/vendor/highlight.js/styles/github-dark.min.css \
+  "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/$HIGHLIGHTJS_VERSION/styles/github-dark.min.css"
+for lang in lua bash javascript python go json; do \
+  curl -sL -o "frontend/vendor/highlight.js/languages/${lang}.min.js" \
+    "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/$HIGHLIGHTJS_VERSION/languages/${lang}.min.js"; \
+done
+
+echo "Downloading Jasmine $JASMINE_VERSION..."
+for file in jasmine.css jasmine.js jasmine-html.js boot0.js boot1.js; do \
+  curl -sL -o "frontend/vendor/jasmine/${file}" \
+    "https://unpkg.com/jasmine-core@$JASMINE_VERSION/lib/jasmine-core/${file}"; \
+done
+
+echo "Done! Vendored JS dependencies updated."
+'''
