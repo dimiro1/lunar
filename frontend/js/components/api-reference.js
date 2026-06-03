@@ -606,6 +606,452 @@ export function getLuaAPISections() {
 }
 
 /**
+ * Gets localized API sections for Starlark functions. Mirrors
+ * getLuaAPISections() with Starlark signatures (def handler, dict access,
+ * (value, error) tuples); descriptions reuse the language-neutral luaApi.* keys.
+ * @returns {APISection[]} Localized API sections
+ */
+export function getStarlarkAPISections() {
+  return [
+    {
+      id: "ai",
+      name: t("luaApi.ai.name"),
+      description: t("luaApi.ai.description"),
+      groups: [
+        {
+          name: t("luaApi.ai.groups.chat"),
+          items: [
+            {
+              name: "ai.chat(options)",
+              type: "function",
+              description: t("luaApi.ai.items.chat"),
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "email",
+      name: t("luaApi.email.name"),
+      description: t("luaApi.email.description"),
+      groups: [
+        {
+          name: t("luaApi.email.groups.send"),
+          items: [
+            {
+              name: "email.send(options)",
+              type: "function",
+              description: t("luaApi.email.items.send"),
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "handler",
+      name: t("luaApi.handler.name"),
+      description: t("luaApi.handler.description"),
+      groups: [
+        {
+          name: t("luaApi.handler.groups.context"),
+          items: [
+            {
+              name: "ctx.executionId",
+              type: "string",
+              description: t("luaApi.handler.items.executionId"),
+            },
+            {
+              name: "ctx.functionId",
+              type: "string",
+              description: t("luaApi.handler.items.functionId"),
+            },
+            {
+              name: "ctx.functionName",
+              type: "string",
+              description: t("luaApi.handler.items.functionName"),
+            },
+            {
+              name: "ctx.version",
+              type: "string",
+              description: t("luaApi.handler.items.version"),
+            },
+            {
+              name: "ctx.requestId",
+              type: "string",
+              description: t("luaApi.handler.items.requestId"),
+            },
+            {
+              name: "ctx.startedAt",
+              type: "number",
+              description: t("luaApi.handler.items.startedAt"),
+            },
+            {
+              name: "ctx.baseUrl",
+              type: "string",
+              description: t("luaApi.handler.items.baseUrl"),
+            },
+          ],
+        },
+        {
+          name: t("luaApi.handler.groups.event"),
+          items: [
+            {
+              name: "event.method",
+              type: "string",
+              description: t("luaApi.handler.items.method"),
+            },
+            {
+              name: "event.path",
+              type: "string",
+              description: t("luaApi.handler.items.path"),
+            },
+            {
+              name: "event.body",
+              type: "string",
+              description: t("luaApi.handler.items.body"),
+            },
+            {
+              name: "event.headers",
+              type: "dict",
+              description: t("luaApi.handler.items.headers"),
+            },
+            {
+              name: "event.query",
+              type: "dict",
+              description: t("luaApi.handler.items.query"),
+            },
+            {
+              name: "event.relativePath",
+              type: "string",
+              description: t("luaApi.handler.items.relativePath"),
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "io",
+      name: t("luaApi.io.name"),
+      description: t("luaApi.io.description"),
+      groups: [
+        {
+          name: t("luaApi.io.groups.logging"),
+          items: [
+            {
+              name: "log.info(msg)",
+              type: "function",
+              description: t("luaApi.io.items.logInfo"),
+            },
+            {
+              name: "log.debug(msg)",
+              type: "function",
+              description: t("luaApi.io.items.logDebug"),
+            },
+            {
+              name: "log.warn(msg)",
+              type: "function",
+              description: t("luaApi.io.items.logWarn"),
+            },
+            {
+              name: "log.error(msg)",
+              type: "function",
+              description: t("luaApi.io.items.logError"),
+            },
+          ],
+        },
+        {
+          name: t("luaApi.io.groups.kv"),
+          items: [
+            {
+              name: "kv.get(key)",
+              type: "function",
+              description: t("luaApi.io.items.kvGet"),
+            },
+            {
+              name: "kv.set(key, value)",
+              type: "function",
+              description: t("luaApi.io.items.kvSet"),
+            },
+            {
+              name: "kv.delete(key)",
+              type: "function",
+              description: t("luaApi.io.items.kvDelete"),
+            },
+            {
+              name: "kv.listKeys()",
+              type: "function",
+              description: t("luaApi.io.items.kvListKeys"),
+            },
+            {
+              name: "kv.all()",
+              type: "function",
+              description: t("luaApi.io.items.kvAll"),
+            },
+            {
+              name: "kv.getGlobal(key)",
+              type: "function",
+              description: t("luaApi.io.items.kvGetGlobal"),
+            },
+            {
+              name: "kv.setGlobal(key, value)",
+              type: "function",
+              description: t("luaApi.io.items.kvSetGlobal"),
+            },
+            {
+              name: "kv.deleteGlobal(key)",
+              type: "function",
+              description: t("luaApi.io.items.kvDeleteGlobal"),
+            },
+            {
+              name: "kv.listGlobalKeys()",
+              type: "function",
+              description: t("luaApi.io.items.kvListGlobalKeys"),
+            },
+            {
+              name: "kv.allGlobal()",
+              type: "function",
+              description: t("luaApi.io.items.kvAllGlobal"),
+            },
+          ],
+        },
+        {
+          name: t("luaApi.io.groups.env"),
+          items: [
+            {
+              name: "env.get(key)",
+              type: "function",
+              description: t("luaApi.io.items.envGet"),
+            },
+          ],
+        },
+        {
+          name: t("luaApi.io.groups.http"),
+          items: [
+            {
+              name: "http.get(url)",
+              type: "function",
+              description: t("luaApi.io.items.httpGet"),
+            },
+            {
+              name: "http.post(url, options)",
+              type: "function",
+              description: t("luaApi.io.items.httpPost"),
+            },
+            {
+              name: "http.put(url, options)",
+              type: "function",
+              description: t("luaApi.io.items.httpPut"),
+            },
+            {
+              name: "http.delete(url)",
+              type: "function",
+              description: t("luaApi.io.items.httpDelete"),
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "data",
+      name: t("luaApi.data.name"),
+      description: t("luaApi.data.description"),
+      groups: [
+        {
+          name: t("luaApi.data.groups.json"),
+          items: [
+            {
+              name: "json.encode(value)",
+              type: "function",
+              description: t("luaApi.data.items.jsonEncode"),
+            },
+            {
+              name: "json.decode(str)",
+              type: "function",
+              description: t("luaApi.data.items.jsonDecode"),
+            },
+          ],
+        },
+        {
+          name: t("luaApi.data.groups.base64"),
+          items: [
+            {
+              name: "base64.encode(str)",
+              type: "function",
+              description: t("luaApi.data.items.base64Encode"),
+            },
+            {
+              name: "base64.decode(str)",
+              type: "function",
+              description: t("luaApi.data.items.base64Decode"),
+            },
+          ],
+        },
+        {
+          name: t("luaApi.data.groups.crypto"),
+          items: [
+            {
+              name: "crypto.md5(str)",
+              type: "function",
+              description: t("luaApi.data.items.md5"),
+            },
+            {
+              name: "crypto.sha256(str)",
+              type: "function",
+              description: t("luaApi.data.items.sha256"),
+            },
+            {
+              name: "crypto.hmac_sha256(msg, key)",
+              type: "function",
+              description: t("luaApi.data.items.hmacSha256"),
+            },
+            {
+              name: "crypto.uuid()",
+              type: "function",
+              description: t("luaApi.data.items.uuid"),
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "router",
+      name: t("luaApi.router.name"),
+      description: t("luaApi.router.description"),
+      groups: [
+        {
+          name: t("luaApi.router.groups.matching"),
+          items: [
+            {
+              name: "router.match(path, pattern)",
+              type: "function",
+              description: t("luaApi.router.items.match"),
+            },
+            {
+              name: "router.params(path, pattern)",
+              type: "function",
+              description: t("luaApi.router.items.params"),
+            },
+          ],
+        },
+        {
+          name: t("luaApi.router.groups.building"),
+          items: [
+            {
+              name: "router.path(pattern, params)",
+              type: "function",
+              description: t("luaApi.router.items.path"),
+            },
+            {
+              name: "router.url(pattern, params)",
+              type: "function",
+              description: t("luaApi.router.items.url"),
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "utils",
+      name: t("luaApi.utils.name"),
+      description: t("luaApi.utils.description"),
+      groups: [
+        {
+          name: t("luaApi.utils.groups.time"),
+          items: [
+            {
+              name: "time.now()",
+              type: "function",
+              description: t("luaApi.utils.items.timeNow"),
+            },
+            {
+              name: "time.format(ts, layout)",
+              type: "function",
+              description: t("luaApi.utils.items.timeFormat"),
+            },
+            {
+              name: "time.parse(str, layout)",
+              type: "function",
+              description: t("luaApi.utils.items.timeParse"),
+            },
+            {
+              name: "time.sleep(ms)",
+              type: "function",
+              description: t("luaApi.utils.items.timeSleep"),
+            },
+          ],
+        },
+        {
+          name: t("luaApi.utils.groups.strings"),
+          items: [
+            {
+              name: "strings.trim(str)",
+              type: "function",
+              description: t("luaApi.utils.items.trim"),
+            },
+            {
+              name: "strings.split(str, sep)",
+              type: "function",
+              description: t("luaApi.utils.items.split"),
+            },
+            {
+              name: "strings.join(list, sep)",
+              type: "function",
+              description: t("luaApi.utils.items.join"),
+            },
+            {
+              name: "strings.contains(str, sub)",
+              type: "function",
+              description: t("luaApi.utils.items.contains"),
+            },
+            {
+              name: "strings.replace(str, old, new)",
+              type: "function",
+              description: t("luaApi.utils.items.replace"),
+            },
+          ],
+        },
+        {
+          name: t("luaApi.utils.groups.random"),
+          items: [
+            {
+              name: "random.int(min, max)",
+              type: "function",
+              description: t("luaApi.utils.items.randomInt"),
+            },
+            {
+              name: "random.float()",
+              type: "function",
+              description: t("luaApi.utils.items.randomFloat"),
+            },
+            {
+              name: "random.string(len)",
+              type: "function",
+              description: t("luaApi.utils.items.randomString"),
+            },
+            {
+              name: "random.id()",
+              type: "function",
+              description: t("luaApi.utils.items.randomId"),
+            },
+          ],
+        },
+      ],
+    },
+  ];
+}
+
+/**
+ * Returns the API reference sections for the given function language.
+ * @param {string} [language='lua'] - "lua" or "starlark"
+ * @returns {APISection[]} Localized API sections
+ */
+export function getAPISections(language = "lua") {
+  return language === "starlark"
+    ? getStarlarkAPISections()
+    : getLuaAPISections();
+}
+
+/**
  * Legacy export for backwards compatibility.
  * @deprecated Use getLuaAPISections() instead
  * @type {APISection[]}

@@ -30,3 +30,4 @@ to reverse-engineer it or interrupt the people who were there.
 | [0010](0010-in-house-i18n.md) | In-house i18n with locale modules | Accepted |
 | [0011](0011-testing-strategy.md) | Layered testing strategy without a JS test runner | Accepted |
 | [0012](0012-graphql-management-api.md) | GraphQL for the management API | Accepted |
+| [0013](0013-starlark-as-a-second-function-language.md) | Starlark as a second function language | Accepted |

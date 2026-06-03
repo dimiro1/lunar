@@ -39,8 +39,9 @@ type DB interface {
 	DeleteFunction(ctx context.Context, id string) error
 
 	// CreateVersion creates a new version for a function and sets it as active.
-	// Returns ErrFunctionNotFound if the function does not exist.
-	CreateVersion(ctx context.Context, functionID string, code string, createdBy *string) (FunctionVersion, error)
+	// An empty language defaults to Lua. Returns ErrFunctionNotFound if the
+	// function does not exist.
+	CreateVersion(ctx context.Context, functionID string, code string, language string, createdBy *string) (FunctionVersion, error)
 
 	// GetVersion retrieves a specific version by function ID and version number.
 	// Returns ErrVersionNotFound if the version does not exist.

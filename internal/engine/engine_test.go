@@ -20,6 +20,78 @@ func (m *mockRuntime) Execute(ctx context.Context, req RuntimeRequest) (*Runtime
 	return m.result, m.err
 }
 
+// labelRuntime records that it ran, so tests can assert which language was selected.
+type labelRuntime struct {
+	label string
+	ran   *string
+}
+
+func (r *labelRuntime) Execute(ctx context.Context, req RuntimeRequest) (*RuntimeResult, error) {
+	*r.ran = r.label
+	return &RuntimeResult{Response: &events.HTTPResponse{StatusCode: 200}}, nil
+}
+
+func TestEngine_Execute_SelectsRuntimeByLanguage(t *testing.T) {
+	db := store.NewMemoryDB()
+	ctx := context.Background()
+
+	fn, _ := db.CreateFunction(ctx, store.Function{ID: "fn", Name: "fn"})
+	// Active version is Starlark.
+	if _, err := db.CreateVersion(ctx, fn.ID, "def handler(ctx, event): return {}", string(store.LanguageStarlark), nil); err != nil {
+		t.Fatalf("CreateVersion: %v", err)
+	}
+
+	var ran string
+	eng := New(Config{
+		DB: db,
+		Runtimes: []RuntimeEntry{
+			{Language: LanguageLua, Runtime: &labelRuntime{label: "lua", ran: &ran}},
+			{Language: LanguageStarlark, Runtime: &labelRuntime{label: "starlark", ran: &ran}},
+		},
+		Logger:      logger.NewMemoryLogger(),
+		IDGenerator: func() string { return "exec-1" },
+	})
+
+	if _, err := eng.Execute(ctx, ExecutionRequest{
+		FunctionID: fn.ID,
+		Event:      events.HTTPEvent{Method: "GET", Path: "/"},
+		Trigger:    store.ExecutionTriggerHTTP,
+	}); err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if ran != "starlark" {
+		t.Errorf("selected runtime = %q, want starlark", ran)
+	}
+}
+
+func TestEngine_Execute_UnsupportedLanguage(t *testing.T) {
+	db := store.NewMemoryDB()
+	ctx := context.Background()
+
+	fn, _ := db.CreateFunction(ctx, store.Function{ID: "fn", Name: "fn"})
+	if _, err := db.CreateVersion(ctx, fn.ID, "code", string(store.LanguageStarlark), nil); err != nil {
+		t.Fatalf("CreateVersion: %v", err)
+	}
+
+	// Only Lua is registered; the Starlark version cannot be executed.
+	eng := New(Config{
+		DB:          db,
+		Runtimes:    []RuntimeEntry{{Language: LanguageLua, Runtime: &mockRuntime{}}},
+		Logger:      logger.NewMemoryLogger(),
+		IDGenerator: func() string { return "exec-1" },
+	})
+
+	_, err := eng.Execute(ctx, ExecutionRequest{
+		FunctionID: fn.ID,
+		Event:      events.HTTPEvent{Method: "GET", Path: "/"},
+		Trigger:    store.ExecutionTriggerHTTP,
+	})
+	var unsupported *UnsupportedLanguageError
+	if !errors.As(err, &unsupported) {
+		t.Fatalf("error = %v, want UnsupportedLanguageError", err)
+	}
+}
+
 func TestEngine_Execute_Success(t *testing.T) {
 	db := store.NewMemoryDB()
 	ctx := context.Background()
@@ -29,7 +101,7 @@ func TestEngine_Execute_Success(t *testing.T) {
 		ID:   "test-func",
 		Name: "Test Function",
 	})
-	_, _ = db.CreateVersion(ctx, fn.ID, "return {}", nil)
+	_, _ = db.CreateVersion(ctx, fn.ID, "return {}", "", nil)
 
 	runtime := &mockRuntime{
 		result: &RuntimeResult{
@@ -42,7 +114,7 @@ func TestEngine_Execute_Success(t *testing.T) {
 
 	eng := New(Config{
 		DB:          db,
-		Runtime:     runtime,
+		Runtimes:    []RuntimeEntry{{Language: LanguageLua, Runtime: runtime}},
 		Logger:      logger.NewMemoryLogger(),
 		IDGenerator: func() string { return "exec-123" },
 	})
@@ -83,7 +155,7 @@ func TestEngine_Execute_FunctionNotFound(t *testing.T) {
 
 	eng := New(Config{
 		DB:          db,
-		Runtime:     &mockRuntime{},
+		Runtimes:    []RuntimeEntry{{Language: LanguageLua, Runtime: &mockRuntime{}}},
 		Logger:      logger.NewMemoryLogger(),
 		IDGenerator: func() string { return "exec-123" },
 	})
@@ -110,7 +182,7 @@ func TestEngine_Execute_FunctionDisabled(t *testing.T) {
 
 	eng := New(Config{
 		DB:          db,
-		Runtime:     &mockRuntime{},
+		Runtimes:    []RuntimeEntry{{Language: LanguageLua, Runtime: &mockRuntime{}}},
 		Logger:      logger.NewMemoryLogger(),
 		IDGenerator: func() string { return "exec-123" },
 	})
@@ -137,7 +209,7 @@ func TestEngine_Execute_NoActiveVersion(t *testing.T) {
 
 	eng := New(Config{
 		DB:          db,
-		Runtime:     &mockRuntime{},
+		Runtimes:    []RuntimeEntry{{Language: LanguageLua, Runtime: &mockRuntime{}}},
 		Logger:      logger.NewMemoryLogger(),
 		IDGenerator: func() string { return "exec-123" },
 	})
@@ -160,7 +232,7 @@ func TestEngine_Execute_RuntimeError(t *testing.T) {
 		ID:   "test-func",
 		Name: "Test Function",
 	})
-	_, _ = db.CreateVersion(ctx, fn.ID, "invalid code", nil)
+	_, _ = db.CreateVersion(ctx, fn.ID, "invalid code", "", nil)
 
 	runtime := &mockRuntime{
 		err: errors.New("runtime error: syntax error"),
@@ -168,7 +240,7 @@ func TestEngine_Execute_RuntimeError(t *testing.T) {
 
 	eng := New(Config{
 		DB:          db,
-		Runtime:     runtime,
+		Runtimes:    []RuntimeEntry{{Language: LanguageLua, Runtime: runtime}},
 		Logger:      logger.NewMemoryLogger(),
 		IDGenerator: func() string { return "exec-123" },
 	})
@@ -204,7 +276,7 @@ func TestEngine_Execute_ErrorStatusCode(t *testing.T) {
 		ID:   "test-func",
 		Name: "Test Function",
 	})
-	_, _ = db.CreateVersion(ctx, fn.ID, "return {statusCode=500}", nil)
+	_, _ = db.CreateVersion(ctx, fn.ID, "return {statusCode=500}", "", nil)
 
 	runtime := &mockRuntime{
 		result: &RuntimeResult{
@@ -217,7 +289,7 @@ func TestEngine_Execute_ErrorStatusCode(t *testing.T) {
 
 	eng := New(Config{
 		DB:          db,
-		Runtime:     runtime,
+		Runtimes:    []RuntimeEntry{{Language: LanguageLua, Runtime: runtime}},
 		Logger:      logger.NewMemoryLogger(),
 		IDGenerator: func() string { return "exec-123" },
 	})

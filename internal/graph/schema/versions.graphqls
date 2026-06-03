@@ -1,5 +1,11 @@
 # Versions domain: immutable per-function code versions and their read queries.
 
+"""The language a function version's source code is written in."""
+enum Language {
+  lua
+  starlark
+}
+
 """A specific, immutable version of a function's source code."""
 type FunctionVersion {
   """Unique version identifier."""
@@ -8,8 +14,10 @@ type FunctionVersion {
   functionId: ID!
   """Monotonic version number within the function."""
   version: Int!
-  """The Lua source code for this version."""
+  """The source code for this version."""
   code: String!
+  """The language this version's code is written in."""
+  language: Language!
   """Creation time (Unix seconds)."""
   createdAt: Int!
   """Identifier of the actor that created this version, if known."""

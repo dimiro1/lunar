@@ -103,6 +103,15 @@ func cronStatusString(c *store.CronStatus) *string {
 	return &s
 }
 
+// languageValue converts an optional Language enum to the string the store's
+// CreateVersion expects, mapping nil to "" (which the store defaults to lua).
+func languageValue(l *store.Language) string {
+	if l == nil {
+		return ""
+	}
+	return string(*l)
+}
+
 // loadExecution fetches an execution by ID, returning (nil, nil) when it does
 // not exist so reverse edges (AIRequest.execution, …) resolve to null.
 func (r *Resolver) loadExecution(ctx context.Context, id string) (*store.Execution, error) {

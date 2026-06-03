@@ -13,6 +13,7 @@ const versionFields = `
 	function_id: functionId
 	version
 	code
+	language
 	created_at: createdAt
 	created_by: createdBy
 	is_active: isActive
@@ -23,6 +24,7 @@ const versionSummaryFields = `
 	id
 	function_id: functionId
 	version
+	language
 	created_at: createdAt
 	created_by: createdBy
 	is_active: isActive

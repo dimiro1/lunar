@@ -62,6 +62,7 @@ export default {
       name: "Name",
       description: "Description",
       status: "Status",
+      language: "Language",
       version: "Version",
     },
   },
@@ -79,9 +80,12 @@ export default {
   // Function creation
   create: {
     title: "Create New Function",
-    subtitle: "Initialize a new serverless function using Lua.",
+    subtitle: "Initialize a new serverless function in Lua or Starlark.",
     functionName: "Function Name",
     functionNamePlaceholder: "e.g., payment-webhook",
+    functionLanguage: "Language",
+    functionLanguageHelp:
+      "Choose the language for this function. It is fixed once the function is created.",
     starterTemplate: "Starter Template",
     createButton: "Create Function",
     failedToCreate: "Failed to create function",
@@ -454,6 +458,8 @@ export default {
       string: "string",
       number: "number",
       table: "table",
+      dict: "dict",
+      list: "list",
       function: "function",
       module: "module",
     },

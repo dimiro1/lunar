@@ -48,6 +48,34 @@ func TestCreateFunctionWithAPITemplate(t *testing.T) {
 		AssertFunctionCodeNot(functionName, "-- HTTP Handler")
 }
 
+// TestCreateStarlarkFunction verifies selecting the Starlark language produces a
+// Starlark function from the chosen template.
+func TestCreateStarlarkFunction(t *testing.T) {
+	bt := newBrowserTest(t)
+	functionName := "star-func-" + time.Now().Format("150405")
+
+	bt.Login("#!/functions/new").
+		WaitVisible(`#function-language`).
+		Type(`#function-name`, functionName).
+		SelectOption(`#function-language`, "starlark").
+		Sleep(200 * time.Millisecond).
+		Click(`.create-function-actions button`).
+		Sleep(1 * time.Second).
+		AssertURL("#!/functions").
+		AssertURLNot("/new").
+		AssertFunctionCode(functionName,
+			"# HTTP Handler",
+			"def handler(ctx, event):",
+			`"Hello from Starlark!"`,
+		).
+		AssertFunctionCodeNot(functionName, "function handler(ctx, event)")
+
+	fn := bt.GetFunction(functionName)
+	if fn == nil || fn.ActiveVersion.Language != "starlark" {
+		t.Fatalf("expected stored language %q, got %v", "starlark", fn)
+	}
+}
+
 // TestCreateFunctionValidation verifies validation error for empty name
 func TestCreateFunctionValidation(t *testing.T) {
 	bt := newBrowserTest(t)

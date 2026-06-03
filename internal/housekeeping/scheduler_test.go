@@ -42,7 +42,7 @@ func TestScheduler_CleanupOldExecutions(t *testing.T) {
 		t.Fatalf("CreateFunction failed: %v", err)
 	}
 
-	ver, err := db.CreateVersion(ctx, created.ID, "code", nil)
+	ver, err := db.CreateVersion(ctx, created.ID, "code", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion failed: %v", err)
 	}
@@ -114,7 +114,7 @@ func TestScheduler_CleanupOldExecutions_DefaultRetention(t *testing.T) {
 		t.Fatalf("CreateFunction failed: %v", err)
 	}
 
-	ver, err := db.CreateVersion(ctx, created.ID, "code", nil)
+	ver, err := db.CreateVersion(ctx, created.ID, "code", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion failed: %v", err)
 	}
@@ -181,12 +181,12 @@ func TestScheduler_CleanupOldExecutions_MultipleFunctions(t *testing.T) {
 		t.Fatalf("CreateFunction 2 failed: %v", err)
 	}
 
-	ver1, err := db.CreateVersion(ctx, fn1.ID, "code1", nil)
+	ver1, err := db.CreateVersion(ctx, fn1.ID, "code1", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion 1 failed: %v", err)
 	}
 
-	ver2, err := db.CreateVersion(ctx, fn2.ID, "code2", nil)
+	ver2, err := db.CreateVersion(ctx, fn2.ID, "code2", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion 2 failed: %v", err)
 	}

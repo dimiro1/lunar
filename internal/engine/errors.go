@@ -29,6 +29,15 @@ func (e *NoActiveVersionError) Error() string {
 	return fmt.Sprintf("no active version found for function: %s", e.FunctionID)
 }
 
+// UnsupportedLanguageError indicates the version's language has no registered runtime.
+type UnsupportedLanguageError struct {
+	Language string
+}
+
+func (e *UnsupportedLanguageError) Error() string {
+	return fmt.Sprintf("unsupported language: %s", e.Language)
+}
+
 // ExecutionRecordError indicates a failure to create/update execution record.
 type ExecutionRecordError struct {
 	Err error

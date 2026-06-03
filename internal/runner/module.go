@@ -12,10 +12,15 @@ import (
 	"go.uber.org/fx"
 )
 
-// Module provides the Lua runtime, bound to the engine.Runtime interface the
-// engine consumes.
+// Module provides the Lua runtime as a member of the engine's "runtimes" group,
+// keyed by its language so the engine can select it per function version.
 var Module = fx.Module("runner",
-	fx.Provide(provideRuntime),
+	fx.Provide(
+		fx.Annotate(
+			provideRuntime,
+			fx.ResultTags(`group:"runtimes"`),
+		),
+	),
 )
 
 // runtimeParams gathers the runtime's collaborators plus the app config (for the
@@ -34,16 +39,19 @@ type runtimeParams struct {
 	Config       config.Config
 }
 
-func provideRuntime(p runtimeParams) engine.Runtime {
-	return NewLuaRuntime(LuaRuntimeConfig{
-		Logger:       p.Logger,
-		KV:           p.KV,
-		Env:          p.Env,
-		HTTP:         p.HTTP,
-		AI:           p.AI,
-		AITracker:    p.AITracker,
-		Email:        p.Email,
-		EmailTracker: p.EmailTracker,
-		Timeout:      p.Config.ExecutionTimeout,
-	})
+func provideRuntime(p runtimeParams) engine.RuntimeEntry {
+	return engine.RuntimeEntry{
+		Language: engine.LanguageLua,
+		Runtime: NewLuaRuntime(LuaRuntimeConfig{
+			Logger:       p.Logger,
+			KV:           p.KV,
+			Env:          p.Env,
+			HTTP:         p.HTTP,
+			AI:           p.AI,
+			AITracker:    p.AITracker,
+			Email:        p.Email,
+			EmailTracker: p.EmailTracker,
+			Timeout:      p.Config.ExecutionTimeout,
+		}),
+	}
 }

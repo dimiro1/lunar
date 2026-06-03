@@ -24,7 +24,7 @@ type engineParams struct {
 	fx.In
 
 	DB           store.DB
-	Runtime      Runtime
+	Runtimes     []RuntimeEntry `group:"runtimes"`
 	Logger       logger.Logger
 	KVStore      kv.Store
 	EnvStore     env.Store
@@ -39,7 +39,7 @@ type engineParams struct {
 func provideEngine(p engineParams) Engine {
 	return New(Config{
 		DB:               p.DB,
-		Runtime:          p.Runtime,
+		Runtimes:         p.Runtimes,
 		Logger:           p.Logger,
 		KVStore:          p.KVStore,
 		EnvStore:         p.EnvStore,

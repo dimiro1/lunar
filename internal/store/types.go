@@ -86,6 +86,18 @@ type EmailRequest struct {
 	CreatedAt    int64              `json:"created_at"`
 }
 
+// Language identifies the language a version's code is written in. The values
+// match the GraphQL Language enum and the engine's runtime keys.
+type Language string
+
+const (
+	LanguageLua      Language = "lua"
+	LanguageStarlark Language = "starlark"
+)
+
+// defaultLanguage is applied to versions created without an explicit language.
+const defaultLanguage = LanguageLua
+
 // Function represents a serverless function
 type Function struct {
 	ID            string            `json:"id"`
@@ -105,13 +117,14 @@ type Function struct {
 
 // FunctionVersion represents a specific version of a function
 type FunctionVersion struct {
-	ID         string  `json:"id"`
-	FunctionID string  `json:"function_id"`
-	Version    int     `json:"version"`
-	Code       string  `json:"code"`
-	CreatedAt  int64   `json:"created_at"`
-	CreatedBy  *string `json:"created_by,omitempty"`
-	IsActive   bool    `json:"is_active"`
+	ID         string   `json:"id"`
+	FunctionID string   `json:"function_id"`
+	Version    int      `json:"version"`
+	Code       string   `json:"code"`
+	Language   Language `json:"language"`
+	CreatedAt  int64    `json:"created_at"`
+	CreatedBy  *string  `json:"created_by,omitempty"`
+	IsActive   bool     `json:"is_active"`
 }
 
 // Execution represents a function execution record

@@ -159,6 +159,7 @@ type ComplexityRoot struct {
 		FunctionID func(childComplexity int) int
 		ID         func(childComplexity int) int
 		IsActive   func(childComplexity int) int
+		Language   func(childComplexity int) int
 		Version    func(childComplexity int) int
 	}
 
@@ -836,6 +837,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.FunctionVersion.IsActive(childComplexity), true
+	case "FunctionVersion.language":
+		if e.ComplexityRoot.FunctionVersion.Language == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FunctionVersion.Language(childComplexity), true
 	case "FunctionVersion.version":
 		if e.ComplexityRoot.FunctionVersion.Version == nil {
 			break
@@ -1515,6 +1522,8 @@ func (ec *executionContext) childFields_FunctionVersion(ctx context.Context, fie
 		return ec.fieldContext_FunctionVersion_version(ctx, field)
 	case "code":
 		return ec.fieldContext_FunctionVersion_code(ctx, field)
+	case "language":
+		return ec.fieldContext_FunctionVersion_language(ctx, field)
 	case "createdAt":
 		return ec.fieldContext_FunctionVersion_createdAt(ctx, field)
 	case "createdBy":
@@ -4448,6 +4457,29 @@ func (ec *executionContext) fieldContext_FunctionVersion_code(_ context.Context,
 	return graphql.NewScalarFieldContext("FunctionVersion", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _FunctionVersion_language(ctx context.Context, field graphql.CollectedField, obj *store.FunctionVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FunctionVersion_language(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Language, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v store.Language) graphql.Marshaler {
+			return ec.marshalNLanguage2githubᚗcomᚋdimiro1ᚋlunarᚋinternalᚋstoreᚐLanguage(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FunctionVersion_language(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FunctionVersion", field, false, false, errors.New("field of type Language does not have child fields"))
+}
+
 func (ec *executionContext) _FunctionVersion_createdAt(ctx context.Context, field graphql.CollectedField, obj *store.FunctionVersion) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7045,7 +7077,11 @@ func (ec *executionContext) unmarshalInputCreateFunctionInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "description", "code"}
+	if _, present := asMap["language"]; !present {
+		asMap["language"] = "lua"
+	}
+
+	fieldsInOrder := [...]string{"name", "description", "code", "language"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -7073,6 +7109,13 @@ func (ec *executionContext) unmarshalInputCreateFunctionInput(ctx context.Contex
 				return it, err
 			}
 			it.Code = data
+		case "language":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("language"))
+			data, err := ec.unmarshalOLanguage2ᚖgithubᚗcomᚋdimiro1ᚋlunarᚋinternalᚋstoreᚐLanguage(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Language = data
 		}
 	}
 	return it, nil
@@ -8291,6 +8334,11 @@ func (ec *executionContext) _FunctionVersion(ctx context.Context, sel ast.Select
 			}
 		case "code":
 			out.Values[i] = ec._FunctionVersion_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "language":
+			out.Values[i] = ec._FunctionVersion_language(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -9754,6 +9802,23 @@ func (ec *executionContext) marshalNInt2int64(ctx context.Context, sel ast.Selec
 	return res
 }
 
+func (ec *executionContext) unmarshalNLanguage2githubᚗcomᚋdimiro1ᚋlunarᚋinternalᚋstoreᚐLanguage(ctx context.Context, v any) (store.Language, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := store.Language(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNLanguage2githubᚗcomᚋdimiro1ᚋlunarᚋinternalᚋstoreᚐLanguage(ctx context.Context, sel ast.SelectionSet, v store.Language) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) marshalNLogEntry2githubᚗcomᚋdimiro1ᚋlunarᚋinternalᚋgraphᚋmodelᚐLogEntry(ctx context.Context, sel ast.SelectionSet, v model.LogEntry) graphql.Marshaler {
 	return ec._LogEntry(ctx, sel, &v)
 }
@@ -10147,6 +10212,25 @@ func (ec *executionContext) marshalOInt2ᚖint64(ctx context.Context, sel ast.Se
 	_ = sel
 	_ = ctx
 	res := graphql.MarshalInt64(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOLanguage2ᚖgithubᚗcomᚋdimiro1ᚋlunarᚋinternalᚋstoreᚐLanguage(ctx context.Context, v any) (*store.Language, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := store.Language(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOLanguage2ᚖgithubᚗcomᚋdimiro1ᚋlunarᚋinternalᚋstoreᚐLanguage(ctx context.Context, sel ast.SelectionSet, v *store.Language) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
 	return res
 }
 

@@ -97,7 +97,7 @@ func (db *SQLiteDB) ListFunctions(ctx context.Context, params PaginationParams) 
 
 	query := `SELECT
 		f.id, f.name, f.description, f.disabled, f.retention_days, f.cron_schedule, f.cron_status, f.save_response, f.created_at, f.updated_at,
-		fv.id, fv.version, fv.code, fv.created_at, fv.created_by
+		fv.id, fv.version, fv.code, fv.language, fv.created_at, fv.created_by
 	FROM functions f
 	LEFT JOIN function_versions fv ON f.id = fv.function_id AND fv.is_active = 1
 	ORDER BY f.created_at DESC
@@ -117,14 +117,14 @@ func (db *SQLiteDB) ListFunctions(ctx context.Context, params PaginationParams) 
 		var cronSchedule sql.NullString
 		var cronStatus sql.NullString
 		var saveResponse sql.NullBool
-		var versionID, versionCode sql.NullString
+		var versionID, versionCode, versionLanguage sql.NullString
 		var versionNum sql.NullInt64
 		var versionCreatedAt sql.NullInt64
 		var versionCreatedBy sql.NullString
 
 		if err := rows.Scan(
 			&fn.ID, &fn.Name, &description, &fn.Disabled, &retentionDays, &cronSchedule, &cronStatus, &saveResponse, &fn.CreatedAt, &fn.UpdatedAt,
-			&versionID, &versionNum, &versionCode, &versionCreatedAt, &versionCreatedBy,
+			&versionID, &versionNum, &versionCode, &versionLanguage, &versionCreatedAt, &versionCreatedBy,
 		); err != nil {
 			return nil, 0, fmt.Errorf("failed to scan function: %w", err)
 		}
@@ -155,6 +155,7 @@ func (db *SQLiteDB) ListFunctions(ctx context.Context, params PaginationParams) 
 				FunctionID: fn.ID,
 				Version:    int(versionNum.Int64),
 				Code:       versionCode.String,
+				Language:   Language(versionLanguage.String),
 				CreatedAt:  versionCreatedAt.Int64,
 				IsActive:   true,
 			}
@@ -265,7 +266,9 @@ func (db *SQLiteDB) DeleteFunction(ctx context.Context, id string) error {
 
 // Version operations
 
-func (db *SQLiteDB) CreateVersion(ctx context.Context, functionID string, code string, createdBy *string) (FunctionVersion, error) {
+func (db *SQLiteDB) CreateVersion(ctx context.Context, functionID string, code string, language string, createdBy *string) (FunctionVersion, error) {
+	lang := Language(language)
+
 	tx, err := db.db.BeginTx(ctx, nil)
 	if err != nil {
 		return FunctionVersion{}, fmt.Errorf("failed to begin transaction: %w", err)
@@ -291,6 +294,23 @@ func (db *SQLiteDB) CreateVersion(ctx context.Context, functionID string, code s
 		return FunctionVersion{}, fmt.Errorf("failed to get next version: %w", err)
 	}
 
+	// Language is chosen at creation and sticky thereafter: when not specified,
+	// inherit it from the function's most recent version (Lua for the first one).
+	if lang == "" {
+		var prev sql.NullString
+		err = tx.QueryRowContext(ctx,
+			"SELECT language FROM function_versions WHERE function_id = ? ORDER BY version DESC LIMIT 1",
+			functionID).Scan(&prev)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return FunctionVersion{}, fmt.Errorf("failed to read previous version language: %w", err)
+		}
+		if prev.Valid && prev.String != "" {
+			lang = Language(prev.String)
+		} else {
+			lang = defaultLanguage
+		}
+	}
+
 	// Deactivate all previous versions
 	_, err = tx.ExecContext(ctx, "UPDATE function_versions SET is_active = 0 WHERE function_id = ?", functionID)
 	if err != nil {
@@ -302,16 +322,17 @@ func (db *SQLiteDB) CreateVersion(ctx context.Context, functionID string, code s
 		FunctionID: functionID,
 		Version:    versionNum,
 		Code:       code,
+		Language:   lang,
 		CreatedAt:  time.Now().Unix(),
 		CreatedBy:  createdBy,
 		IsActive:   true,
 	}
 
-	query := `INSERT INTO function_versions (id, function_id, version, code, created_at, created_by, is_active)
-	          VALUES (?, ?, ?, ?, ?, ?, ?)`
+	query := `INSERT INTO function_versions (id, function_id, version, code, language, created_at, created_by, is_active)
+	          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 
 	_, err = tx.ExecContext(ctx, query, version.ID, version.FunctionID, version.Version,
-		version.Code, version.CreatedAt, version.CreatedBy, 1)
+		version.Code, version.Language, version.CreatedAt, version.CreatedBy, 1)
 	if err != nil {
 		return FunctionVersion{}, fmt.Errorf("failed to insert version: %w", err)
 	}
@@ -324,14 +345,14 @@ func (db *SQLiteDB) CreateVersion(ctx context.Context, functionID string, code s
 }
 
 func (db *SQLiteDB) GetVersion(ctx context.Context, functionID string, version int) (FunctionVersion, error) {
-	query := `SELECT id, function_id, version, code, created_at, created_by, is_active
+	query := `SELECT id, function_id, version, code, language, created_at, created_by, is_active
 	          FROM function_versions WHERE function_id = ? AND version = ?`
 
 	var v FunctionVersion
 	var createdBy sql.NullString
 
 	err := db.db.QueryRowContext(ctx, query, functionID, version).Scan(
-		&v.ID, &v.FunctionID, &v.Version, &v.Code, &v.CreatedAt, &createdBy, &v.IsActive,
+		&v.ID, &v.FunctionID, &v.Version, &v.Code, &v.Language, &v.CreatedAt, &createdBy, &v.IsActive,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return FunctionVersion{}, ErrVersionNotFound
@@ -348,14 +369,14 @@ func (db *SQLiteDB) GetVersion(ctx context.Context, functionID string, version i
 }
 
 func (db *SQLiteDB) GetVersionByID(ctx context.Context, versionID string) (FunctionVersion, error) {
-	query := `SELECT id, function_id, version, code, created_at, created_by, is_active
+	query := `SELECT id, function_id, version, code, language, created_at, created_by, is_active
 	          FROM function_versions WHERE id = ?`
 
 	var v FunctionVersion
 	var createdBy sql.NullString
 
 	err := db.db.QueryRowContext(ctx, query, versionID).Scan(
-		&v.ID, &v.FunctionID, &v.Version, &v.Code, &v.CreatedAt, &createdBy, &v.IsActive,
+		&v.ID, &v.FunctionID, &v.Version, &v.Code, &v.Language, &v.CreatedAt, &createdBy, &v.IsActive,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return FunctionVersion{}, ErrVersionNotFound
@@ -382,7 +403,7 @@ func (db *SQLiteDB) ListVersions(ctx context.Context, functionID string, params 
 	// Normalize pagination parameters
 	params = params.Normalize()
 
-	query := `SELECT id, function_id, version, code, created_at, created_by, is_active
+	query := `SELECT id, function_id, version, code, language, created_at, created_by, is_active
 	          FROM function_versions WHERE function_id = ?
 	          ORDER BY version DESC
 	          LIMIT ? OFFSET ?`
@@ -398,7 +419,7 @@ func (db *SQLiteDB) ListVersions(ctx context.Context, functionID string, params 
 		var v FunctionVersion
 		var createdBy sql.NullString
 
-		if err := rows.Scan(&v.ID, &v.FunctionID, &v.Version, &v.Code, &v.CreatedAt, &createdBy, &v.IsActive); err != nil {
+		if err := rows.Scan(&v.ID, &v.FunctionID, &v.Version, &v.Code, &v.Language, &v.CreatedAt, &createdBy, &v.IsActive); err != nil {
 			return nil, 0, fmt.Errorf("failed to scan version: %w", err)
 		}
 
@@ -413,14 +434,14 @@ func (db *SQLiteDB) ListVersions(ctx context.Context, functionID string, params 
 }
 
 func (db *SQLiteDB) GetActiveVersion(ctx context.Context, functionID string) (FunctionVersion, error) {
-	query := `SELECT id, function_id, version, code, created_at, created_by, is_active
+	query := `SELECT id, function_id, version, code, language, created_at, created_by, is_active
 	          FROM function_versions WHERE function_id = ? AND is_active = 1`
 
 	var v FunctionVersion
 	var createdBy sql.NullString
 
 	err := db.db.QueryRowContext(ctx, query, functionID).Scan(
-		&v.ID, &v.FunctionID, &v.Version, &v.Code, &v.CreatedAt, &createdBy, &v.IsActive,
+		&v.ID, &v.FunctionID, &v.Version, &v.Code, &v.Language, &v.CreatedAt, &createdBy, &v.IsActive,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return FunctionVersion{}, ErrNoActiveVersion

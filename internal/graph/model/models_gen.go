@@ -21,8 +21,10 @@ type AIRequestConnection struct {
 type CreateFunctionInput struct {
 	Name        string  `json:"name"`
 	Description *string `json:"description,omitempty"`
-	// Lua source code for the initial version.
+	// Source code for the initial version.
 	Code string `json:"code"`
+	// Language of the initial version's code. Defaults to lua.
+	Language *store.Language `json:"language,omitempty"`
 }
 
 // A single line in a version diff.
