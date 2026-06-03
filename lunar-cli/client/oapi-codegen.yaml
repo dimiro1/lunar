@@ -1,7 +1,0 @@
-package: client
-generate:
-  client: true
-  models: true
-output: client.gen.go
-output-options:
-  response-type-suffix: Result

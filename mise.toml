@@ -40,10 +40,9 @@ run = [
   "go build -o ../$BUILD_DIR/$CLI_BINARY_NAME .",
 ]
 
-[tasks.generate-cli]
-description = "Regenerate CLI from openapi.yaml (go generate)"
-dir = "lunar-cli"
-run = "go generate ./..."
+[tasks.generate-graphql]
+description = "Regenerate GraphQL code from the schema (gqlgen)"
+run = "go generate ./internal/graph/..."
 
 # ---------------------------------------------------------------------------
 # Test
@@ -108,16 +107,91 @@ run = "go run ./cmd"
 description = "Start development mode with air (live reload)"
 run = "air"
 
+[tasks.seed]
+description = "Create a few example functions on a running server (covers create/env/kv)"
+depends = ["build-cli"]
+run = '''
+set -euo pipefail
+
+SERVER="${LUNAR_SERVER:-http://localhost:${PORT:-3000}}"
+TOKEN="${LUNAR_TOKEN:-${API_KEY:-}}"
+if [ -z "$TOKEN" ] && [ -f "${DATA_DIR:-./data}/api_key.txt" ]; then
+  TOKEN="$(cat "${DATA_DIR:-./data}/api_key.txt")"
+fi
+if [ -z "$TOKEN" ]; then
+  echo "No API token found. Set LUNAR_TOKEN or API_KEY, or start the server once" >&2
+  echo "so that ${DATA_DIR:-./data}/api_key.txt is generated, then re-run." >&2
+  exit 1
+fi
+export LUNAR_SERVER="$SERVER" LUNAR_TOKEN="$TOKEN"
+CLI="$BUILD_DIR/$CLI_BINARY_NAME"
+
+# create_fn <name> <description> ; reads Lua from stdin ; prints the new id.
+create_fn() {
+  "$CLI" functions create --name "$1" --description "$2" --code - -o json \
+    | sed -n 's/^  "id": "\([^"]*\)".*/\1/p' | head -1
+}
+
+echo "Seeding $SERVER ..."
+
+# 1. hello — the simplest possible function.
+create_fn hello "Returns a plain-text greeting" >/dev/null <<'LUA'
+function handler(ctx, event)
+  return { statusCode = 200, body = "Hello from Lunar!\n" }
+end
+LUA
+
+# 2. echo — reflects the incoming request back as JSON.
+create_fn echo "Echoes the request as JSON" >/dev/null <<'LUA'
+function handler(ctx, event)
+  local body, err = json.encode({
+    method = event.method,
+    path = event.relativePath,
+    query = event.query,
+    body = event.body,
+  })
+  if err then return { statusCode = 500, body = err } end
+  return {
+    statusCode = 200,
+    headers = { ["Content-Type"] = "application/json" },
+    body = body,
+  }
+end
+LUA
+
+# 3. counter — persists a hit count in the KV store; seed an initial value.
+COUNTER_ID="$(create_fn counter "Counts requests via the KV store" <<'LUA'
+function handler(ctx, event)
+  local n = tonumber(kv.get("count") or "0") + 1
+  kv.set("count", tostring(n))
+  return { statusCode = 200, body = "count: " .. n .. "\n" }
+end
+LUA
+)"
+"$CLI" functions kv "$COUNTER_ID" --global=false --kv count=100 >/dev/null
+
+# 4. greet — reads a greeting from an env var; seed the env var.
+GREET_ID="$(create_fn greet "Greets using an env var" <<'LUA'
+function handler(ctx, event)
+  local greeting = env.get("GREETING") or "Hello"
+  local who = event.query["name"] or "world"
+  return { statusCode = 200, body = greeting .. ", " .. who .. "!\n" }
+end
+LUA
+)"
+"$CLI" functions env "$GREET_ID" --env GREETING=Howdy >/dev/null
+
+echo "Done. Created: hello, echo, counter, greet"
+echo "Try:  curl $SERVER/fn/$GREET_ID?name=Lunar"
+'''
+
 [tasks.docker]
 description = "Run with Docker Compose"
 run = "docker compose up"
 
 [tasks.clean]
 description = "Remove build artifacts"
-run = [
-  "rm -rf $BUILD_DIR",
-  "rm -f cli/cmd/*.gen.go cli/client/client.gen.go",
-]
+run = "rm -rf $BUILD_DIR"
 
 # ---------------------------------------------------------------------------
 # Release

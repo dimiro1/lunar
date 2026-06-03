@@ -1,0 +1,70 @@
+# Versions domain: immutable per-function code versions and their read queries.
+
+"""A specific, immutable version of a function's source code."""
+type FunctionVersion {
+  """Unique version identifier."""
+  id: ID!
+  """ID of the function this version belongs to."""
+  functionId: ID!
+  """Monotonic version number within the function."""
+  version: Int!
+  """The Lua source code for this version."""
+  code: String!
+  """Creation time (Unix seconds)."""
+  createdAt: Int!
+  """Identifier of the actor that created this version, if known."""
+  createdBy: String
+  """Whether this is the function's active version."""
+  isActive: Boolean!
+  """The function this version belongs to, or null if it has since been
+  deleted."""
+  function: Function
+}
+
+"""A paginated list of function versions."""
+type FunctionVersionConnection {
+  """The versions in this page."""
+  nodes: [FunctionVersion!]!
+  """Pagination metadata for the list."""
+  pageInfo: PageInfo!
+}
+
+"""The kind of change a diff line represents."""
+enum DiffLineType {
+  unchanged
+  added
+  removed
+}
+
+"""A single line in a version diff."""
+type DiffLine {
+  lineType: DiffLineType!
+  """Line number in the old version, if present."""
+  oldLine: Int
+  """Line number in the new version, if present."""
+  newLine: Int
+  content: String!
+}
+
+"""A line-by-line diff between two versions of a function."""
+type VersionDiff {
+  oldVersion: Int!
+  newVersion: Int!
+  lines: [DiffLine!]!
+}
+
+extend type Query {
+  """List a function's versions, newest first."""
+  versions(functionId: ID!, limit: Int = 20, offset: Int = 0): FunctionVersionConnection!
+  """Fetch a single version by function ID and version number, or null if absent."""
+  version(functionId: ID!, version: Int!): FunctionVersion
+  """Compute the diff between two versions of a function."""
+  versionDiff(functionId: ID!, oldVersion: Int!, newVersion: Int!): VersionDiff!
+}
+
+extend type Mutation {
+  """Make the given version the function's active version; returns the function."""
+  activateVersion(functionId: ID!, versionId: ID!): Function!
+  """Delete a version (the active version cannot be deleted). Returns true on success."""
+  deleteVersion(functionId: ID!, versionId: ID!): Boolean!
+}

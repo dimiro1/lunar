@@ -109,17 +109,15 @@ export const FunctionVersions = {
   loadData: async (id) => {
     FunctionVersions.loading = true;
     try {
-      const [func, versions] = await Promise.all([
-        API.functions.get(id),
-        API.versions.list(
+      const { func, versions, pagination } = await API.functions
+        .getWithVersions(
           id,
           FunctionVersions.versionsLimit,
           FunctionVersions.versionsOffset,
-        ),
-      ]);
+        );
       FunctionVersions.func = func;
-      FunctionVersions.versions = versions.versions || [];
-      FunctionVersions.versionsTotal = versions.pagination?.total || 0;
+      FunctionVersions.versions = versions || [];
+      FunctionVersions.versionsTotal = pagination?.total || 0;
     } catch (e) {
       console.error("Failed to load function:", e);
     } finally {

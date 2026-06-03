@@ -1,0 +1,105 @@
+# Functions domain: the function entity and its read queries.
+
+"""The status of a function's cron schedule."""
+enum CronStatus {
+  active
+  paused
+}
+
+"""A serverless Lua function and its currently active version."""
+type Function {
+  """Unique function identifier."""
+  id: ID!
+  """Human-readable function name."""
+  name: String!
+  """Optional description of what the function does."""
+  description: String
+  """Whether the function is disabled (will not execute)."""
+  disabled: Boolean!
+  """Number of days execution history is retained, if set."""
+  retentionDays: Int
+  """Cron expression for scheduled execution, if configured."""
+  cronSchedule: String
+  """Status of the cron schedule, if configured."""
+  cronStatus: CronStatus
+  """Whether responses from executions are persisted."""
+  saveResponse: Boolean!
+  """Creation time (Unix seconds)."""
+  createdAt: Int!
+  """Last update time (Unix seconds)."""
+  updatedAt: Int!
+  """The version currently served when the function is invoked."""
+  activeVersion: FunctionVersion!
+  """
+  All versions of this function, newest first. Paginated and fetched lazily —
+  only queries that select it read the version store.
+  """
+  versions(limit: Int = 20, offset: Int = 0): FunctionVersionConnection!
+  """
+  This function's executions, newest first. Paginated and fetched lazily.
+  """
+  executions(limit: Int = 20, offset: Int = 0): ExecutionConnection!
+  """The function's next scheduled run, derived from its cron settings."""
+  nextRun: NextRun!
+  """
+  Environment variables available to the function at runtime. Fetched lazily —
+  only queries that select this field read the env store.
+  """
+  envVars: Map!
+  """Function-scoped key/value store entries. Fetched lazily."""
+  scopedData: Map!
+  """Global key/value store entries shared across all functions. Fetched lazily."""
+  globalData: Map!
+}
+
+"""A paginated list of functions."""
+type FunctionConnection {
+  """The functions in this page."""
+  nodes: [Function!]!
+  """Pagination metadata for the list."""
+  pageInfo: PageInfo!
+}
+
+type Query {
+  """List functions with their active version, newest first."""
+  functions(limit: Int = 20, offset: Int = 0): FunctionConnection!
+  """Fetch a single function by ID, or null if it does not exist."""
+  function(id: ID!): Function
+}
+
+"""Fields for creating a function and its initial version."""
+input CreateFunctionInput {
+  name: String!
+  description: String
+  """Lua source code for the initial version."""
+  code: String!
+}
+
+"""
+Fields for updating a function. All fields are optional; providing `code`
+creates a new active version, and changing cron settings reschedules the
+function.
+"""
+input UpdateFunctionInput {
+  name: String
+  description: String
+  code: String
+  disabled: Boolean
+  retentionDays: Int
+  cronSchedule: String
+  cronStatus: CronStatus
+  saveResponse: Boolean
+}
+
+type Mutation {
+  """Create a function with an initial version."""
+  createFunction(input: CreateFunctionInput!): Function!
+  """Update function metadata and/or create a new version from `code`."""
+  updateFunction(id: ID!, input: UpdateFunctionInput!): Function!
+  """Delete a function and all of its associated data. Returns true on success."""
+  deleteFunction(id: ID!): Boolean!
+  """Replace the function's environment variables with the given set."""
+  setFunctionEnv(id: ID!, env: Map!): Function!
+  """Replace function-scoped (or global) KV entries with the given set."""
+  setFunctionKv(id: ID!, kv: Map!, global: Boolean = false): Function!
+}

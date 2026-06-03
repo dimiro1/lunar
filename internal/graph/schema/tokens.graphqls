@@ -1,0 +1,21 @@
+# API tokens domain: management of tokens used by the CLI / connected clients.
+
+"""An API token issued to a connected client (e.g. the CLI)."""
+type APIToken {
+  id: ID!
+  name: String!
+  createdAt: Int!
+  """Last time the token was used (Unix seconds), if ever."""
+  lastUsed: Int
+  revoked: Boolean!
+}
+
+extend type Query {
+  """List all API tokens, newest first."""
+  apiTokens: [APIToken!]!
+}
+
+extend type Mutation {
+  """Revoke an API token. Returns true on success."""
+  revokeApiToken(id: ID!): Boolean!
+}

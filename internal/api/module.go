@@ -5,14 +5,9 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/dimiro1/lunar/internal/config"
-	internalcron "github.com/dimiro1/lunar/internal/cron"
 	"github.com/dimiro1/lunar/internal/engine"
-	"github.com/dimiro1/lunar/internal/services/ai"
-	"github.com/dimiro1/lunar/internal/services/email"
-	"github.com/dimiro1/lunar/internal/services/env"
-	"github.com/dimiro1/lunar/internal/services/kv"
-	"github.com/dimiro1/lunar/internal/services/logger"
 	"github.com/dimiro1/lunar/internal/store"
 	"go.uber.org/fx"
 )
@@ -25,36 +20,26 @@ var Module = fx.Module("api",
 )
 
 // serverParams gathers everything the API server needs via dependency
-// injection. The engine.Engine is injected as a fully-built graph node rather
-// than assembled inside the server.
+// injection. The engine.Engine and the GraphQL handler are injected as
+// fully-built graph nodes rather than assembled inside the server.
 type serverParams struct {
 	fx.In
 
-	DB           store.DB
-	Engine       engine.Engine
-	Logger       logger.Logger
-	KVStore      kv.Store
-	EnvStore     env.Store
-	AITracker    ai.Tracker
-	EmailTracker email.Tracker
-	Scheduler    *internalcron.FunctionScheduler
-	Frontend     http.Handler
-	Config       config.Config
+	DB       store.DB
+	Engine   engine.Engine
+	Frontend http.Handler
+	GraphQL  *handler.Server
+	Config   config.Config
 }
 
 func provideServer(p serverParams) *Server {
 	return newServer(serverDeps{
 		DB:              p.DB,
 		Engine:          p.Engine,
-		Logger:          p.Logger,
-		KVStore:         p.KVStore,
-		EnvStore:        p.EnvStore,
-		AITracker:       p.AITracker,
-		EmailTracker:    p.EmailTracker,
-		Scheduler:       p.Scheduler,
 		FrontendHandler: p.Frontend,
 		APIKey:          p.Config.APIKey,
 		BaseURL:         p.Config.BaseURL,
+		GraphQL:         p.GraphQL,
 	})
 }
 

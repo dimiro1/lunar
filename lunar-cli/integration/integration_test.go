@@ -51,6 +51,13 @@ func newTestServer() (*httptest.Server, func()) {
 	if err != nil {
 		panic(fmt.Sprintf("open db: %v", err))
 	}
+	// A plain ":memory:" database is private to each pooled connection, so
+	// migrations (and the per-connection PRAGMA below) would apply to one
+	// connection while other queries hit fresh, empty ones. The GraphQL server
+	// resolves sibling fields concurrently, which makes the pool hand out those
+	// extra connections — pinning to a single connection keeps every query on
+	// the one migrated in-memory database.
+	db.SetMaxOpenConns(1)
 	if _, err := db.Exec("PRAGMA foreign_keys = ON"); err != nil {
 		panic(fmt.Sprintf("foreign keys: %v", err))
 	}

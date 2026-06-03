@@ -2,15 +2,12 @@ package cmd
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"strings"
 
 	"github.com/caarlos0/env/v11"
-	"github.com/dimiro1/lunar/lunar-cli/client"
 	"github.com/dimiro1/lunar/lunar-cli/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -116,23 +113,6 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&flagToken, "token", "", "API token (env: LUNAR_TOKEN)")
 	rootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "", "Output format: pretty (default) or json")
 	rootCmd.PersistentFlags().BoolVar(&showCode, "show-code", false, "Print code fields when displaying functions or versions")
-}
-
-// mustClient builds an authenticated HTTP client using the resolved server/token.
-func mustClient() *client.ClientWithResponses {
-	c, err := client.NewClientWithResponses(serverURL,
-		client.WithRequestEditorFn(func(ctx context.Context, req *http.Request) error {
-			if apiToken != "" {
-				req.Header.Set("Authorization", "Bearer "+apiToken)
-			}
-			return nil
-		}),
-	)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error creating client: %v\n", err)
-		os.Exit(1)
-	}
-	return c
 }
 
 // printJSON renders a JSON response body using the active output format.

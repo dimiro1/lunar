@@ -258,8 +258,8 @@ func TestHandleDeviceApproveFlow(t *testing.T) {
 		t.Error("expected token to be set")
 	}
 
-	// Step 5: Verify the token works for authentication
-	reqAuth := httptest.NewRequest(http.MethodGet, "/api/functions", nil)
+	// Step 5: Verify the token works for authentication against /graphql
+	reqAuth := newGraphQLProbe()
 	reqAuth.Header.Set("Authorization", "Bearer "+tokenResp.Token)
 	wAuth := httptest.NewRecorder()
 	server.Handler().ServeHTTP(wAuth, reqAuth)
@@ -366,110 +366,6 @@ func TestHandleDeviceApprove_InvalidAction(t *testing.T) {
 	}
 }
 
-func TestHandleListAPITokens(t *testing.T) {
-	database := store.NewMemoryDB()
-	server := createTestServer(database)
-
-	// List should be empty initially
-	req := makeAuthRequest(http.MethodGet, "/api/tokens", nil)
-	w := httptest.NewRecorder()
-	server.Handler().ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected status 200, got %d: %s", w.Code, w.Body.String())
-	}
-
-	var resp map[string][]store.APIToken
-	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
-		t.Fatalf("failed to decode response: %v", err)
-	}
-
-	if len(resp["tokens"]) != 0 {
-		t.Errorf("expected 0 tokens, got %d", len(resp["tokens"]))
-	}
-}
-
-func TestHandleRevokeAPIToken(t *testing.T) {
-	database := store.NewMemoryDB()
-	server := createTestServer(database)
-
-	// Create a token via the device flow
-	reqCreate := httptest.NewRequest(http.MethodPost, "/api/auth/device-request", nil)
-	wCreate := httptest.NewRecorder()
-	server.Handler().ServeHTTP(wCreate, reqCreate)
-
-	var createResp DeviceRequestResponse
-	if err := json.NewDecoder(wCreate.Body).Decode(&createResp); err != nil {
-		t.Fatalf("failed to decode create response: %v", err)
-	}
-
-	// Approve
-	approveBody, _ := json.Marshal(DeviceApproveRequest{
-		DeviceCode: createResp.DeviceCode,
-		Action:     "allow",
-	})
-	reqApprove := makeAuthRequest(http.MethodPost, "/api/auth/device-approve", approveBody)
-	wApprove := httptest.NewRecorder()
-	server.Handler().ServeHTTP(wApprove, reqApprove)
-
-	// Get the token from poll
-	reqToken := httptest.NewRequest(http.MethodGet, "/api/auth/device-token?code="+createResp.DeviceCode, nil)
-	wToken := httptest.NewRecorder()
-	server.Handler().ServeHTTP(wToken, reqToken)
-
-	var tokenResp DeviceTokenResponse
-	if err := json.NewDecoder(wToken.Body).Decode(&tokenResp); err != nil {
-		t.Fatalf("failed to decode token response: %v", err)
-	}
-
-	// List tokens to get the ID
-	reqList := makeAuthRequest(http.MethodGet, "/api/tokens", nil)
-	wList := httptest.NewRecorder()
-	server.Handler().ServeHTTP(wList, reqList)
-
-	var listResp map[string][]store.APIToken
-	if err := json.NewDecoder(wList.Body).Decode(&listResp); err != nil {
-		t.Fatalf("failed to decode list response: %v", err)
-	}
-
-	if len(listResp["tokens"]) != 1 {
-		t.Fatalf("expected 1 token, got %d", len(listResp["tokens"]))
-	}
-
-	tokenID := listResp["tokens"][0].ID
-
-	// Revoke the token
-	reqRevoke := makeAuthRequest(http.MethodPost, "/api/tokens/"+tokenID+"/revoke", nil)
-	wRevoke := httptest.NewRecorder()
-	server.Handler().ServeHTTP(wRevoke, reqRevoke)
-
-	if wRevoke.Code != http.StatusOK {
-		t.Fatalf("expected status 200 for revoke, got %d: %s", wRevoke.Code, wRevoke.Body.String())
-	}
-
-	// Verify the token no longer works for auth
-	reqAuth := httptest.NewRequest(http.MethodGet, "/api/functions", nil)
-	reqAuth.Header.Set("Authorization", "Bearer "+tokenResp.Token)
-	wAuth := httptest.NewRecorder()
-	server.Handler().ServeHTTP(wAuth, reqAuth)
-
-	if wAuth.Code != http.StatusUnauthorized {
-		t.Errorf("expected status 401 after revocation, got %d", wAuth.Code)
-	}
-}
-
-func TestHandleRevokeAPIToken_NotFound(t *testing.T) {
-	server := createTestServer(store.NewMemoryDB())
-
-	req := makeAuthRequest(http.MethodPost, "/api/tokens/nonexistent/revoke", nil)
-	w := httptest.NewRecorder()
-	server.Handler().ServeHTTP(w, req)
-
-	if w.Code != http.StatusNotFound {
-		t.Errorf("expected status 404, got %d", w.Code)
-	}
-}
-
 func TestAuthMiddleware_WithAPIToken(t *testing.T) {
 	database := store.NewMemoryDB()
 	server := createTestServer(database)
@@ -488,7 +384,7 @@ func TestAuthMiddleware_WithAPIToken(t *testing.T) {
 	}
 
 	// Use the raw token for auth
-	req := httptest.NewRequest(http.MethodGet, "/api/functions", nil)
+	req := newGraphQLProbe()
 	req.Header.Set("Authorization", "Bearer "+rawToken)
 	w := httptest.NewRecorder()
 	server.Handler().ServeHTTP(w, req)
@@ -501,7 +397,7 @@ func TestAuthMiddleware_WithAPIToken(t *testing.T) {
 func TestAuthMiddleware_InvalidToken(t *testing.T) {
 	server := createTestServer(store.NewMemoryDB())
 
-	req := httptest.NewRequest(http.MethodGet, "/api/functions", nil)
+	req := newGraphQLProbe()
 	req.Header.Set("Authorization", "Bearer invalid-token")
 	w := httptest.NewRecorder()
 	server.Handler().ServeHTTP(w, req)
@@ -515,7 +411,8 @@ func TestAuthMiddleware_AdminKeyStillWorks(t *testing.T) {
 	server := createTestServer(store.NewMemoryDB())
 
 	// Admin API key should still work
-	req := makeAuthRequest(http.MethodGet, "/api/functions", nil)
+	req := newGraphQLProbe()
+	req.Header.Set("Authorization", "Bearer test-api-key")
 	w := httptest.NewRecorder()
 	server.Handler().ServeHTTP(w, req)
 
@@ -527,7 +424,7 @@ func TestAuthMiddleware_AdminKeyStillWorks(t *testing.T) {
 func TestAuthMiddleware_CookieStillWorks(t *testing.T) {
 	server := createTestServer(store.NewMemoryDB())
 
-	req := httptest.NewRequest(http.MethodGet, "/api/functions", nil)
+	req := newGraphQLProbe()
 	req.AddCookie(&http.Cookie{
 		Name:  "auth_token",
 		Value: "test-api-key",
