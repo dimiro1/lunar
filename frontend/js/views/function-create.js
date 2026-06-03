@@ -11,9 +11,11 @@ import {
   FormHelp,
   FormInput,
   FormLabel,
+  FormSelect,
 } from "../components/form.js";
 import {
   FunctionTemplates,
+  getTemplateCode,
   getTemplateDescription,
   getTemplateName,
   TemplateCard,
@@ -25,6 +27,7 @@ import {
  * @property {string} name - Function name
  * @property {string} description - Function description
  * @property {string} code - Initial function code
+ * @property {string} language - Function language ("lua" or "starlark")
  */
 
 /**
@@ -47,6 +50,7 @@ export const FunctionCreate = {
     name: "",
     description: "",
     code: "",
+    language: "lua",
   },
 
   /**
@@ -69,26 +73,37 @@ export const FunctionCreate = {
       name: "",
       description: "",
       code: "",
+      language: "lua",
     };
     FunctionCreate.errors = {};
     FunctionCreate.selectedTemplate = "http";
-    // Set initial code from the default template
-    const template = FunctionTemplates.find((t) => t.id === "http");
-    if (template) {
-      FunctionCreate.formData.code = template.code;
-    }
+    // Set initial code from the default template in the default language.
+    FunctionCreate.formData.code = getTemplateCode("http", "lua");
   },
 
   /**
-   * Selects a template and updates the code.
+   * Selects a template and updates the code for the current language.
    * @param {string} templateId - Template ID to select
    */
   selectTemplate: (templateId) => {
     FunctionCreate.selectedTemplate = templateId;
-    const template = FunctionTemplates.find((t) => t.id === templateId);
-    if (template) {
-      FunctionCreate.formData.code = template.code;
-    }
+    FunctionCreate.formData.code = getTemplateCode(
+      templateId,
+      FunctionCreate.formData.language,
+    );
+  },
+
+  /**
+   * Switches the function language and refreshes the starter code to the
+   * selected template's snippet in the new language.
+   * @param {string} language - "lua" or "starlark"
+   */
+  selectLanguage: (language) => {
+    FunctionCreate.formData.language = language;
+    FunctionCreate.formData.code = getTemplateCode(
+      FunctionCreate.selectedTemplate,
+      language,
+    );
   },
 
   /**
@@ -115,6 +130,7 @@ export const FunctionCreate = {
         name: FunctionCreate.formData.name,
         description: FunctionCreate.formData.description,
         code: FunctionCreate.formData.code,
+        language: FunctionCreate.formData.language,
       };
 
       await API.functions.create(payload);
@@ -165,6 +181,24 @@ export const FunctionCreate = {
           }),
           FunctionCreate.errors.name &&
           m(FormHelp, { error: true, text: FunctionCreate.errors.name }),
+        ]),
+
+        // Language
+        m(FormGroup, [
+          m(FormLabel, {
+            text: t("create.functionLanguage"),
+            for: "function-language",
+          }),
+          m(FormSelect, {
+            id: "function-language",
+            selected: FunctionCreate.formData.language,
+            options: [
+              { value: "lua", label: "Lua" },
+              { value: "starlark", label: "Starlark" },
+            ],
+            onchange: (e) => FunctionCreate.selectLanguage(e.target.value),
+          }),
+          m(FormHelp, { text: t("create.functionLanguageHelp") }),
         ]),
 
         // Starter Template

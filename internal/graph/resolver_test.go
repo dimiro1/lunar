@@ -73,7 +73,7 @@ func seedFunction(t *testing.T, db store.DB, id, name, code string) {
 	if _, err := db.CreateFunction(ctx, store.Function{ID: id, Name: name}); err != nil {
 		t.Fatalf("CreateFunction(%q): %v", id, err)
 	}
-	if _, err := db.CreateVersion(ctx, id, code, nil); err != nil {
+	if _, err := db.CreateVersion(ctx, id, code, "", nil); err != nil {
 		t.Fatalf("CreateVersion(%q): %v", id, err)
 	}
 }
@@ -170,7 +170,7 @@ func TestGraphEdges(t *testing.T) {
 	if _, err := db.CreateFunction(ctx, store.Function{ID: "fn1", Name: "edges"}); err != nil {
 		t.Fatalf("CreateFunction: %v", err)
 	}
-	ver, err := db.CreateVersion(ctx, "fn1", "return 1", nil)
+	ver, err := db.CreateVersion(ctx, "fn1", "return 1", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion: %v", err)
 	}

@@ -14,6 +14,7 @@ require (
 	github.com/sergi/go-diff v1.4.0
 	github.com/vektah/gqlparser/v2 v2.5.33
 	github.com/yuin/gopher-lua v1.1.1
+	go.starlark.net v0.0.0-20260522144826-ec58d4b459e2
 	go.uber.org/fx v1.24.0
 	modernc.org/sqlite v1.45.0
 )

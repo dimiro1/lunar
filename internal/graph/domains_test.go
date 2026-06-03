@@ -145,10 +145,10 @@ func TestVersionDiff(t *testing.T) {
 	if _, err := db.CreateFunction(ctx, store.Function{ID: "fn1", Name: "f"}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.CreateVersion(ctx, "fn1", "line1\nline2", nil); err != nil {
+	if _, err := db.CreateVersion(ctx, "fn1", "line1\nline2", "", nil); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.CreateVersion(ctx, "fn1", "line1\nCHANGED", nil); err != nil {
+	if _, err := db.CreateVersion(ctx, "fn1", "line1\nCHANGED", "", nil); err != nil {
 		t.Fatal(err)
 	}
 

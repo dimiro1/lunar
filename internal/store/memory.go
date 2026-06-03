@@ -146,7 +146,7 @@ func (db *MemoryDB) DeleteFunction(_ context.Context, id string) error {
 
 // Version operations
 
-func (db *MemoryDB) CreateVersion(_ context.Context, functionID string, code string, createdBy *string) (FunctionVersion, error) {
+func (db *MemoryDB) CreateVersion(_ context.Context, functionID string, code string, language string, createdBy *string) (FunctionVersion, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
@@ -156,6 +156,17 @@ func (db *MemoryDB) CreateVersion(_ context.Context, functionID string, code str
 
 	versions := db.versions[functionID]
 	versionNum := len(versions) + 1
+
+	// Language is chosen at creation and sticky thereafter: when not specified,
+	// inherit it from the function's most recent version (Lua for the first one).
+	lang := Language(language)
+	if lang == "" {
+		if n := len(versions); n > 0 && versions[n-1].Language != "" {
+			lang = versions[n-1].Language
+		} else {
+			lang = defaultLanguage
+		}
+	}
 
 	// Deactivate all previous versions
 	for i := range versions {
@@ -167,6 +178,7 @@ func (db *MemoryDB) CreateVersion(_ context.Context, functionID string, code str
 		FunctionID: functionID,
 		Version:    versionNum,
 		Code:       code,
+		Language:   lang,
 		CreatedAt:  time.Now().Unix(),
 		CreatedBy:  createdBy,
 		IsActive:   true,

@@ -2,6 +2,13 @@
 
 > Serverless platform for creating HTTP functions in Lua with a comprehensive standard library
 
+> Functions may also be written in **Starlark** (a sandboxed Python dialect),
+> chosen when the function is created. The same modules are available; the
+> handler is `def handler(ctx, event):` returning a dict, `ctx`/`event` use
+> attribute access, and fallible calls return `(value, error)` tuples
+> (`resp, err = http.get(url)`). Run `lunar skills show lunar-starlark` for the
+> full Starlark guide.
+
 ## Handler Function
 
 Every function must define a handler that receives context and event parameters:

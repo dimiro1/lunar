@@ -11,6 +11,7 @@ import (
 	"github.com/dimiro1/lunar/internal/engine"
 	"github.com/dimiro1/lunar/internal/graph"
 	"github.com/dimiro1/lunar/internal/runner"
+	"github.com/dimiro1/lunar/internal/starlarkrt"
 	"github.com/dimiro1/lunar/internal/services/ai"
 	"github.com/dimiro1/lunar/internal/services/email"
 	"github.com/dimiro1/lunar/internal/services/env"
@@ -65,8 +66,19 @@ func NewServer(config ServerConfig) *Server {
 	aiClient := ai.NewDefaultClient(config.HTTPClient, config.EnvStore)
 	emailClient := email.NewDefaultClient(config.EnvStore)
 
-	// Create Lua runtime
+	// Create the language runtimes (Lua and Starlark share the same collaborators).
 	luaRuntime := runner.NewLuaRuntime(runner.LuaRuntimeConfig{
+		Logger:       config.Logger,
+		KV:           config.KVStore,
+		Env:          config.EnvStore,
+		HTTP:         config.HTTPClient,
+		AI:           aiClient,
+		AITracker:    config.AITracker,
+		Email:        emailClient,
+		EmailTracker: config.EmailTracker,
+		Timeout:      config.ExecutionTimeout,
+	})
+	starlarkRuntime := starlarkrt.New(starlarkrt.Config{
 		Logger:       config.Logger,
 		KV:           config.KVStore,
 		Env:          config.EnvStore,
@@ -80,8 +92,11 @@ func NewServer(config ServerConfig) *Server {
 
 	// Create execution engine
 	eng := engine.New(engine.Config{
-		DB:               config.DB,
-		Runtime:          luaRuntime,
+		DB: config.DB,
+		Runtimes: []engine.RuntimeEntry{
+			{Language: engine.LanguageLua, Runtime: luaRuntime},
+			{Language: engine.LanguageStarlark, Runtime: starlarkRuntime},
+		},
 		Logger:           config.Logger,
 		KVStore:          config.KVStore,
 		EnvStore:         config.EnvStore,

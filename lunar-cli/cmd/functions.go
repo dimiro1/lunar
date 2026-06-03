@@ -27,6 +27,7 @@ const functionFields = `
 		function_id: functionId
 		version
 		code
+		language
 		created_at: createdAt
 		created_by: createdBy
 		is_active: isActive
@@ -102,15 +103,17 @@ var (
 	createFunctionCmdCode        string
 	createFunctionCmdDescription string
 	createFunctionCmdName        string
+	createFunctionCmdLanguage    string
 )
 
 func init() {
 	functionsCmd.AddCommand(createFunctionCmd)
-	createFunctionCmd.Flags().StringVar(&createFunctionCmdCode, "code", "", "Lua code for the function (use \"-\" to read from stdin)")
+	createFunctionCmd.Flags().StringVar(&createFunctionCmdCode, "code", "", "Source code for the function (use \"-\" to read from stdin)")
 	_ = createFunctionCmd.MarkFlagRequired("code")
 	createFunctionCmd.Flags().StringVar(&createFunctionCmdDescription, "description", "", "Optional description")
 	createFunctionCmd.Flags().StringVar(&createFunctionCmdName, "name", "", "Name for the function")
 	_ = createFunctionCmd.MarkFlagRequired("name")
+	createFunctionCmd.Flags().StringVar(&createFunctionCmdLanguage, "language", "", "Code language: lua (default) or starlark")
 }
 
 func runCreateFunction(cmd *cobra.Command, args []string) error {
@@ -121,6 +124,9 @@ func runCreateFunction(cmd *cobra.Command, args []string) error {
 	input := map[string]any{"name": createFunctionCmdName, "code": code}
 	if cmd.Flags().Changed("description") {
 		input["description"] = createFunctionCmdDescription
+	}
+	if cmd.Flags().Changed("language") {
+		input["language"] = createFunctionCmdLanguage
 	}
 	query := `mutation ($input: CreateFunctionInput!) {
 		createFunction(input: $input) {` + functionFields + `}

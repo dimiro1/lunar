@@ -99,6 +99,7 @@ const mapVersion = (v) =>
     function_id: v.functionId,
     version: v.version,
     code: v.code,
+    language: v.language,
     created_at: v.createdAt,
     created_by: v.createdBy,
     is_active: v.isActive,
@@ -248,9 +249,9 @@ const toUpdateFunctionInput = (data) => {
 // avoiding drift between, say, `functions.get` and `functions.getWithNextRun`.
 const PAGE_INFO = `total limit offset`;
 const VERSION_FULL_FIELDS =
-  `id functionId version code createdAt createdBy isActive`;
+  `id functionId version code language createdAt createdBy isActive`;
 const VERSION_SUMMARY_FIELDS =
-  `id functionId version createdAt createdBy isActive`;
+  `id functionId version language createdAt createdBy isActive`;
 // Full function detail (settings/detail views): includes active version code and
 // the env/KV maps.
 const FUNCTION_DETAIL_FIELDS = `
@@ -262,7 +263,7 @@ const FUNCTION_DETAIL_FIELDS = `
 // Lightweight function selection for list rows and detail-page headers: no code,
 // env, or KV — just enough to render a name/status/active version number.
 const FUNCTION_SUMMARY_FIELDS =
-  `id name description disabled activeVersion { version }`;
+  `id name description disabled activeVersion { version language }`;
 const EXECUTION_FULL_FIELDS = `
   id functionId functionVersionId status durationMs
   errorMessage eventJson responseJson trigger createdAt
@@ -464,6 +465,7 @@ export const API = {
      * @param {string} data.name - Function name
      * @param {string} [data.description] - Function description
      * @param {string} data.code - Initial function code
+     * @param {string} [data.language] - Function language ("lua" or "starlark")
      * @returns {Promise<LunarFunction>} The created function
      */
     create: (data) =>
@@ -476,6 +478,7 @@ export const API = {
             name: data.name,
             description: data.description,
             code: data.code,
+            language: data.language,
           },
         },
       ).then((d) => mapFunction(d.createFunction)),

@@ -27,7 +27,7 @@ type Engine interface {
 // Config holds all dependencies needed to create an engine.
 type Config struct {
 	DB               store.DB
-	Runtime          Runtime
+	Runtimes         []RuntimeEntry
 	Logger           logger.Logger
 	KVStore          kv.Store
 	EnvStore         env.Store
@@ -43,7 +43,7 @@ type Config struct {
 // DefaultEngine is the default implementation of the Engine interface.
 type DefaultEngine struct {
 	db               store.DB
-	runtime          Runtime
+	runtimes         map[string]Runtime
 	logger           logger.Logger
 	kvStore          kv.Store
 	envStore         env.Store
@@ -58,9 +58,14 @@ type DefaultEngine struct {
 
 // New creates a new DefaultEngine with the given configuration.
 func New(cfg Config) *DefaultEngine {
+	runtimes := make(map[string]Runtime, len(cfg.Runtimes))
+	for _, entry := range cfg.Runtimes {
+		runtimes[entry.Language] = entry.Runtime
+	}
+
 	return &DefaultEngine{
 		db:               cfg.DB,
-		runtime:          cfg.Runtime,
+		runtimes:         runtimes,
 		logger:           cfg.Logger,
 		kvStore:          cfg.KVStore,
 		envStore:         cfg.EnvStore,
@@ -125,14 +130,24 @@ func (e *DefaultEngine) Execute(ctx context.Context, req ExecutionRequest) (*Exe
 		return nil, &ExecutionRecordError{Err: err}
 	}
 
-	// Execute via runtime
+	// Select the runtime for the version's language (empty defaults to Lua).
+	language := string(version.Language)
+	if language == "" {
+		language = DefaultLanguage
+	}
+	runtime, ok := e.runtimes[language]
+	if !ok {
+		return nil, &UnsupportedLanguageError{Language: language}
+	}
+
+	// Execute via the selected runtime
 	runtimeReq := RuntimeRequest{
 		Code:    version.Code,
 		Context: execContext,
 		Event:   req.Event,
 	}
 
-	runtimeResult, runErr := e.runtime.Execute(ctx, runtimeReq)
+	runtimeResult, runErr := runtime.Execute(ctx, runtimeReq)
 
 	// Calculate duration
 	duration := time.Since(startTime)

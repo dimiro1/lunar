@@ -23,10 +23,7 @@ import {
 import { TabContent, Tabs } from "../components/tabs.js";
 import { getFunctionTabs } from "../utils.js";
 import { routes } from "../routes.js";
-import {
-  APIReference,
-  getLuaAPISections,
-} from "../components/api-reference.js";
+import { APIReference, getAPISections } from "../components/api-reference.js";
 import { t } from "../i18n/index.js";
 import { CommandPalette } from "../components/command-palette.js";
 
@@ -180,6 +177,8 @@ export const FunctionCode = {
     }
 
     const func = FunctionCode.func;
+    const language = func.active_version.language || "lua";
+    const fileName = language === "starlark" ? "main.star" : "main.lua";
 
     return m(".fade-in", [
       // Header
@@ -234,10 +233,10 @@ export const FunctionCode = {
           m(
             MaximizableCard,
             {
-              title: "main.lua",
+              title: fileName,
               icon: "code",
               class: "code-card",
-              headerActions: [m("span.code-editor-lang", "lua")],
+              headerActions: [m("span.code-editor-lang", language)],
               isMaximized: FunctionCode.isCodeMaximized,
               onToggleMaximize: (val) => {
                 FunctionCode.isCodeMaximized = val;
@@ -248,6 +247,7 @@ export const FunctionCode = {
             m(CodeEditor, {
               id: "code-viewer",
               height: "calc(100vh - 340px)",
+              language: language,
               value: FunctionCode.editedCode !== null
                 ? FunctionCode.editedCode
                 : func.active_version.code,
@@ -263,7 +263,7 @@ export const FunctionCode = {
           ),
           m(".api-reference-sidebar", [
             m(APIReference, {
-              sections: getLuaAPISections(),
+              sections: getAPISections(language),
               activeSection: FunctionCode.activeApiSection,
               onSectionChange: (id) => {
                 FunctionCode.activeApiSection = id;

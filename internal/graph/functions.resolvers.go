@@ -91,7 +91,7 @@ func (r *mutationResolver) CreateFunction(ctx context.Context, input model.Creat
 		return nil, err
 	}
 
-	if _, err := r.DB.CreateVersion(ctx, created.ID, input.Code, nil); err != nil {
+	if _, err := r.DB.CreateVersion(ctx, created.ID, input.Code, languageValue(input.Language), nil); err != nil {
 		return nil, err
 	}
 
@@ -117,7 +117,9 @@ func (r *mutationResolver) UpdateFunction(ctx context.Context, id string, input 
 
 	// Providing code creates a new (active) version.
 	if req.Code != nil {
-		if _, err := r.DB.CreateVersion(ctx, id, *req.Code, nil); err != nil {
+		// Language is fixed at creation; a new version inherits the function's
+		// existing language (empty string → store carries the previous one forward).
+		if _, err := r.DB.CreateVersion(ctx, id, *req.Code, "", nil); err != nil {
 			return nil, err
 		}
 	}

@@ -25,8 +25,9 @@ const testAPIKey = "test-api-key-12345"
 
 // testEnv holds the test server and database for e2e tests
 type testEnv struct {
-	Server *httptest.Server
-	Store  *store.SQLiteDB
+	Server   *httptest.Server
+	Store    *store.SQLiteDB
+	EnvStore env.Store
 }
 
 // browserTest provides a fluent API for writing e2e tests
@@ -41,7 +42,10 @@ type browserTest struct {
 func newBrowserTest(t *testing.T) *browserTest {
 	t.Helper()
 	env := startTestServer(t)
-	ctx, cancel := newBrowserContext(t, 30*time.Second)
+	// 60s budget per test: generous for local runs, and headroom for slower CI
+	// runners where Chrome cold-start + Monaco load on the first browser test can
+	// approach the previous 30s deadline.
+	ctx, cancel := newBrowserContext(t, 60*time.Second)
 
 	t.Cleanup(func() {
 		cancel()
@@ -95,6 +99,18 @@ func (bt *browserTest) Click(selector string) *browserTest {
 func (bt *browserTest) Type(selector, text string) *browserTest {
 	bt.t.Helper()
 	return bt.Run(chromedp.SendKeys(selector, text, chromedp.ByQuery))
+}
+
+// SelectOption sets a <select> element's value and dispatches a change event so
+// Mithril's onchange handler runs (chromedp.SetValue alone does not fire it).
+func (bt *browserTest) SelectOption(selector, value string) *browserTest {
+	bt.t.Helper()
+	var ok bool
+	js := fmt.Sprintf(
+		`(() => { const el = document.querySelector(%q); if (!el) return false; el.value = %q; el.dispatchEvent(new Event("change", { bubbles: true })); return true; })()`,
+		selector, value,
+	)
+	return bt.Run(chromedp.Evaluate(js, &ok))
 }
 
 // Sleep waits for a duration
@@ -175,6 +191,18 @@ func (bt *browserTest) AssertText(selector, contains string) *browserTest {
 	text := bt.GetText(selector)
 	if !strings.Contains(text, contains) {
 		bt.t.Errorf("expected %q text to contain %q, got: %s", selector, contains, text)
+	}
+	return bt
+}
+
+// AssertTextI asserts an element's text contains the expected substring,
+// ignoring case. Useful for UI text that CSS transforms (e.g. uppercased
+// table headers and badges).
+func (bt *browserTest) AssertTextI(selector, contains string) *browserTest {
+	bt.t.Helper()
+	text := bt.GetText(selector)
+	if !strings.Contains(strings.ToLower(text), strings.ToLower(contains)) {
+		bt.t.Errorf("expected %q text to contain %q (any case), got: %s", selector, contains, text)
 	}
 	return bt
 }
@@ -269,11 +297,15 @@ func (bt *browserTest) AssertFunctionCodeNot(name string, notContains ...string)
 func startTestServer(t *testing.T) *testEnv {
 	t.Helper()
 
-	// Create in-memory SQLite database
+	// Create in-memory SQLite database. A :memory: database is private to a
+	// single connection, so pin the pool to one connection — otherwise data
+	// seeded/written on one connection is invisible to requests served on
+	// another (which surfaces as spurious "not found" under browser concurrency).
 	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
 	}
+	db.SetMaxOpenConns(1)
 
 	// Enable foreign keys
 	if _, err := db.Exec("PRAGMA foreign_keys = ON"); err != nil {
@@ -315,8 +347,9 @@ func startTestServer(t *testing.T) *testEnv {
 	})
 
 	return &testEnv{
-		Server: ts,
-		Store:  apiDB,
+		Server:   ts,
+		Store:    apiDB,
+		EnvStore: envStore,
 	}
 }
 

@@ -27,6 +27,18 @@ import {
  * @typedef {import('../types.js').LunarFunction} LunarFunction
  */
 
+/** Human-readable labels for function languages. */
+const LANGUAGE_LABELS = { lua: "Lua", starlark: "Starlark" };
+
+/**
+ * Returns a display label for a function language, defaulting to Lua.
+ * @param {string} [language] - Language identifier ("lua", "starlark")
+ * @returns {string} Display label
+ */
+function languageLabel(language) {
+  return LANGUAGE_LABELS[language] || LANGUAGE_LABELS.lua;
+}
+
 /**
  * Functions list a view component.
  * Displays a paginated table of all functions.
@@ -164,6 +176,7 @@ export const FunctionsList = {
                   m(TableHead, t("functions.columns.name")),
                   m(TableHead, t("functions.columns.description")),
                   m(TableHead, t("functions.columns.status")),
+                  m(TableHead, t("functions.columns.language")),
                   m(TableHead, t("functions.columns.version")),
                 ]),
               ]),
@@ -186,6 +199,17 @@ export const FunctionsList = {
                       m(
                         TableCell,
                         m(StatusBadge, { enabled: !func.disabled }),
+                      ),
+                      m(
+                        TableCell,
+                        m(
+                          Badge,
+                          {
+                            variant: BadgeVariant.OUTLINE,
+                            size: BadgeSize.SM,
+                          },
+                          languageLabel(func.active_version.language),
+                        ),
                       ),
                       m(
                         TableCell,

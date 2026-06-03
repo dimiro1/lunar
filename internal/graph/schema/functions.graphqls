@@ -71,8 +71,10 @@ type Query {
 input CreateFunctionInput {
   name: String!
   description: String
-  """Lua source code for the initial version."""
+  """Source code for the initial version."""
   code: String!
+  """Language of the initial version's code. Defaults to lua."""
+  language: Language = lua
 }
 
 """

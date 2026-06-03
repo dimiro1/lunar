@@ -105,6 +105,8 @@ models:
   # values directly. The GraphQL enum values match the store constant strings.
   CronStatus:
     model: github.com/dimiro1/lunar/internal/store.CronStatus
+  Language:
+    model: github.com/dimiro1/lunar/internal/store.Language
   ExecutionStatus:
     model: github.com/dimiro1/lunar/internal/store.ExecutionStatus
   ExecutionTrigger:

@@ -24,6 +24,7 @@ import (
 	internalhttp "github.com/dimiro1/lunar/internal/services/http"
 	"github.com/dimiro1/lunar/internal/services/kv"
 	"github.com/dimiro1/lunar/internal/services/logger"
+	"github.com/dimiro1/lunar/internal/starlarkrt"
 	"github.com/dimiro1/lunar/internal/store"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
@@ -77,6 +78,7 @@ func appOptions() fx.Option {
 		ai.Module,
 		email.Module,
 		runner.Module,
+		starlarkrt.Module,
 		engine.Module,
 		internalcron.Module,
 		housekeeping.Module,

@@ -244,7 +244,7 @@ func TestSQLiteDB_CreateVersion(t *testing.T) {
 
 	// Create a version
 	createdBy := "user@example.com"
-	version, err := sqliteDB.CreateVersion(ctx, fn.ID, "function handler() end", &createdBy)
+	version, err := sqliteDB.CreateVersion(ctx, fn.ID, "function handler() end", "", &createdBy)
 	if err != nil {
 		t.Fatalf("CreateVersion failed: %v", err)
 	}
@@ -281,13 +281,13 @@ func TestSQLiteDB_CreateVersion_DeactivatesPrevious(t *testing.T) {
 	}
 
 	// Create first version
-	v1, err := sqliteDB.CreateVersion(ctx, fn.ID, "version 1", nil)
+	v1, err := sqliteDB.CreateVersion(ctx, fn.ID, "version 1", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion v1 failed: %v", err)
 	}
 
 	// Create second version
-	v2, err := sqliteDB.CreateVersion(ctx, fn.ID, "version 2", nil)
+	v2, err := sqliteDB.CreateVersion(ctx, fn.ID, "version 2", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion v2 failed: %v", err)
 	}
@@ -304,6 +304,48 @@ func TestSQLiteDB_CreateVersion_DeactivatesPrevious(t *testing.T) {
 	// Verify v2 is active
 	if !v2.IsActive {
 		t.Error("Expected v2 to be active")
+	}
+}
+
+func TestSQLiteDB_CreateVersion_Language(t *testing.T) {
+	db, sqliteDB := setupTestDB(t)
+	defer func() { _ = db.Close() }()
+
+	ctx := context.Background()
+	fn := Function{ID: "func_lang", Name: "lang-test", EnvVars: map[string]string{}}
+	if _, err := sqliteDB.CreateFunction(ctx, fn); err != nil {
+		t.Fatalf("CreateFunction failed: %v", err)
+	}
+
+	// First version explicitly Starlark.
+	v1, err := sqliteDB.CreateVersion(ctx, fn.ID, "def handler(ctx, event): return {}", string(LanguageStarlark), nil)
+	if err != nil {
+		t.Fatalf("CreateVersion v1 failed: %v", err)
+	}
+	if v1.Language != LanguageStarlark {
+		t.Errorf("v1 language = %q, want starlark", v1.Language)
+	}
+
+	// Second version with no language inherits the function's language.
+	v2, err := sqliteDB.CreateVersion(ctx, fn.ID, "def handler(ctx, event): return {}", "", nil)
+	if err != nil {
+		t.Fatalf("CreateVersion v2 failed: %v", err)
+	}
+	if v2.Language != LanguageStarlark {
+		t.Errorf("v2 inherited language = %q, want starlark", v2.Language)
+	}
+
+	// A brand-new function with no language defaults to Lua.
+	fn2 := Function{ID: "func_lang_default", Name: "default", EnvVars: map[string]string{}}
+	if _, err := sqliteDB.CreateFunction(ctx, fn2); err != nil {
+		t.Fatalf("CreateFunction failed: %v", err)
+	}
+	d1, err := sqliteDB.CreateVersion(ctx, fn2.ID, "return {}", "", nil)
+	if err != nil {
+		t.Fatalf("CreateVersion failed: %v", err)
+	}
+	if d1.Language != LanguageLua {
+		t.Errorf("default language = %q, want lua", d1.Language)
 	}
 }
 
@@ -325,7 +367,7 @@ func TestSQLiteDB_GetVersion(t *testing.T) {
 	}
 
 	code := "function handler() return 42 end"
-	created, err := sqliteDB.CreateVersion(ctx, fn.ID, code, nil)
+	created, err := sqliteDB.CreateVersion(ctx, fn.ID, code, "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion failed: %v", err)
 	}
@@ -361,7 +403,7 @@ func TestSQLiteDB_GetVersionByID(t *testing.T) {
 		t.Fatalf("CreateFunction failed: %v", err)
 	}
 
-	created, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	created, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion failed: %v", err)
 	}
@@ -396,7 +438,7 @@ func TestSQLiteDB_ListVersions(t *testing.T) {
 
 	// Create 3 versions
 	for i := 1; i <= 3; i++ {
-		if _, err := sqliteDB.CreateVersion(ctx, fn.ID, "code v"+string(rune('0'+i)), nil); err != nil {
+		if _, err := sqliteDB.CreateVersion(ctx, fn.ID, "code v"+string(rune('0'+i)), "", nil); err != nil {
 			t.Fatalf("CreateVersion v%d failed: %v", i, err)
 		}
 	}
@@ -438,10 +480,10 @@ func TestSQLiteDB_GetActiveVersion(t *testing.T) {
 	}
 
 	// Create versions
-	if _, err := sqliteDB.CreateVersion(ctx, fn.ID, "v1", nil); err != nil {
+	if _, err := sqliteDB.CreateVersion(ctx, fn.ID, "v1", "", nil); err != nil {
 		t.Fatalf("CreateVersion v1 failed: %v", err)
 	}
-	v2, err := sqliteDB.CreateVersion(ctx, fn.ID, "v2", nil)
+	v2, err := sqliteDB.CreateVersion(ctx, fn.ID, "v2", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion v2 failed: %v", err)
 	}
@@ -478,11 +520,11 @@ func TestSQLiteDB_ActivateVersion(t *testing.T) {
 	}
 
 	// Create 2 versions
-	v1, err := sqliteDB.CreateVersion(ctx, fn.ID, "v1", nil)
+	v1, err := sqliteDB.CreateVersion(ctx, fn.ID, "v1", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion v1 failed: %v", err)
 	}
-	if _, err := sqliteDB.CreateVersion(ctx, fn.ID, "v2", nil); err != nil {
+	if _, err := sqliteDB.CreateVersion(ctx, fn.ID, "v2", "", nil); err != nil {
 		t.Fatalf("CreateVersion v2 failed: %v", err)
 	}
 
@@ -521,7 +563,7 @@ func TestSQLiteDB_CreateExecution(t *testing.T) {
 		t.Fatalf("CreateFunction failed: %v", err)
 	}
 
-	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion failed: %v", err)
 	}
@@ -567,7 +609,7 @@ func TestSQLiteDB_GetExecution(t *testing.T) {
 		t.Fatalf("CreateFunction failed: %v", err)
 	}
 
-	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion failed: %v", err)
 	}
@@ -614,7 +656,7 @@ func TestSQLiteDB_UpdateExecution(t *testing.T) {
 		t.Fatalf("CreateFunction failed: %v", err)
 	}
 
-	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion failed: %v", err)
 	}
@@ -671,7 +713,7 @@ func TestSQLiteDB_ListExecutions(t *testing.T) {
 		t.Fatalf("CreateFunction failed: %v", err)
 	}
 
-	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion failed: %v", err)
 	}
@@ -722,7 +764,7 @@ func TestSQLiteDB_DeleteFunction_CascadesVersions(t *testing.T) {
 		t.Fatalf("CreateFunction failed: %v", err)
 	}
 
-	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion failed: %v", err)
 	}
@@ -756,7 +798,7 @@ func TestSQLiteDB_DeleteFunction_CascadesExecutions(t *testing.T) {
 		t.Fatalf("CreateFunction failed: %v", err)
 	}
 
-	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion failed: %v", err)
 	}
@@ -970,7 +1012,7 @@ func TestSQLiteDB_CreateExecution_WithEventJSON(t *testing.T) {
 		t.Fatalf("CreateFunction failed: %v", err)
 	}
 
-	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion failed: %v", err)
 	}
@@ -1018,7 +1060,7 @@ func TestSQLiteDB_GetExecution_WithEventJSON(t *testing.T) {
 		t.Fatalf("CreateFunction failed: %v", err)
 	}
 
-	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion failed: %v", err)
 	}
@@ -1067,7 +1109,7 @@ func TestSQLiteDB_GetExecution_WithoutEventJSON(t *testing.T) {
 		t.Fatalf("CreateFunction failed: %v", err)
 	}
 
-	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion failed: %v", err)
 	}
@@ -1112,7 +1154,7 @@ func TestSQLiteDB_ListExecutions_WithEventJSON(t *testing.T) {
 		t.Fatalf("CreateFunction failed: %v", err)
 	}
 
-	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion failed: %v", err)
 	}
@@ -1275,7 +1317,7 @@ func TestSQLiteDB_DeleteOldExecutions(t *testing.T) {
 		t.Fatalf("CreateFunction failed: %v", err)
 	}
 
-	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion failed: %v", err)
 	}
@@ -1357,7 +1399,7 @@ func TestSQLiteDB_DeleteOldExecutions_AllNew(t *testing.T) {
 		t.Fatalf("CreateFunction failed: %v", err)
 	}
 
-	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion failed: %v", err)
 	}
@@ -1474,7 +1516,7 @@ func TestSQLiteDB_UpdateExecution_WithResponseJSON(t *testing.T) {
 		t.Fatalf("CreateFunction failed: %v", err)
 	}
 
-	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion failed: %v", err)
 	}
@@ -1539,7 +1581,7 @@ func TestSQLiteDB_GetExecution_WithResponseJSON(t *testing.T) {
 		t.Fatalf("CreateFunction failed: %v", err)
 	}
 
-	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion failed: %v", err)
 	}
@@ -1595,7 +1637,7 @@ func TestSQLiteDB_GetExecution_WithoutResponseJSON(t *testing.T) {
 		t.Fatalf("CreateFunction failed: %v", err)
 	}
 
-	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", nil)
+	ver, err := sqliteDB.CreateVersion(ctx, fn.ID, "code", "", nil)
 	if err != nil {
 		t.Fatalf("CreateVersion failed: %v", err)
 	}

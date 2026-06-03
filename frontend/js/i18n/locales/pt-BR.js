@@ -63,6 +63,7 @@ export default {
       name: "Nome",
       description: "Descrição",
       status: "Status",
+      language: "Linguagem",
       version: "Versão",
     },
   },
@@ -80,9 +81,12 @@ export default {
   // Function creation
   create: {
     title: "Criar Nova Função",
-    subtitle: "Inicialize uma nova função serverless usando Lua.",
+    subtitle: "Inicialize uma nova função serverless em Lua ou Starlark.",
     functionName: "Nome da Função",
     functionNamePlaceholder: "ex: webhook-pagamento",
+    functionLanguage: "Linguagem",
+    functionLanguageHelp:
+      "Escolha a linguagem desta função. Ela é fixada quando a função é criada.",
     starterTemplate: "Template Inicial",
     createButton: "Criar Função",
     failedToCreate: "Falha ao criar função",
@@ -457,6 +461,8 @@ export default {
       string: "string",
       number: "número",
       table: "tabela",
+      dict: "dict",
+      list: "list",
       function: "função",
       module: "módulo",
     },

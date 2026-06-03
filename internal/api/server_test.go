@@ -32,7 +32,7 @@ func createTestFunction(t *testing.T, database store.DB) store.Function {
 	}
 
 	// Create an initial version for the function
-	_, err = database.CreateVersion(context.Background(), created.ID, "function handler(ctx, event)\n  return {statusCode = 200}\nend", nil)
+	_, err = database.CreateVersion(context.Background(), created.ID, "function handler(ctx, event)\n  return {statusCode = 200}\nend", "", nil)
 	if err != nil {
 		t.Fatalf("failed to create initial version: %v", err)
 	}
@@ -97,7 +97,7 @@ function handler(ctx, event)
     body = '{"message": "success"}'
   }
 end
-`, nil)
+`, "", nil)
 		if err != nil {
 			t.Fatalf("Failed to create version: %v", err)
 		}
@@ -141,7 +141,7 @@ function handler(ctx, event)
     body = event.body
   }
 end
-`, nil)
+`, "", nil)
 		if err != nil {
 			t.Fatalf("Failed to create version: %v", err)
 		}
@@ -180,7 +180,7 @@ function handler(ctx, event)
     body = '{"created": true}'
   }
 end
-`, nil)
+`, "", nil)
 		if err != nil {
 			t.Fatalf("Failed to create version: %v", err)
 		}
@@ -218,7 +218,7 @@ function handler(ctx, event)
     body = 'hello'
   }
 end
-`, nil)
+`, "", nil)
 		if err != nil {
 			t.Fatalf("Failed to create version: %v", err)
 		}
@@ -263,7 +263,7 @@ function handler(ctx, event)
     body = '<html><body><h1>Hello World</h1></body></html>'
   }
 end
-`, nil)
+`, "", nil)
 		if err != nil {
 			t.Fatalf("Failed to create version: %v", err)
 		}
@@ -306,7 +306,7 @@ function handler(ctx, event)
     body = '{"message": "hello"}'
   }
 end
-`, nil)
+`, "", nil)
 		if err != nil {
 			t.Fatalf("Failed to create version: %v", err)
 		}
@@ -345,7 +345,7 @@ function handler(ctx, event)
     body = 'test'
   }
 end
-`, nil)
+`, "", nil)
 		if err != nil {
 			t.Fatalf("Failed to create version: %v", err)
 		}
@@ -376,7 +376,7 @@ end
 function handler(ctx, event)
   error("Something went wrong!")
 end
-`, nil)
+`, "", nil)
 		if err != nil {
 			t.Fatalf("Failed to create version: %v", err)
 		}
@@ -476,7 +476,7 @@ function handler(ctx, event)
     body = '{"method": "' .. event.method .. '"}'
   }
 end
-`, nil)
+`, "", nil)
 		if err != nil {
 			t.Fatalf("Failed to create version: %v", err)
 		}
@@ -517,7 +517,7 @@ function handler(ctx, event)
     body = '{"message": "success"}'
   }
 end
-`, nil)
+`, "", nil)
 	if err != nil {
 		t.Fatalf("Failed to create version: %v", err)
 	}
@@ -588,7 +588,7 @@ function handler(ctx, event)
     body = '{"message": "success"}'
   }
 end
-`, nil)
+`, "", nil)
 	if err != nil {
 		t.Fatalf("Failed to create version: %v", err)
 	}
@@ -702,7 +702,7 @@ function handler(ctx, event)
     body = '{"ok": true}'
   }
 end
-`, nil)
+`, "", nil)
 			if err != nil {
 				t.Fatalf("Failed to create version: %v", err)
 			}
@@ -760,7 +760,7 @@ function handler(ctx, event)
     body = '{"message": "success"}'
   }
 end
-`, nil)
+`, "", nil)
 	if err != nil {
 		t.Fatalf("Failed to create version: %v", err)
 	}
@@ -899,7 +899,7 @@ function handler(ctx, event)
     body = '{"message": "success"}'
   }
 end
-`, nil)
+`, "", nil)
 		if err != nil {
 			t.Fatalf("Failed to create version: %v", err)
 		}
@@ -983,7 +983,7 @@ function handler(ctx, event)
     body = '{"message": "success"}'
   }
 end
-`, nil)
+`, "", nil)
 		if err != nil {
 			t.Fatalf("Failed to create version: %v", err)
 		}

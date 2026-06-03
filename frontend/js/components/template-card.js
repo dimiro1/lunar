@@ -122,6 +122,18 @@ export function getTemplateDescription(id) {
 }
 
 /**
+ * Gets a template's starter code for the given language.
+ * @param {string} id - Template ID
+ * @param {string} [language='lua'] - "lua" or "starlark"
+ * @returns {string} Starter code, or "" if the template is unknown
+ */
+export function getTemplateCode(id, language = "lua") {
+  const template = FunctionTemplates.find((tpl) => tpl.id === id);
+  if (!template) return "";
+  return language === "starlark" ? template.starlark : template.code;
+}
+
+/**
  * Pre-defined templates for function creation.
  * Each template includes sample Lua code for common use cases.
  * Use getTemplateName() and getTemplateDescription() for localized strings.
@@ -351,3 +363,139 @@ function handler(ctx, event)
 end`,
   },
 ];
+
+/**
+ * Starlark starter code for each template, keyed by template id. Mirrors the
+ * Lua snippets above. Attached to FunctionTemplates so getTemplateCode() can
+ * return the right snippet for the selected language.
+ * @type {Object.<string, string>}
+ */
+const StarlarkTemplateCode = {
+  http: `# HTTP Handler
+def handler(ctx, event):
+    method = event.method
+    path = event.path
+
+    log.info("Received " + method + " request to " + path)
+
+    body, _ = json.encode({
+        "message": "Hello from Starlark!",
+        "method": method,
+        "path": path,
+    })
+    return {
+        "statusCode": 200,
+        "headers": {"Content-Type": "application/json"},
+        "body": body,
+    }`,
+  api: `# REST API Endpoint
+def handler(ctx, event):
+    method = event.method
+
+    if method == "GET":
+        body, _ = json.encode({"items": [], "total": 0})
+        return {"statusCode": 200, "headers": {"Content-Type": "application/json"}, "body": body}
+    elif method == "POST":
+        data, _ = json.decode(event.body)
+        body, _ = json.encode({"id": crypto.uuid(), "created": True})
+        return {"statusCode": 201, "headers": {"Content-Type": "application/json"}, "body": body}
+    else:
+        body, _ = json.encode({"error": "Method not allowed"})
+        return {"statusCode": 405, "headers": {"Content-Type": "application/json"}, "body": body}`,
+  aiChat: `# AI Chatbot
+# Set OPENAI_API_KEY or ANTHROPIC_API_KEY in environment variables
+def handler(ctx, event):
+    data, err = json.decode(event.body)
+    if err != None:
+        body, _ = json.encode({"error": "Invalid JSON"})
+        return {"statusCode": 400, "headers": {"Content-Type": "application/json"}, "body": body}
+
+    message = data.get("message", "Hello!")
+
+    response, err = ai.chat({
+        "provider": "openai",  # or "anthropic"
+        "model": "gpt-4o-mini",  # or "claude-haiku-4-5-20251001"
+        "messages": [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": message},
+        ],
+        "max_tokens": 500,
+    })
+
+    if err != None:
+        log.error("AI error: " + err)
+        body, _ = json.encode({"error": err})
+        return {"statusCode": 500, "headers": {"Content-Type": "application/json"}, "body": body}
+
+    log.info("AI responded with " + str(response["usage"]["output_tokens"]) + " tokens")
+
+    body, _ = json.encode({
+        "reply": response["content"],
+        "model": response["model"],
+        "tokens": response["usage"]["input_tokens"] + response["usage"]["output_tokens"],
+    })
+    return {"statusCode": 200, "headers": {"Content-Type": "application/json"}, "body": body}`,
+  email: `# Send Email
+# Set RESEND_API_KEY in environment variables
+def handler(ctx, event):
+    data, err = json.decode(event.body)
+    if err != None:
+        body, _ = json.encode({"error": "Invalid JSON"})
+        return {"statusCode": 400, "headers": {"Content-Type": "application/json"}, "body": body}
+
+    if data.get("to") == None or data.get("subject") == None:
+        body, _ = json.encode({"error": "Missing required fields: to, subject"})
+        return {"statusCode": 400, "headers": {"Content-Type": "application/json"}, "body": body}
+
+    result, err = email.send({
+        "from": "noreply@yourdomain.com",  # Update with your verified domain
+        "to": data["to"],
+        "subject": data["subject"],
+        "html": data.get("html", "<p>" + data.get("text", "Hello!") + "</p>"),
+        "text": data.get("text", ""),
+    })
+
+    if err != None:
+        log.error("Email error: " + err)
+        body, _ = json.encode({"error": err})
+        return {"statusCode": 500, "headers": {"Content-Type": "application/json"}, "body": body}
+
+    log.info("Email sent: " + result["id"])
+
+    body, _ = json.encode({"success": True, "email_id": result["id"]})
+    return {"statusCode": 200, "headers": {"Content-Type": "application/json"}, "body": body}`,
+  router: `# Simple Router
+# Uses event.relativePath and the router module for path matching
+def handler(ctx, event):
+    path = event.relativePath
+    method = event.method
+
+    if method == "GET" and router.match(path, "/users"):
+        body, _ = json.encode({"users": []})
+        return {"statusCode": 200, "headers": {"Content-Type": "application/json"}, "body": body}
+
+    if method == "GET" and router.match(path, "/users/:id"):
+        params = router.params(path, "/users/:id")
+        body, _ = json.encode({"id": params["id"], "name": "User " + params["id"]})
+        return {"statusCode": 200, "headers": {"Content-Type": "application/json"}, "body": body}
+
+    if method == "POST" and router.match(path, "/users"):
+        data, _ = json.decode(event.body)
+        body, _ = json.encode({"id": crypto.uuid(), "name": data["name"]})
+        return {"statusCode": 201, "headers": {"Content-Type": "application/json"}, "body": body}
+
+    body, _ = json.encode({"error": "Not found"})
+    return {"statusCode": 404, "headers": {"Content-Type": "application/json"}, "body": body}`,
+  blank: `# Your function code here
+def handler(ctx, event):
+    return {
+        "statusCode": 200,
+        "headers": {"Content-Type": "text/plain"},
+        "body": "Hello, World!",
+    }`,
+};
+
+// Attach the Starlark snippets to their templates.
+for (const template of FunctionTemplates) {
+  template.starlark = StarlarkTemplateCode[template.id] || "";
+}

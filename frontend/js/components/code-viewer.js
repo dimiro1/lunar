@@ -14,6 +14,12 @@ function highlightCode(code, language) {
     return { html: "", highlighted: false };
   }
 
+  // Starlark is a Python dialect; highlight.js has no Starlark grammar, so
+  // reuse Python highlighting for it.
+  if (language === "starlark") {
+    language = "python";
+  }
+
   try {
     if (language && hljs.getLanguage(language)) {
       return {
