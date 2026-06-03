@@ -5,8 +5,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
 	internalcron "github.com/dimiro1/lunar/internal/cron"
 	"github.com/dimiro1/lunar/internal/engine"
+	"github.com/dimiro1/lunar/internal/graph"
 	"github.com/dimiro1/lunar/internal/runner"
 	"github.com/dimiro1/lunar/internal/services/ai"
 	"github.com/dimiro1/lunar/internal/services/email"
@@ -18,22 +21,20 @@ import (
 	"github.com/rs/xid"
 )
 
-// Server represents the API server
+// Server represents the API server. With the management API now served over
+// GraphQL, the REST surface is limited to auth (login/device flow), the public
+// /fn/* execution passthrough, and the frontend — so the server only holds the
+// collaborators those routes and the GraphQL handler need.
 type Server struct {
 	mux             *http.ServeMux
 	db              store.DB
 	execDeps        *ExecuteFunctionDeps
-	envStore        env.Store
-	logger          logger.Logger
-	aiTracker       ai.Tracker
-	emailTracker    email.Tracker
-	scheduler       *internalcron.FunctionScheduler
 	frontendHandler http.Handler
 	apiKey          string
 	httpServer      *http.Server
-	kvStore         kv.Store
 	deviceAuth      *DeviceAuthStore
 	baseURL         string
+	graphQL         *handler.Server
 }
 
 // ServerConfig holds configuration for creating a Server
@@ -96,34 +97,32 @@ func NewServer(config ServerConfig) *Server {
 	return newServer(serverDeps{
 		DB:              config.DB,
 		Engine:          eng,
-		Logger:          config.Logger,
-		KVStore:         config.KVStore,
-		EnvStore:        config.EnvStore,
-		AITracker:       config.AITracker,
-		EmailTracker:    config.EmailTracker,
-		Scheduler:       config.Scheduler,
 		FrontendHandler: config.FrontendHandler,
 		APIKey:          config.APIKey,
 		BaseURL:         config.BaseURL,
+		GraphQL: graph.NewServer(&graph.Resolver{
+			DB:           config.DB,
+			EnvStore:     config.EnvStore,
+			KVStore:      config.KVStore,
+			Scheduler:    config.Scheduler,
+			Logger:       config.Logger,
+			AITracker:    config.AITracker,
+			EmailTracker: config.EmailTracker,
+		}),
 	})
 }
 
 // serverDeps are the fully-constructed collaborators a Server needs. Unlike
-// ServerConfig — which carries the raw ingredients used to build the engine —
-// serverDeps takes the engine.Engine already assembled. This is the seam the fx
-// graph injects through.
+// ServerConfig — which carries the raw ingredients used to build the engine and
+// the GraphQL resolver — serverDeps takes the engine.Engine and GraphQL handler
+// already assembled. This is the seam the fx graph injects through.
 type serverDeps struct {
 	DB              store.DB
 	Engine          engine.Engine
-	Logger          logger.Logger
-	KVStore         kv.Store
-	EnvStore        env.Store
-	AITracker       ai.Tracker
-	EmailTracker    email.Tracker
-	Scheduler       *internalcron.FunctionScheduler
 	FrontendHandler http.Handler
 	APIKey          string
 	BaseURL         string
+	GraphQL         *handler.Server
 }
 
 // newServer assembles a Server from its constructed dependencies and registers
@@ -133,16 +132,11 @@ func newServer(d serverDeps) *Server {
 		mux:             http.NewServeMux(),
 		db:              d.DB,
 		execDeps:        &ExecuteFunctionDeps{Engine: d.Engine, BaseURL: d.BaseURL},
-		envStore:        d.EnvStore,
-		logger:          d.Logger,
-		aiTracker:       d.AITracker,
-		emailTracker:    d.EmailTracker,
-		scheduler:       d.Scheduler,
 		frontendHandler: d.FrontendHandler,
 		apiKey:          d.APIKey,
-		kvStore:         d.KVStore,
 		deviceAuth:      NewDeviceAuthStore(),
 		baseURL:         d.BaseURL,
+		graphQL:         d.GraphQL,
 	}
 
 	s.setupRoutes()
@@ -159,46 +153,21 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("POST /api/auth/device-request", HandleDeviceRequest(s.deviceAuth, s.baseURL))
 	s.mux.HandleFunc("GET /api/auth/device-token", HandleDeviceToken(s.deviceAuth))
 
-	// API documentation (no authentication required)
-	s.mux.HandleFunc("GET /docs", docsPageHandler)
-	s.mux.HandleFunc("HEAD /docs", docsPageHandler)
-	s.mux.HandleFunc("GET /docs/openapi.yaml", openAPISpecHandler)
-	s.mux.HandleFunc("HEAD /docs/openapi.yaml", openAPISpecHandler)
-
-	// Protected API routes - wrap with auth middleware
+	// Protected routes - wrap with auth middleware
 	authMiddleware := AuthMiddleware(s.apiKey, s.db)
 
-	// Function Management - only need DB
-	s.mux.Handle("POST /api/functions", authMiddleware(http.HandlerFunc(CreateFunctionHandler(s.db))))
-	s.mux.Handle("GET /api/functions", authMiddleware(http.HandlerFunc(ListFunctionsHandler(s.db))))
-	s.mux.Handle("GET /api/functions/{id}", authMiddleware(http.HandlerFunc(GetFunctionHandler(s.db, s.envStore, s.kvStore))))
-	s.mux.Handle("PUT /api/functions/{id}", authMiddleware(http.HandlerFunc(UpdateFunctionHandler(s.db, s.scheduler))))
-	s.mux.Handle("DELETE /api/functions/{id}", authMiddleware(http.HandlerFunc(DeleteFunctionHandler(s.db))))
-	s.mux.Handle("PUT /api/functions/{id}/env", authMiddleware(http.HandlerFunc(UpdateEnvVarsHandler(s.db, s.envStore))))
-	s.mux.Handle("GET /api/functions/{id}/next-run", authMiddleware(http.HandlerFunc(GetNextRunHandler(s.db))))
-	s.mux.Handle("POST /api/functions/{id}/kv", authMiddleware(http.HandlerFunc(UpdateKvStoreHandler(s.db, s.kvStore))))
-
-	// Version Management - only need DB
-	s.mux.Handle("GET /api/functions/{id}/versions", authMiddleware(http.HandlerFunc(ListVersionsHandler(s.db))))
-	s.mux.Handle("GET /api/functions/{id}/versions/{version}", authMiddleware(http.HandlerFunc(GetVersionHandler(s.db))))
-	s.mux.Handle("POST /api/functions/{id}/versions/{versionId}/activate", authMiddleware(http.HandlerFunc(ActivateVersionHandler(s.db))))
-	s.mux.Handle("DELETE /api/functions/{id}/versions/{versionId}", authMiddleware(http.HandlerFunc(DeleteVersionHandler(s.db))))
-	s.mux.Handle("GET /api/functions/{id}/diff/{v1}/{v2}", authMiddleware(http.HandlerFunc(GetVersionDiffHandler(s.db))))
-
-	// Execution History - only need DB
-	s.mux.Handle("GET /api/functions/{id}/executions", authMiddleware(http.HandlerFunc(ListExecutionsHandler(s.db))))
-	s.mux.Handle("GET /api/executions/{id}", authMiddleware(http.HandlerFunc(GetExecutionHandler(s.db))))
-	s.mux.Handle("GET /api/executions/{id}/logs", authMiddleware(http.HandlerFunc(GetExecutionLogsHandler(s.db, s.logger))))
-	s.mux.Handle("GET /api/executions/{id}/ai-requests", authMiddleware(http.HandlerFunc(GetExecutionAIRequestsHandler(s.db, s.aiTracker))))
-	s.mux.Handle("GET /api/executions/{id}/email-requests", authMiddleware(http.HandlerFunc(GetExecutionEmailRequestsHandler(s.db, s.emailTracker))))
-
-	// Device approval (auth required - user must be logged in)
+	// Device approval (auth required - user must be logged in via the SPA)
 	s.mux.Handle("GET /api/auth/device-approve", authMiddleware(http.HandlerFunc(HandleDeviceApproveStatus(s.deviceAuth))))
 	s.mux.Handle("POST /api/auth/device-approve", authMiddleware(http.HandlerFunc(HandleDeviceApprove(s.deviceAuth, s.db))))
 
-	// API token management (auth required)
-	s.mux.Handle("GET /api/tokens", authMiddleware(http.HandlerFunc(HandleListAPITokens(s.db))))
-	s.mux.Handle("POST /api/tokens/{id}/revoke", authMiddleware(http.HandlerFunc(HandleRevokeAPIToken(s.db))))
+	// GraphQL API — the entire management surface (functions, versions,
+	// executions, tokens). Query execution (POST) is auth-protected; the
+	// GraphiQL playground UI (GET) is served publicly and posts back to
+	// /graphql, which still enforces authentication.
+	if s.graphQL != nil {
+		s.mux.Handle("POST /graphql", authMiddleware(s.graphQL))
+		s.mux.HandleFunc("GET /graphql", playground.Handler("Lunar GraphQL", "/graphql"))
+	}
 
 	// Runtime Execution - needs all dependencies (NO AUTH - public endpoint)
 	// Register both exact match and wildcard patterns for routing support

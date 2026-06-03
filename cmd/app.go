@@ -14,6 +14,7 @@ import (
 	"github.com/dimiro1/lunar/internal/config"
 	internalcron "github.com/dimiro1/lunar/internal/cron"
 	"github.com/dimiro1/lunar/internal/engine"
+	"github.com/dimiro1/lunar/internal/graph"
 	"github.com/dimiro1/lunar/internal/housekeeping"
 	"github.com/dimiro1/lunar/internal/migrate"
 	"github.com/dimiro1/lunar/internal/runner"
@@ -79,6 +80,7 @@ func appOptions() fx.Option {
 		engine.Module,
 		internalcron.Module,
 		housekeeping.Module,
+		graph.Module,
 		api.Module,
 	)
 }

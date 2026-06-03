@@ -1,11 +1,13 @@
 // Package api provides the HTTP API server for the lunar platform.
 //
-// The API implements the OpenAPI specification defined in docs/openapi.yaml and provides
-// endpoints for managing functions, versions, executions, and runtime execution.
+// The management API (functions, versions, executions, tokens) is served over
+// GraphQL at /graphql; its schema in internal/graph is the source of truth. The
+// REST surface this package still owns is intentionally small:
 //
-// Main endpoint groups:
-//   - /api/functions - Function management (CRUD)
-//   - /api/functions/{id}/versions - Version management
-//   - /api/executions - Execution history and logs
-//   - /fn/{function_id} - Runtime function execution
+//   - /graphql - GraphQL management API (POST) + GraphiQL playground (GET)
+//   - /api/auth/* - login/logout and the CLI device-authorization flow
+//   - /fn/{function_id} - public runtime function execution (passthrough)
+//
+// The REST endpoints are documented in docs/rest-endpoints.md; the GraphQL
+// surface is described by its schema in internal/graph/schema.
 package api

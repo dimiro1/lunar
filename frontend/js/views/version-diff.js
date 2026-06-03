@@ -72,12 +72,13 @@ export const VersionDiff = {
   loadData: async (functionId, v1, v2) => {
     VersionDiff.loading = true;
     try {
-      const [func, diffData] = await Promise.all([
-        API.functions.get(functionId),
-        API.versions.diff(functionId, v1, v2),
-      ]);
+      const { func, diff } = await API.versions.diffWithFunction(
+        functionId,
+        v1,
+        v2,
+      );
       VersionDiff.func = func;
-      VersionDiff.diffData = diffData;
+      VersionDiff.diffData = diff;
     } catch (e) {
       console.error("Failed to load diff:", e);
     } finally {

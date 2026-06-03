@@ -148,36 +148,24 @@ export const ExecutionDetail = {
   loadExecution: async (id) => {
     ExecutionDetail.loading = true;
     try {
-      const [execution, logsData, aiRequestsData, emailRequestsData] =
-        await Promise.all([
-          API.executions.get(id),
-          API.executions.getLogs(
-            id,
-            ExecutionDetail.logsLimit,
-            ExecutionDetail.logsOffset,
-          ),
-          API.executions.getAIRequests(
-            id,
-            ExecutionDetail.aiRequestsLimit,
-            ExecutionDetail.aiRequestsOffset,
-          ),
-          API.executions.getEmailRequests(
-            id,
-            ExecutionDetail.emailRequestsLimit,
-            ExecutionDetail.emailRequestsOffset,
-          ),
-        ]);
-      ExecutionDetail.execution = execution;
-      ExecutionDetail.logs = logsData.logs || [];
-      ExecutionDetail.logsTotal = logsData.pagination?.total || 0;
-      ExecutionDetail.aiRequests = aiRequestsData.ai_requests || [];
-      ExecutionDetail.aiRequestsTotal = aiRequestsData.pagination?.total || 0;
-      ExecutionDetail.emailRequests = emailRequestsData.email_requests || [];
-      ExecutionDetail.emailRequestsTotal =
-        emailRequestsData.pagination?.total || 0;
-
-      // Load function details
-      ExecutionDetail.func = await API.functions.get(execution.function_id);
+      // One round-trip fetches the execution, its parent function, logs, and
+      // AI/email requests together (see API.executions.getDetail).
+      const data = await API.executions.getDetail(id, {
+        logsLimit: ExecutionDetail.logsLimit,
+        logsOffset: ExecutionDetail.logsOffset,
+        aiLimit: ExecutionDetail.aiRequestsLimit,
+        aiOffset: ExecutionDetail.aiRequestsOffset,
+        emailLimit: ExecutionDetail.emailRequestsLimit,
+        emailOffset: ExecutionDetail.emailRequestsOffset,
+      });
+      ExecutionDetail.execution = data.execution;
+      ExecutionDetail.func = data.func;
+      ExecutionDetail.logs = data.logs;
+      ExecutionDetail.logsTotal = data.logsTotal;
+      ExecutionDetail.aiRequests = data.aiRequests;
+      ExecutionDetail.aiRequestsTotal = data.aiRequestsTotal;
+      ExecutionDetail.emailRequests = data.emailRequests;
+      ExecutionDetail.emailRequestsTotal = data.emailRequestsTotal;
     } catch (e) {
       console.error("Failed to load execution:", e);
     } finally {

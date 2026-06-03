@@ -1,0 +1,23 @@
+# Shared types used across the whole schema.
+#
+# The schema is split into one file per domain (functions, versions, …). Because
+# gqlgen uses the follow-schema layout, each <domain>.graphqls produces its own
+# <domain>.resolvers.go — so no single resolver file grows unbounded.
+#
+# Timestamps are Unix epoch seconds carried as `Int`. gqlgen.yml binds `Int` to
+# both graphql.Int and graphql.Int64, so the underlying int64 values round-trip
+# at full width (no 32-bit truncation). A dedicated `Timestamp` scalar would add
+# semantic clarity but no correctness — it is intentionally not introduced.
+
+"""An arbitrary string→string mapping, serialized as a JSON object."""
+scalar Map
+
+"""Pagination metadata shared by all paginated lists."""
+type PageInfo {
+  """Total number of items across all pages."""
+  total: Int!
+  """Maximum number of items requested per page."""
+  limit: Int!
+  """Number of items skipped before this page."""
+  offset: Int!
+}

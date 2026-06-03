@@ -1,0 +1,115 @@
+# gqlgen configuration for the Lunar GraphQL API.
+#
+# The GraphQL schema (internal/graph/schema/*.graphqls) is the source of truth.
+# Running `mise run generate-graphql` (go tool gqlgen generate) regenerates the
+# executable schema, models, and resolver stubs. Because resolvers are generated
+# as Go interfaces, the compiler refuses to build until every schema field has an
+# implementation — so the API can never silently drift from the schema.
+schema:
+  - internal/graph/schema/*.graphqls
+
+# Where the generated executable schema (the runtime) is written.
+exec:
+  filename: internal/graph/generated.go
+  package: graph
+
+# Where models that have no hand-written/bound Go type are generated. Types bound
+# in the `models:` section below (or owned elsewhere in the codebase) are NOT
+# regenerated here.
+model:
+  filename: internal/graph/model/models_gen.go
+  package: model
+
+# Resolvers are generated one file per schema file (follow-schema). The root
+# Resolver struct lives in internal/graph/resolver.go (hand-written, holds deps).
+resolver:
+  layout: follow-schema
+  dir: internal/graph
+  package: graph
+  filename_template: "{name}.resolvers.go"
+
+# Generate value slices ([]T) instead of pointer slices ([]*T) for list fields,
+# which matches how the store package returns value-type slices.
+omit_slice_element_pointers: true
+
+# Bind GraphQL types to the existing domain types in internal/store so resolvers
+# return store values directly instead of mapping to duplicate DTOs.
+models:
+  ID:
+    model:
+      - github.com/99designs/gqlgen/graphql.ID
+      - github.com/99designs/gqlgen/graphql.Int
+  Int:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int64
+  Map:
+    model: github.com/dimiro1/lunar/internal/graph/model.StringMap
+  Function:
+    model: github.com/dimiro1/lunar/internal/store.FunctionWithActiveVersion
+    fields:
+      # Relation/derived fields resolved lazily from the store, so only queries
+      # that select them do the work (env/KV are the original overfetch fix;
+      # versions/executions/nextRun are graph-traversal edges).
+      versions:
+        resolver: true
+      executions:
+        resolver: true
+      nextRun:
+        resolver: true
+      envVars:
+        resolver: true
+      scopedData:
+        resolver: true
+      globalData:
+        resolver: true
+      # The store carries cron_status as *string; a field resolver coerces it to
+      # the CronStatus enum (mapping an empty/absent value to null).
+      cronStatus:
+        resolver: true
+  FunctionVersion:
+    model: github.com/dimiro1/lunar/internal/store.FunctionVersion
+    fields:
+      # Reverse edge back to the owning function.
+      function:
+        resolver: true
+  PageInfo:
+    model: github.com/dimiro1/lunar/internal/store.PaginationInfo
+  Execution:
+    model: github.com/dimiro1/lunar/internal/store.Execution
+    fields:
+      # Relation edges resolved from the execution's foreign keys / id, all lazy.
+      function:
+        resolver: true
+      version:
+        resolver: true
+      logs:
+        resolver: true
+      aiRequests:
+        resolver: true
+      emailRequests:
+        resolver: true
+  AIRequest:
+    model: github.com/dimiro1/lunar/internal/store.AIRequest
+    fields:
+      execution:
+        resolver: true
+  EmailRequest:
+    model: github.com/dimiro1/lunar/internal/store.EmailRequest
+    fields:
+      execution:
+        resolver: true
+  APIToken:
+    model: github.com/dimiro1/lunar/internal/store.APIToken
+  # Enums bound to the existing store string types, so resolvers return store
+  # values directly. The GraphQL enum values match the store constant strings.
+  CronStatus:
+    model: github.com/dimiro1/lunar/internal/store.CronStatus
+  ExecutionStatus:
+    model: github.com/dimiro1/lunar/internal/store.ExecutionStatus
+  ExecutionTrigger:
+    model: github.com/dimiro1/lunar/internal/store.ExecutionTrigger
+  AIRequestStatus:
+    model: github.com/dimiro1/lunar/internal/store.AIRequestStatus
+  EmailRequestStatus:
+    model: github.com/dimiro1/lunar/internal/store.EmailRequestStatus

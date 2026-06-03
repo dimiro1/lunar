@@ -23,7 +23,7 @@ A lightweight, self-hosted Function-as-a-Service platform written in Go with Lua
 * **Execution History** - Monitor function executions and logs
 * **Beautiful Error Messages** - Human-friendly error messages with code context, line numbers, and actionable suggestions
 * **Web Dashboard** - Manage functions through a clean web interface
-* **API Documentation** - Swagger UI available at `/docs`
+* **GraphQL API** - Typed, introspectable management API with a GraphiQL playground at `/graphql`
 * **Lightweight** - Single binary, no external dependencies
 
 ## Screenshots
@@ -265,20 +265,28 @@ The dashboard requires authentication via API key. You can:
 1. **Auto-generate** (recommended) - Let Lunar generate a secure key on first run
 2. **Set manually** - Provide your own key via the `API_KEY` environment variable
 
-API calls can authenticate using either:
+The management API is served over **GraphQL** at `/graphql` (with a GraphiQL
+playground in the browser). Requests authenticate using either:
 - **Cookie** - Automatically handled by the dashboard after login
 - **Bearer token** - Include `Authorization: Bearer YOUR_API_KEY` header
 
-Example API call with Bearer token:
+Example GraphQL call with a Bearer token:
 ```bash
-curl -H "Authorization: Bearer YOUR_API_KEY" http://localhost:3000/api/functions
+curl -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ functions(limit: 20, offset: 0) { nodes { id name } } }"}' \
+  http://localhost:3000/graphql
 ```
 
 Note: Function execution endpoints (`/fn/{id}`) do not require authentication.
 
+The handful of endpoints that stay REST — cookie login/logout, the CLI device
+authorization flow, and function execution — are documented in
+[`docs/rest-endpoints.md`](docs/rest-endpoints.md).
+
 ## CLI
 
-Lunar ships a command-line client (`lunar-cli`) that is auto-generated from the OpenAPI spec, so it always stays in sync with the API.
+Lunar ships a command-line client (`lunar-cli`) built on the server's GraphQL API, so it always stays in sync with the schema.
 
 ### Installation
 
@@ -409,10 +417,13 @@ lunar-cli invoke <function-id> --method POST --body -   # read body from stdin
 
 ### Keeping the CLI in Sync with the API
 
-The CLI commands are auto-generated from `internal/api/docs/openapi.yaml`. When the API changes, regenerate with:
+The CLI talks to the server's GraphQL API (`/graphql`) using a thin
+[hasura/go-graphql-client](https://github.com/hasura/go-graphql-client) wrapper.
+The GraphQL schema is the single source of truth: the server won't compile until
+every field has a resolver, and the CLI's queries are checked against the live
+schema by introspection. After changing a command, rebuild with:
 
 ```bash
-mise run generate-cli
 mise run build-cli
 ```
 

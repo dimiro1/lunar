@@ -161,12 +161,9 @@ export const FunctionSettings = {
   loadFunction: async (id) => {
     FunctionSettings.loading = true;
     try {
-      const [func, nextRunInfo] = await Promise.all([
-        API.functions.get(id),
-        API.functions.getNextRun(id),
-      ]);
+      const { func, nextRun } = await API.functions.getWithNextRun(id);
       FunctionSettings.func = func;
-      FunctionSettings.nextRunInfo = nextRunInfo;
+      FunctionSettings.nextRunInfo = nextRun;
       FunctionSettings.editedName = null;
       FunctionSettings.editedDescription = null;
       FunctionSettings.editedDisabled = null;

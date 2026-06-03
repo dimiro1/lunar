@@ -1,0 +1,167 @@
+# Executions domain: execution records and their logs, AI requests, email
+# requests, plus a function's next scheduled run.
+
+"""The outcome of a function execution."""
+enum ExecutionStatus {
+  pending
+  success
+  error
+}
+
+"""How an execution was triggered."""
+enum ExecutionTrigger {
+  http
+  cron
+}
+
+"""A record of a single function execution."""
+type Execution {
+  id: ID!
+  functionId: ID!
+  functionVersionId: ID!
+  status: ExecutionStatus!
+  """Wall-clock duration in milliseconds, if the execution finished."""
+  durationMs: Int
+  errorMessage: String
+  """JSON-encoded event the function received."""
+  eventJson: String
+  """JSON-encoded response the function returned, if persisted."""
+  responseJson: String
+  trigger: ExecutionTrigger!
+  createdAt: Int!
+  """
+  The function this execution belongs to, resolved from functionId. Lets a
+  single query fetch an execution together with its parent function (e.g. for
+  the execution-detail view) instead of a second round-trip. Null if the
+  function has since been deleted.
+  """
+  function: Function
+  """The specific function version that produced this execution, or null if it
+  has since been deleted."""
+  version: FunctionVersion
+  """Log entries emitted during this execution. Fetched lazily."""
+  logs(limit: Int = 20, offset: Int = 0): LogEntryConnection!
+  """AI provider requests made during this execution. Fetched lazily."""
+  aiRequests(limit: Int = 20, offset: Int = 0): AIRequestConnection!
+  """Email send requests made during this execution. Fetched lazily."""
+  emailRequests(limit: Int = 20, offset: Int = 0): EmailRequestConnection!
+}
+
+"""A paginated list of executions."""
+type ExecutionConnection {
+  nodes: [Execution!]!
+  pageInfo: PageInfo!
+}
+
+"""Severity of a log entry."""
+enum LogLevel {
+  debug
+  info
+  warn
+  error
+}
+
+"""A single log line emitted during an execution."""
+type LogEntry {
+  level: LogLevel!
+  message: String!
+  createdAt: Int!
+}
+
+"""A paginated list of log entries."""
+type LogEntryConnection {
+  nodes: [LogEntry!]!
+  pageInfo: PageInfo!
+}
+
+"""The outcome of an AI provider request."""
+enum AIRequestStatus {
+  success
+  error
+}
+
+"""A tracked AI provider request made during an execution."""
+type AIRequest {
+  id: ID!
+  executionId: ID!
+  provider: String!
+  model: String!
+  endpoint: String!
+  requestJson: String!
+  responseJson: String
+  status: AIRequestStatus!
+  errorMessage: String
+  inputTokens: Int
+  outputTokens: Int
+  durationMs: Int!
+  createdAt: Int!
+  """The execution during which this AI request was made, or null if deleted."""
+  execution: Execution
+}
+
+"""A paginated list of AI requests."""
+type AIRequestConnection {
+  nodes: [AIRequest!]!
+  pageInfo: PageInfo!
+}
+
+"""The outcome of an email send request."""
+enum EmailRequestStatus {
+  success
+  error
+}
+
+"""A tracked email send request made during an execution."""
+type EmailRequest {
+  id: ID!
+  executionId: ID!
+  from: String!
+  to: [String!]!
+  subject: String!
+  hasText: Boolean!
+  hasHtml: Boolean!
+  requestJson: String!
+  responseJson: String
+  status: EmailRequestStatus!
+  errorMessage: String
+  emailId: String
+  durationMs: Int!
+  createdAt: Int!
+  """The execution during which this email request was made, or null if deleted."""
+  execution: Execution
+}
+
+"""A paginated list of email requests."""
+type EmailRequestConnection {
+  nodes: [EmailRequest!]!
+  pageInfo: PageInfo!
+}
+
+"""A function's next scheduled run, derived from its cron settings."""
+type NextRun {
+  """Whether the function has a cron schedule configured."""
+  hasSchedule: Boolean!
+  cronSchedule: String
+  cronStatus: CronStatus
+  """Whether the schedule exists but is paused."""
+  isPaused: Boolean!
+  """Next run time (Unix seconds), if scheduled and active."""
+  nextRun: Int
+  """Human-readable next run time, if scheduled and active."""
+  nextRunHuman: String
+}
+
+extend type Query {
+  """List a function's executions, newest first."""
+  executions(functionId: ID!, limit: Int = 20, offset: Int = 0): ExecutionConnection!
+  """Fetch a single execution by ID, or null if it does not exist."""
+  execution(id: ID!): Execution
+  """List the log entries emitted by an execution."""
+  executionLogs(executionId: ID!, limit: Int = 20, offset: Int = 0): LogEntryConnection!
+  """List the AI requests made during an execution."""
+  executionAiRequests(executionId: ID!, limit: Int = 20, offset: Int = 0): AIRequestConnection!
+  """List the email requests made during an execution."""
+  executionEmailRequests(executionId: ID!, limit: Int = 20, offset: Int = 0): EmailRequestConnection!
+  """Compute the next scheduled run for a function."""
+  nextRun(functionId: ID!): NextRun!
+}

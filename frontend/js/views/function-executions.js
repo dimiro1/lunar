@@ -92,17 +92,15 @@ export const FunctionExecutions = {
   loadData: async (id) => {
     FunctionExecutions.loading = true;
     try {
-      const [func, executions] = await Promise.all([
-        API.functions.get(id),
-        API.executions.list(
+      const { func, executions, pagination } = await API.functions
+        .getWithExecutions(
           id,
           FunctionExecutions.executionsLimit,
           FunctionExecutions.executionsOffset,
-        ),
-      ]);
+        );
       FunctionExecutions.func = func;
-      FunctionExecutions.executions = executions.executions || [];
-      FunctionExecutions.executionsTotal = executions.pagination?.total || 0;
+      FunctionExecutions.executions = executions || [];
+      FunctionExecutions.executionsTotal = pagination?.total || 0;
     } catch (e) {
       console.error("Failed to load function:", e);
     } finally {

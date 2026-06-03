@@ -92,14 +92,6 @@ var (
 	rowSepStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("237"))
 )
 
-// printOutput dispatches to the appropriate renderer based on --output flag.
-func printOutput(data []byte) error {
-	if outputFormat == "json" {
-		return printRawJSON(data)
-	}
-	return printPretty(data)
-}
-
 // printRawJSON pretty-prints JSON to outputWriter.
 func printRawJSON(data []byte) error {
 	var buf bytes.Buffer
