@@ -28,15 +28,6 @@ func errResult(msg string) starlark.Value {
 	return starlark.Tuple{starlark.None, starlark.String(msg)}
 }
 
-// result maps a Go (value, error) pair to the Starlark tuple convention so
-// handler code can write: resp, err = http.get(url).
-func result(v starlark.Value, err error) starlark.Value {
-	if err != nil {
-		return errResult(err.Error())
-	}
-	return okResult(v)
-}
-
 // optDict returns the named entry of d as a dict, or nil when absent or not a dict.
 func optDict(d *starlark.Dict, key string) *starlark.Dict {
 	if d == nil {
