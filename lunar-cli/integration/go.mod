@@ -46,6 +46,7 @@ require (
 	github.com/vektah/gqlparser/v2 v2.5.33 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/yuin/gopher-lua v1.1.1 // indirect
+	go.starlark.net v0.0.0-20260522144826-ec58d4b459e2 // indirect
 	go.uber.org/dig v1.19.0 // indirect
 	go.uber.org/fx v1.24.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect

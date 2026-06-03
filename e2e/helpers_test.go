@@ -42,7 +42,10 @@ type browserTest struct {
 func newBrowserTest(t *testing.T) *browserTest {
 	t.Helper()
 	env := startTestServer(t)
-	ctx, cancel := newBrowserContext(t, 30*time.Second)
+	// 60s budget per test: generous for local runs, and headroom for slower CI
+	// runners where Chrome cold-start + Monaco load on the first browser test can
+	// approach the previous 30s deadline.
+	ctx, cancel := newBrowserContext(t, 60*time.Second)
 
 	t.Cleanup(func() {
 		cancel()
