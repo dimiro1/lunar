@@ -147,6 +147,23 @@ func shutdownAllocator() {
 	}
 }
 
+// warmUpBrowser launches the shared headless Chrome process and performs a
+// trivial navigation before any scenario runs. The first Chrome launch on a cold
+// CI runner can take well over a minute; paying that one-time cost here — outside
+// any scenario's browserTimeout budget — keeps it from being charged to the
+// first scenario, where it has caused flaky "context deadline exceeded" failures
+// during sign-in. Errors are intentionally ignored: if warmup fails, the first
+// scenario simply pays the cold start as before, so this can only help.
+func warmUpBrowser() {
+	tabCtx, tabCancel := chromedp.NewContext(sharedAllocator())
+	defer tabCancel()
+	// A generous, one-time budget — deliberately larger than browserTimeout so the
+	// cold start itself never trips a deadline here.
+	timedCtx, timeoutCancel := context.WithTimeout(tabCtx, 3*time.Minute)
+	defer timeoutCancel()
+	_ = chromedp.Run(timedCtx, chromedp.Navigate("about:blank"))
+}
+
 // world is the per-scenario state shared between steps. A fresh world is created
 // for every scenario, so there is no cross-scenario leakage.
 type world struct {
