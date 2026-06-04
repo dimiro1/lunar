@@ -110,6 +110,10 @@ func sharedAllocator() context.Context {
 			chromedp.DefaultExecAllocatorOptions[:],
 			chromedp.Flag("disable-gpu", true),
 			chromedp.Flag("no-sandbox", true),
+			// CI runners give the container a tiny /dev/shm (~64MB); headless
+			// Chrome can exhaust it and crash on startup. Writing shared memory to
+			// /tmp instead keeps the browser stable on the first (cold) launch.
+			chromedp.Flag("disable-dev-shm-usage", true),
 		)
 		// Headless by default. Set E2E_HEADED=1 (or true/yes/on) to watch the
 		// suite drive a real, visible browser window — handy when debugging a

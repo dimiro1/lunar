@@ -63,6 +63,11 @@ func TestJasmineSuitePasses(t *testing.T) {
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
 		chromedp.Flag("disable-gpu", true),
 		chromedp.Flag("no-sandbox", true),
+		// CI runners give the container a tiny /dev/shm (~64MB); without this
+		// headless Chrome exhausts it and crashes on startup, which surfaces here
+		// as "websocket url timeout reached" because it never prints its DevTools
+		// endpoint. Writing shared memory to /tmp instead avoids that.
+		chromedp.Flag("disable-dev-shm-usage", true),
 		chromedp.Flag("headless", true),
 	)
 	allocCtx, cancelAlloc := chromedp.NewExecAllocator(context.Background(), opts...)
