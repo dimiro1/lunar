@@ -5,9 +5,9 @@
 import { formatUnixTimestamp, getFunctionTabs } from "../../js/utils.js";
 
 describe("getFunctionTabs", () => {
-  it("returns all 5 tabs", () => {
+  it("returns all 6 tabs", () => {
     const tabs = getFunctionTabs("test-id");
-    expect(tabs.length).toBe(5);
+    expect(tabs.length).toBe(6);
   });
 
   it("includes correct tab ids", () => {
@@ -16,6 +16,7 @@ describe("getFunctionTabs", () => {
     expect(ids).toContain("code");
     expect(ids).toContain("versions");
     expect(ids).toContain("executions");
+    expect(ids).toContain("data");
     expect(ids).toContain("settings");
     expect(ids).toContain("test");
   });

@@ -14,6 +14,42 @@
     <script src="/vendor/jasmine/boot0.js"></script>
     <script src="/vendor/jasmine/boot1.js"></script>
 
+    <!-- Machine-readable result hook for the headless e2e runner.
+         Jasmine's built-in jsApiReporter is deprecated and not wired up, so we
+         register our own reporter (before boot1's window.onload calls
+         env.execute()) that records the final verdict on window.__jasmineResults.
+         The e2e test (e2e/jasmine) polls that global; it is invisible to a human
+         opening this page in a browser. -->
+    <script>
+      window.__jasmineResults = null;
+      (function () {
+        var total = 0;
+        var failures = [];
+        jasmine.getEnv().addReporter({
+          specDone: function (result) {
+            total += 1;
+            if (result.status === "failed") {
+              failures.push({
+                fullName: result.fullName,
+                messages: (result.failedExpectations || []).map(
+                  function (e) {
+                    return e.message;
+                  },
+                ),
+              });
+            }
+          },
+          jasmineDone: function (result) {
+            window.__jasmineResults = {
+              overallStatus: result.overallStatus,
+              total: total,
+              failures: failures,
+            };
+          },
+        });
+      })();
+    </script>
+
     <!-- Mithril (same version as app) -->
     <script src="/vendor/mithril/mithril.min.js"></script>
 
