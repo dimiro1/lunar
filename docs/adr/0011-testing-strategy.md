@@ -33,14 +33,21 @@ We will test at four layers, each with a dedicated task:
 3. **CLI integration tests** (`mise run test-cli-integration`) — built-tagged
    (`-tags integration`) tests in `lunar-cli/integration` that exercise the
    generated client against a real running server.
-4. **End-to-end browser tests** (`mise run test-e2e`) — Go tests under `e2e/`
-   that boot the real API on an `httptest.Server` against a migrated SQLite
-   store and drive **headless Chrome via `chromedp`**, with a small fluent
-   `browserTest` helper. `mise run test-all` runs units + e2e together.
+4. **End-to-end browser tests** (`mise run test-e2e`) — **Cucumber/Gherkin**
+   feature files under `e2e/features/`, run with
+   [godog](https://github.com/cucumber/godog). Each scenario boots the real API
+   on an `httptest.Server` against a migrated SQLite store and drives the
+   dashboard in **headless Chrome via `chromedp`**. The features are written at
+   the product level (no selectors, no implementation detail); the Go step
+   definitions in `e2e/*_test.go` translate that intent into browser
+   interactions. Function invocation — the one thing a real client does outside
+   the browser — is exercised over plain HTTP against the public `/fn` endpoint.
+   `mise run test-all` runs units + e2e together.
 
 The unifying principle: wherever a runtime is needed, prefer **Go** as the test
-harness (testserver, chromedp, httptest) rather than introducing a second
-language's tooling.
+harness (testserver, chromedp + godog, httptest) rather than introducing a
+second language's tooling. godog keeps the e2e specs in Cucumber while the
+harness stays pure Go.
 
 ## Consequences
 

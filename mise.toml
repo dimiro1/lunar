@@ -65,8 +65,17 @@ description = "Open Jasmine frontend tests in browser"
 run = "go run ./cmd/testserver"
 
 [tasks.test-e2e]
-description = "Run E2E tests with headless Chrome"
-run = "go test -v ./e2e/..."
+description = "Run E2E tests with headless Chrome (Cucumber/godog)"
+# The whole browser suite runs well under the 20m budget locally; the generous
+# timeout is headroom for slower CI runners (Chrome cold-start + Monaco load).
+# Set E2E_HEADED=1 to watch a real browser; GODOG_FEATURE=e2e/features/<x>.feature
+# narrows the run to one file. `mise run test-e2e-headed` does both conveniently.
+run = "go test -v -timeout 20m ./e2e/..."
+
+[tasks.test-e2e-headed]
+description = "Run E2E tests in a visible (non-headless) browser"
+env = { E2E_HEADED = "1" }
+run = "go test -v -count=1 -timeout 20m ./e2e/..."
 
 [tasks.test-all]
 description = "Run all Go tests (unit + e2e)"

@@ -319,3 +319,53 @@ func TestFunctionByID(t *testing.T) {
 		t.Errorf("missing function = %+v, want nil", resp.Missing)
 	}
 }
+
+// TestExecutionRequestConnectionsWithoutTrackers verifies that the AI and email
+// request connections degrade to an empty result — rather than panicking — when
+// no tracker is wired (newTestClient leaves AITracker and EmailTracker nil, as
+// happens whenever AI/email tracking is not configured).
+func TestExecutionRequestConnectionsWithoutTrackers(t *testing.T) {
+	c, db, _, _ := newTestClient(t)
+	seedFunction(t, db, "fn1", "hello", "return 1")
+
+	// The connections are only reached once the execution exists, so seed one.
+	ctx := context.Background()
+	version, err := db.GetActiveVersion(ctx, "fn1")
+	if err != nil {
+		t.Fatalf("GetActiveVersion: %v", err)
+	}
+	if _, err := db.CreateExecution(ctx, store.Execution{
+		ID:                "exec1",
+		FunctionID:        "fn1",
+		FunctionVersionID: version.ID,
+		Status:            store.ExecutionStatusSuccess,
+		Trigger:           store.ExecutionTriggerHTTP,
+	}); err != nil {
+		t.Fatalf("CreateExecution: %v", err)
+	}
+
+	var resp struct {
+		AI struct {
+			Nodes    []struct{ ID string }
+			PageInfo struct{ Total int }
+		} `json:"executionAiRequests"`
+		Email struct {
+			Nodes    []struct{ ID string }
+			PageInfo struct{ Total int }
+		} `json:"executionEmailRequests"`
+	}
+
+	// MustPost fails the test on any GraphQL error, so a resolver panic (which
+	// gqlgen surfaces as an error) would be caught here.
+	c.MustPost(`{
+		executionAiRequests(executionId: "exec1") { nodes { id } pageInfo { total } }
+		executionEmailRequests(executionId: "exec1") { nodes { id } pageInfo { total } }
+	}`, &resp)
+
+	if n := len(resp.AI.Nodes); n != 0 || resp.AI.PageInfo.Total != 0 {
+		t.Errorf("aiRequests = %d nodes / total %d, want empty", n, resp.AI.PageInfo.Total)
+	}
+	if n := len(resp.Email.Nodes); n != 0 || resp.Email.PageInfo.Total != 0 {
+		t.Errorf("emailRequests = %d nodes / total %d, want empty", n, resp.Email.PageInfo.Total)
+	}
+}

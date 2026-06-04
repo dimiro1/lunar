@@ -167,16 +167,25 @@ func (r *Resolver) logEntryConnection(executionID string, limit, offset *int) *m
 
 // aiRequestConnection builds a paginated AIRequestConnection for an execution.
 // Shared by the top-level executionAiRequests query and Execution.aiRequests.
+// A nil AITracker (e.g. when AI tracking is not configured) yields an empty
+// connection rather than panicking.
 func (r *Resolver) aiRequestConnection(executionID string, limit, offset *int) *model.AIRequestConnection {
 	params := paginationParams(limit, offset)
+	if r.AITracker == nil {
+		return &model.AIRequestConnection{PageInfo: pageInfo(0, params)}
+	}
 	requests, total := r.AITracker.RequestsPaginated(executionID, params.Limit, params.Offset)
 	return &model.AIRequestConnection{Nodes: requests, PageInfo: pageInfo(total, params)}
 }
 
 // emailRequestConnection builds a paginated EmailRequestConnection for an
 // execution. Shared by executionEmailRequests and Execution.emailRequests.
+// A nil EmailTracker yields an empty connection rather than panicking.
 func (r *Resolver) emailRequestConnection(executionID string, limit, offset *int) *model.EmailRequestConnection {
 	params := paginationParams(limit, offset)
+	if r.EmailTracker == nil {
+		return &model.EmailRequestConnection{PageInfo: pageInfo(0, params)}
+	}
 	requests, total := r.EmailTracker.RequestsPaginated(executionID, params.Limit, params.Offset)
 	return &model.EmailRequestConnection{Nodes: requests, PageInfo: pageInfo(total, params)}
 }
