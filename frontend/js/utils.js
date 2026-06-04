@@ -29,6 +29,11 @@ export const getFunctionTabs = (funcId) => [
     label: t("tabs.executions"),
     href: routes.functionExecutions(funcId),
   },
+  {
+    id: "metrics",
+    label: t("tabs.metrics"),
+    href: routes.functionMetrics(funcId),
+  },
   { id: "data", label: t("tabs.data"), href: routes.functionData(funcId) },
   { id: "test", label: t("tabs.test"), href: routes.functionTest(funcId) },
   {

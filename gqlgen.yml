@@ -57,6 +57,8 @@ models:
         resolver: true
       nextRun:
         resolver: true
+      metrics:
+        resolver: true
       envVars:
         resolver: true
       scopedData:

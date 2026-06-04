@@ -141,6 +141,20 @@ type Execution struct {
 	CreatedAt         int64            `json:"created_at"`
 }
 
+// MetricBucket is a pre-aggregated set of execution metrics over a single time
+// window for one function. As stored it spans one UTC hour; GetFunctionMetrics
+// may roll several hourly rows up into a coarser bucket (e.g. a day), in which
+// case BucketStart is the start of that coarser window. It carries raw sums so
+// callers can derive averages without re-querying; the GraphQL layer turns these
+// into display-ready values (average duration, error rate).
+type MetricBucket struct {
+	BucketStart   int64 `json:"bucket_start"` // unix seconds, start of the window (UTC)
+	Count         int64 `json:"count"`
+	ErrorCount    int64 `json:"error_count"`
+	SumDurationMs int64 `json:"sum_duration_ms"`
+	MaxDurationMs int64 `json:"max_duration_ms"`
+}
+
 // FunctionWithActiveVersion includes the function and its active version
 type FunctionWithActiveVersion struct {
 	Function

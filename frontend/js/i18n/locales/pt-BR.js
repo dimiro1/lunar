@@ -73,6 +73,7 @@ export default {
     code: "Código",
     versions: "Versões",
     executions: "Execuções",
+    metrics: "Métricas",
     settings: "Configurações",
     test: "Teste",
     data: "Dados Chave-Valor",
@@ -203,6 +204,32 @@ export default {
     },
   },
 
+  // Metrics dashboard
+  metrics: {
+    title: "Métricas",
+    rangeLabel: "Período",
+    range: {
+      "24h": "24h",
+      "7d": "7d",
+      "30d": "30d",
+    },
+    totalExecutions: "Total de execuções",
+    errorRate: "Taxa de erro",
+    errorCount: "{{count}} com erro",
+    avgDuration: "Duração média",
+    maxDuration: "Duração máxima",
+    volumeTitle: "Execuções ao longo do tempo",
+    durationTitle: "Duração média ao longo do tempo",
+    legend: {
+      success: "Sucesso",
+      error: "Erro",
+    },
+    bucketTooltip: "{{time}} · {{count}} execuções, {{errors}} erros",
+    durationTooltip: "{{time}} · {{value}}",
+    emptyState:
+      "Nenhuma métrica neste período ainda. Assim que esta função executar, suas métricas aparecerão aqui.",
+  },
+
   // Test page
   test: {
     response: "Resposta",
@@ -228,6 +255,7 @@ export default {
       goToCode: "Ir para Código",
       viewVersions: "Ver histórico de versões",
       viewExecutions: "Ver logs de execução",
+      viewMetrics: "Ver métricas",
       configureFunction: "Configurar função",
       testFunction: "Testar função",
       viewClients: "Ver clientes conectados",

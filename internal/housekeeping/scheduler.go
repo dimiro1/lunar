@@ -16,15 +16,18 @@ const (
 
 // Scheduler manages periodic cleanup of old executions
 type Scheduler struct {
-	db   store.DB
-	cron *cron.Cron
+	db                   store.DB
+	cron                 *cron.Cron
+	metricsRetentionDays int
 }
 
-// NewScheduler creates a new housekeeping scheduler
-func NewScheduler(db store.DB) *Scheduler {
+// NewScheduler creates a new housekeeping scheduler. metricsRetentionDays is how
+// long pre-aggregated metric buckets are kept before cleanup.
+func NewScheduler(db store.DB, metricsRetentionDays int) *Scheduler {
 	return &Scheduler{
-		db:   db,
-		cron: cron.New(),
+		db:                   db,
+		cron:                 cron.New(),
+		metricsRetentionDays: metricsRetentionDays,
 	}
 }
 
@@ -36,6 +39,9 @@ func (s *Scheduler) Start() error {
 		ctx := context.Background()
 		if err := s.cleanupOldExecutions(ctx); err != nil {
 			slog.Error("Failed to cleanup old executions", "error", err)
+		}
+		if err := s.cleanupOldMetricBuckets(ctx); err != nil {
+			slog.Error("Failed to cleanup old metric buckets", "error", err)
 		}
 	})
 	if err != nil {
@@ -108,6 +114,29 @@ func (s *Scheduler) cleanupOldExecutions(ctx context.Context) error {
 	slog.Info("Old executions cleanup completed",
 		"total_deleted", totalDeleted,
 		"cutoff_time", time.Unix(defaultCutoffTime, 0))
+
+	return nil
+}
+
+// cleanupOldMetricBuckets removes metric buckets older than the configured
+// metrics retention window. Metrics are kept far longer than executions so the
+// dashboard can show long-range trends, hence a separate global cutoff.
+func (s *Scheduler) cleanupOldMetricBuckets(ctx context.Context) error {
+	retentionDays := s.metricsRetentionDays
+	if retentionDays <= 0 {
+		retentionDays = 365
+	}
+
+	cutoff := time.Now().Unix() - (int64(retentionDays) * 24 * 60 * 60)
+
+	deleted, err := s.db.DeleteOldMetricBuckets(ctx, cutoff)
+	if err != nil {
+		return err
+	}
+
+	slog.Info("Old metric buckets cleanup completed",
+		"total_deleted", deleted,
+		"cutoff_time", time.Unix(cutoff, 0))
 
 	return nil
 }

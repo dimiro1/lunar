@@ -86,6 +86,22 @@ type DB interface {
 	// Returns the number of deleted records.
 	DeleteOldExecutions(ctx context.Context, beforeTimestamp int64) (int64, error)
 
+	// IncrementMetricBucket folds a single completed execution into the hourly
+	// metric bucket identified by (functionID, bucketHour). bucketHour is the
+	// execution's start time in unix seconds truncated to the hour (UTC). It is
+	// called best-effort: a failure is logged by the caller, not propagated.
+	IncrementMetricBucket(ctx context.Context, functionID string, bucketHour int64, isError bool, durationMs int64) error
+
+	// GetFunctionMetrics returns a function's metric buckets between fromUnix
+	// (inclusive) and toUnix (exclusive), grouped into windows of bucketSeconds
+	// (3600 for hourly, 86400 for daily). Only buckets that contain data are
+	// returned, ordered by BucketStart ascending.
+	GetFunctionMetrics(ctx context.Context, functionID string, fromUnix, toUnix, bucketSeconds int64) ([]MetricBucket, error)
+
+	// DeleteOldMetricBuckets removes metric buckets older than the given
+	// bucket_hour cutoff. Returns the number of deleted records.
+	DeleteOldMetricBuckets(ctx context.Context, beforeBucketHour int64) (int64, error)
+
 	// ListFunctionsWithActiveCron returns all functions that have an active cron schedule.
 	ListFunctionsWithActiveCron(ctx context.Context) ([]Function, error)
 

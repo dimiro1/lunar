@@ -214,6 +214,15 @@ export const CommandPalette = {
       });
       functionItems.push({
         type: "action",
+        label: `${func.name} → ${t("tabs.metrics")}`,
+        description: t("commandPalette.actions.viewMetrics"),
+        path: paths.functionMetrics(func.id),
+        icon: "chartBar",
+        id: func.id,
+        disabled: func.disabled,
+      });
+      functionItems.push({
+        type: "action",
         label: `${func.name} → ${t("tabs.settings")}`,
         description: t("commandPalette.actions.configureFunction"),
         path: paths.functionSettings(func.id),

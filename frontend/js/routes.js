@@ -46,6 +46,13 @@ export const routes = {
   functionExecutions: (id) => `#!/functions/${id}/executions`,
 
   /**
+   * Function metrics page.
+   * @param {string} id - Function ID
+   * @returns {string} Route URL
+   */
+  functionMetrics: (id) => `#!/functions/${id}/metrics`,
+
+  /**
    * Function settings page.
    * @param {string} id - Function ID
    * @returns {string} Route URL
@@ -155,6 +162,13 @@ export const paths = {
    * @returns {string} Path
    */
   functionExecutions: (id) => `/functions/${id}/executions`,
+
+  /**
+   * Function metrics page.
+   * @param {string} id - Function ID
+   * @returns {string} Path
+   */
+  functionMetrics: (id) => `/functions/${id}/metrics`,
 
   /**
    * Function settings page.

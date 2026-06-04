@@ -10,7 +10,7 @@ import (
 
 func TestNewScheduler(t *testing.T) {
 	db := store.NewMemoryDB()
-	scheduler := NewScheduler(db)
+	scheduler := NewScheduler(db, 365)
 
 	if scheduler == nil {
 		t.Fatal("Expected scheduler to be created")
@@ -79,7 +79,7 @@ func TestScheduler_CleanupOldExecutions(t *testing.T) {
 	}
 
 	// Run cleanup
-	scheduler := NewScheduler(db)
+	scheduler := NewScheduler(db, 365)
 	err = scheduler.cleanupOldExecutions(ctx)
 	if err != nil {
 		t.Fatalf("cleanupOldExecutions failed: %v", err)
@@ -137,7 +137,7 @@ func TestScheduler_CleanupOldExecutions_DefaultRetention(t *testing.T) {
 	}
 
 	// Run cleanup
-	scheduler := NewScheduler(db)
+	scheduler := NewScheduler(db, 365)
 	err = scheduler.cleanupOldExecutions(ctx)
 	if err != nil {
 		t.Fatalf("cleanupOldExecutions failed: %v", err)
@@ -225,7 +225,7 @@ func TestScheduler_CleanupOldExecutions_MultipleFunctions(t *testing.T) {
 	}
 
 	// Run cleanup
-	scheduler := NewScheduler(db)
+	scheduler := NewScheduler(db, 365)
 	err = scheduler.cleanupOldExecutions(ctx)
 	if err != nil {
 		t.Fatalf("cleanupOldExecutions failed: %v", err)
@@ -252,7 +252,7 @@ func TestScheduler_CleanupOldExecutions_NoExecutions(t *testing.T) {
 	ctx := context.Background()
 
 	// Run cleanup with no executions
-	scheduler := NewScheduler(db)
+	scheduler := NewScheduler(db, 365)
 	err := scheduler.cleanupOldExecutions(ctx)
 	if err != nil {
 		t.Fatalf("cleanupOldExecutions should not fail with no executions: %v", err)
@@ -261,7 +261,7 @@ func TestScheduler_CleanupOldExecutions_NoExecutions(t *testing.T) {
 
 func TestScheduler_StartAndStop(t *testing.T) {
 	db := store.NewMemoryDB()
-	scheduler := NewScheduler(db)
+	scheduler := NewScheduler(db, 365)
 
 	// Start scheduler
 	err := scheduler.Start()

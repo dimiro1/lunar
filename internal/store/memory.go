@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 )
@@ -13,9 +14,10 @@ var _ DB = (*MemoryDB)(nil)
 type MemoryDB struct {
 	mu         sync.RWMutex
 	functions  map[string]Function
-	versions   map[string][]FunctionVersion // functionID -> versions
-	executions map[string]Execution         // id -> execution
-	apiTokens  map[string]APIToken          // id -> token
+	versions   map[string][]FunctionVersion      // functionID -> versions
+	executions map[string]Execution              // id -> execution
+	apiTokens  map[string]APIToken               // id -> token
+	metrics    map[string]map[int64]MetricBucket // functionID -> bucketHour -> bucket
 }
 
 // NewMemoryDB creates a new in-memory database
@@ -25,6 +27,7 @@ func NewMemoryDB() *MemoryDB {
 		versions:   make(map[string][]FunctionVersion),
 		executions: make(map[string]Execution),
 		apiTokens:  make(map[string]APIToken),
+		metrics:    make(map[string]map[int64]MetricBucket),
 	}
 }
 
@@ -421,6 +424,85 @@ func (db *MemoryDB) DeleteOldExecutions(_ context.Context, beforeTimestamp int64
 	}
 
 	return deletedCount, nil
+}
+
+// Metric operations
+
+func (db *MemoryDB) IncrementMetricBucket(_ context.Context, functionID string, bucketHour int64, isError bool, durationMs int64) error {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	buckets := db.metrics[functionID]
+	if buckets == nil {
+		buckets = make(map[int64]MetricBucket)
+		db.metrics[functionID] = buckets
+	}
+
+	b := buckets[bucketHour]
+	b.BucketStart = bucketHour
+	b.Count++
+	if isError {
+		b.ErrorCount++
+	}
+	b.SumDurationMs += durationMs
+	if durationMs > b.MaxDurationMs {
+		b.MaxDurationMs = durationMs
+	}
+	buckets[bucketHour] = b
+	return nil
+}
+
+func (db *MemoryDB) GetFunctionMetrics(_ context.Context, functionID string, fromUnix, toUnix, bucketSeconds int64) ([]MetricBucket, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+
+	if bucketSeconds <= 0 {
+		bucketSeconds = 3600
+	}
+
+	// Group the stored hourly buckets into windows of bucketSeconds.
+	grouped := make(map[int64]MetricBucket)
+	for hour, b := range db.metrics[functionID] {
+		if hour < fromUnix || hour >= toUnix {
+			continue
+		}
+		start := (hour / bucketSeconds) * bucketSeconds
+		g := grouped[start]
+		g.BucketStart = start
+		g.Count += b.Count
+		g.ErrorCount += b.ErrorCount
+		g.SumDurationMs += b.SumDurationMs
+		if b.MaxDurationMs > g.MaxDurationMs {
+			g.MaxDurationMs = b.MaxDurationMs
+		}
+		grouped[start] = g
+	}
+
+	out := make([]MetricBucket, 0, len(grouped))
+	for _, b := range grouped {
+		out = append(out, b)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].BucketStart < out[j].BucketStart })
+	return out, nil
+}
+
+func (db *MemoryDB) DeleteOldMetricBuckets(_ context.Context, beforeBucketHour int64) (int64, error) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	var deleted int64
+	for functionID, buckets := range db.metrics {
+		for hour := range buckets {
+			if hour < beforeBucketHour {
+				delete(buckets, hour)
+				deleted++
+			}
+		}
+		if len(buckets) == 0 {
+			delete(db.metrics, functionID)
+		}
+	}
+	return deleted, nil
 }
 
 func (db *MemoryDB) ListFunctionsWithActiveCron(_ context.Context) ([]Function, error) {

@@ -57,6 +57,17 @@ type FunctionConnection struct {
 	PageInfo *store.PaginationInfo `json:"pageInfo"`
 }
 
+// Aggregated execution metrics for a function over a time window.
+type FunctionMetrics struct {
+	// Roll-up totals across the whole requested window.
+	Summary *MetricsSummary `json:"summary"`
+	// Time series of buckets at the requested granularity, oldest first. Only
+	// buckets that contain executions are returned; gaps mean no executions ran.
+	Buckets []MetricBucket `json:"buckets"`
+	// The granularity the buckets are aggregated at.
+	Granularity MetricGranularity `json:"granularity"`
+}
+
 // A paginated list of function versions.
 type FunctionVersionConnection struct {
 	// The versions in this page.
@@ -76,6 +87,34 @@ type LogEntry struct {
 type LogEntryConnection struct {
 	Nodes    []LogEntry            `json:"nodes"`
 	PageInfo *store.PaginationInfo `json:"pageInfo"`
+}
+
+// Execution metrics aggregated over a single bucket of the time series.
+type MetricBucket struct {
+	// Start of the bucket (unix seconds, UTC).
+	BucketStart int `json:"bucketStart"`
+	// Completed executions in this bucket.
+	Count int `json:"count"`
+	// How many of them errored.
+	ErrorCount int `json:"errorCount"`
+	// Mean wall-clock duration in milliseconds for this bucket.
+	AvgDurationMs float64 `json:"avgDurationMs"`
+	// Slowest single execution in this bucket, in milliseconds.
+	MaxDurationMs int `json:"maxDurationMs"`
+}
+
+// Roll-up totals over the whole window.
+type MetricsSummary struct {
+	// Total completed executions.
+	Count int `json:"count"`
+	// How many of those executions errored.
+	ErrorCount int `json:"errorCount"`
+	// Fraction of executions that errored, 0.0–1.0. Zero when there were none.
+	ErrorRate float64 `json:"errorRate"`
+	// Mean wall-clock duration in milliseconds. Zero when there were none.
+	AvgDurationMs float64 `json:"avgDurationMs"`
+	// Slowest single execution in the window, in milliseconds.
+	MaxDurationMs int `json:"maxDurationMs"`
 }
 
 type Mutation struct {
@@ -232,6 +271,62 @@ func (e *LogLevel) UnmarshalJSON(b []byte) error {
 }
 
 func (e LogLevel) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// The size of each bucket in a metric time series.
+type MetricGranularity string
+
+const (
+	MetricGranularityHour MetricGranularity = "hour"
+	MetricGranularityDay  MetricGranularity = "day"
+)
+
+var AllMetricGranularity = []MetricGranularity{
+	MetricGranularityHour,
+	MetricGranularityDay,
+}
+
+func (e MetricGranularity) IsValid() bool {
+	switch e {
+	case MetricGranularityHour, MetricGranularityDay:
+		return true
+	}
+	return false
+}
+
+func (e MetricGranularity) String() string {
+	return string(e)
+}
+
+func (e *MetricGranularity) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = MetricGranularity(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid MetricGranularity", str)
+	}
+	return nil
+}
+
+func (e MetricGranularity) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *MetricGranularity) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e MetricGranularity) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

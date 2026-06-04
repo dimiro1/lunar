@@ -75,6 +75,7 @@ import { AIRequestViewer } from "../components/ai-request-viewer.js";
 import { EmailRequestViewer } from "../components/email-request-viewer.js";
 import { CodeEditor } from "../components/code-editor.js";
 import { CodeDisplay } from "../components/code-display.js";
+import { BarChart, MetricCard, Sparkline } from "../components/metrics.js";
 
 /**
  * @typedef {import('../components/env-editor.js').EnvVar} EnvVar
@@ -182,6 +183,7 @@ export const Preview = {
     "ai-request-viewer",
     "email-request-viewer",
     "code-display",
+    "metrics",
   ],
 
   /**
@@ -267,6 +269,8 @@ export const Preview = {
         return Preview.renderEmailRequestViewer();
       case "code-display":
         return Preview.renderCodeDisplay();
+      case "metrics":
+        return Preview.renderMetrics();
       default:
         return m("p", "Component not found");
     }
@@ -1303,6 +1307,79 @@ end`;
             label: "Device Code",
             value: "A1B2-C3D4-E5F6",
           }),
+        ]),
+      ]),
+    ]);
+  },
+
+  /**
+   * Renders metric visualization component previews (the function metrics
+   * dashboard primitives).
+   * @returns {Object} Mithril vnode
+   */
+  renderMetrics: () => {
+    const bars = [
+      { count: 120, errorCount: 2, title: "Mon · 120 executions, 2 errors" },
+      { count: 98, errorCount: 0, title: "Tue · 98 executions, 0 errors" },
+      { count: 140, errorCount: 9, title: "Wed · 140 executions, 9 errors" },
+      { count: 0, errorCount: 0, title: "Thu · 0 executions, 0 errors" },
+      { count: 76, errorCount: 1, title: "Fri · 76 executions, 1 error" },
+      { count: 110, errorCount: 3, title: "Sat · 110 executions, 3 errors" },
+      { count: 134, errorCount: 0, title: "Sun · 134 executions, 0 errors" },
+    ];
+    const points = [
+      { value: 41, title: "Mon · 41 ms" },
+      { value: 38, title: "Tue · 38 ms" },
+      { value: 55, title: "Wed · 55 ms" },
+      { value: 0, title: "Thu · 0 ms" },
+      { value: 47, title: "Fri · 47 ms" },
+      { value: 52, title: "Sat · 52 ms" },
+      { value: 44, title: "Sun · 44 ms" },
+    ];
+
+    return m(".preview-section", [
+      m("h3", "Metric Cards"),
+      m(".metrics-summary", { style: "margin-bottom: 1.5rem;" }, [
+        m(MetricCard, { label: "Total executions", value: "12,403" }),
+        m(MetricCard, {
+          label: "Error rate",
+          value: "1.8%",
+          sublabel: "224 errored",
+          variant: "danger",
+        }),
+        m(MetricCard, {
+          label: "Success rate",
+          value: "98.2%",
+          sublabel: "12,179 succeeded",
+          variant: "success",
+        }),
+        m(MetricCard, { label: "Avg duration", value: "43 ms" }),
+      ]),
+
+      m("h3", "Bar Chart (volume with errors)"),
+      m("p.preview-description", "Hover a bar to see its tooltip."),
+      m(Card, { style: "max-width: 600px; margin-bottom: 1.5rem;" }, [
+        m(CardHeader, { title: "Executions over time" }),
+        m(CardContent, [
+          m(BarChart, { bars }),
+          m(".chart__legend", [
+            m(".chart__legend-item", [
+              m(".chart__legend-swatch.chart__legend-swatch--success"),
+              "Success",
+            ]),
+            m(".chart__legend-item", [
+              m(".chart__legend-swatch.chart__legend-swatch--error"),
+              "Error",
+            ]),
+          ]),
+        ]),
+      ]),
+
+      m("h3", "Sparkline (average duration)"),
+      m(Card, { style: "max-width: 600px;" }, [
+        m(CardHeader, { title: "Average duration over time" }),
+        m(CardContent, [
+          m(Sparkline, { points }),
         ]),
       ]),
     ]);
