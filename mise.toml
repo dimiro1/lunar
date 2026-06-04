@@ -64,6 +64,13 @@ run = "go test -tags integration -v -timeout 60s ./..."
 description = "Open Jasmine frontend tests in browser"
 run = "go run ./cmd/testserver"
 
+[tasks.test-frontend-headless]
+description = "Run the Jasmine frontend tests headlessly and assert they pass"
+# Drives SpecRunner.html in headless Chrome and fails if any spec fails. Also
+# covered by `mise run test-e2e` (it runs all of ./e2e/...); this task narrows
+# the run to just the frontend suite. Needs a Chrome/Chromium on the machine.
+run = "go test -v -count=1 -timeout 5m ./e2e/jasmine/..."
+
 [tasks.test-e2e]
 description = "Run E2E tests with headless Chrome (Cucumber/godog)"
 # The whole browser suite runs well under the 20m budget locally; the generous
