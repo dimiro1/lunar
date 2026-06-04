@@ -21,6 +21,7 @@ A lightweight, self-hosted Function-as-a-Service platform written in Go with Lua
 * **Email Integration** - Send emails via Resend with scheduling support
 * **Version Control** - Track and manage function versions
 * **Execution History** - Monitor function executions and logs
+* **Metrics Dashboard** - Per-function execution count, error rate, and average/max duration, trended over time
 * **Beautiful Error Messages** - Human-friendly error messages with code context, line numbers, and actionable suggestions
 * **Web Dashboard** - Manage functions through a clean web interface
 * **GraphQL API** - Typed, introspectable management API with a GraphiQL playground at `/graphql`
@@ -42,6 +43,9 @@ A lightweight, self-hosted Function-as-a-Service platform written in Go with Lua
 
 ### Execution History
 ![Executions](shots/executions.png)
+
+### Function Metrics
+![Function Metrics](shots/metrics.png)
 
 ### Version Management
 ![Versions](shots/versions.png)
@@ -281,6 +285,7 @@ DATA_DIR=./data           # Data directory for SQLite database (default: ./data)
 EXECUTION_TIMEOUT=300     # Function execution timeout in seconds (default: 300)
 API_KEY=your-key-here     # API key for authentication (auto-generated if not set)
 BASE_URL=http://localhost:3000  # Base URL for the deployment (auto-detected if not set)
+METRICS_RETENTION_DAYS=365  # How long aggregated function metrics are kept (default: 365)
 ```
 
 ### Authentication

@@ -226,6 +226,73 @@ func computeNextRun(fn store.Function) (*model.NextRun, error) {
 	return out, nil
 }
 
+// functionMetrics aggregates a function's execution metrics over the half-open
+// window [from, to) (unix seconds) at the requested granularity. The store
+// returns raw sums per bucket; this turns them into the display-ready derived
+// values (average duration, error rate) the schema exposes, and folds the
+// buckets into the window summary. Shared by Function.metrics.
+func (r *Resolver) functionMetrics(ctx context.Context, functionID string, from, to int, granularity *model.MetricGranularity) (*model.FunctionMetrics, error) {
+	grain := model.MetricGranularityHour
+	if granularity != nil {
+		grain = *granularity
+	}
+	bucketSeconds := int64(3600)
+	if grain == model.MetricGranularityDay {
+		bucketSeconds = 86400
+	}
+
+	rows, err := r.DB.GetFunctionMetrics(ctx, functionID, int64(from), int64(to), bucketSeconds)
+	if err != nil {
+		return nil, err
+	}
+
+	buckets := make([]model.MetricBucket, len(rows))
+	var totalCount, totalErrors, totalSum, maxDuration int64
+	for i, b := range rows {
+		buckets[i] = model.MetricBucket{
+			BucketStart:   int(b.BucketStart),
+			Count:         int(b.Count),
+			ErrorCount:    int(b.ErrorCount),
+			AvgDurationMs: avgDuration(b.SumDurationMs, b.Count),
+			MaxDurationMs: int(b.MaxDurationMs),
+		}
+		totalCount += b.Count
+		totalErrors += b.ErrorCount
+		totalSum += b.SumDurationMs
+		if b.MaxDurationMs > maxDuration {
+			maxDuration = b.MaxDurationMs
+		}
+	}
+
+	return &model.FunctionMetrics{
+		Summary: &model.MetricsSummary{
+			Count:         int(totalCount),
+			ErrorCount:    int(totalErrors),
+			ErrorRate:     ratio(totalErrors, totalCount),
+			AvgDurationMs: avgDuration(totalSum, totalCount),
+			MaxDurationMs: int(maxDuration),
+		},
+		Buckets:     buckets,
+		Granularity: grain,
+	}, nil
+}
+
+// avgDuration divides a duration sum by a count, guarding division by zero.
+func avgDuration(sum, count int64) float64 {
+	if count == 0 {
+		return 0
+	}
+	return float64(sum) / float64(count)
+}
+
+// ratio divides part by total, guarding division by zero.
+func ratio(part, total int64) float64 {
+	if total == 0 {
+		return 0
+	}
+	return float64(part) / float64(total)
+}
+
 // mapLogLevel converts a logger severity to the GraphQL LogLevel enum.
 func mapLogLevel(l logger.LogLevel) model.LogLevel {
 	switch l {

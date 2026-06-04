@@ -732,6 +732,83 @@ func (db *SQLiteDB) DeleteOldExecutions(ctx context.Context, beforeTimestamp int
 	return rowsAffected, nil
 }
 
+// Metric operations
+
+func (db *SQLiteDB) IncrementMetricBucket(ctx context.Context, functionID string, bucketHour int64, isError bool, durationMs int64) error {
+	errorCount := 0
+	if isError {
+		errorCount = 1
+	}
+
+	// Atomic upsert: insert a fresh bucket or fold this execution into the
+	// existing one. MAX keeps the slowest duration seen in the window.
+	query := `
+		INSERT INTO execution_metrics (function_id, bucket_hour, count, error_count, sum_duration_ms, max_duration_ms)
+		VALUES (?, ?, 1, ?, ?, ?)
+		ON CONFLICT(function_id, bucket_hour) DO UPDATE SET
+			count = count + 1,
+			error_count = error_count + excluded.error_count,
+			sum_duration_ms = sum_duration_ms + excluded.sum_duration_ms,
+			max_duration_ms = MAX(max_duration_ms, excluded.max_duration_ms)`
+
+	if _, err := db.db.ExecContext(ctx, query, functionID, bucketHour, errorCount, durationMs, durationMs); err != nil {
+		return fmt.Errorf("failed to increment metric bucket: %w", err)
+	}
+	return nil
+}
+
+func (db *SQLiteDB) GetFunctionMetrics(ctx context.Context, functionID string, fromUnix, toUnix, bucketSeconds int64) ([]MetricBucket, error) {
+	if bucketSeconds <= 0 {
+		bucketSeconds = 3600
+	}
+
+	// Roll the stored hourly rows up into windows of bucketSeconds by truncating
+	// bucket_hour to the window boundary. For hourly (3600) this is a no-op.
+	query := `
+		SELECT (bucket_hour / ?) * ? AS bucket_start,
+		       SUM(count),
+		       SUM(error_count),
+		       SUM(sum_duration_ms),
+		       MAX(max_duration_ms)
+		FROM execution_metrics
+		WHERE function_id = ? AND bucket_hour >= ? AND bucket_hour < ?
+		GROUP BY bucket_start
+		ORDER BY bucket_start ASC`
+
+	rows, err := db.db.QueryContext(ctx, query, bucketSeconds, bucketSeconds, functionID, fromUnix, toUnix)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query function metrics: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var buckets []MetricBucket
+	for rows.Next() {
+		var b MetricBucket
+		if err := rows.Scan(&b.BucketStart, &b.Count, &b.ErrorCount, &b.SumDurationMs, &b.MaxDurationMs); err != nil {
+			return nil, fmt.Errorf("failed to scan metric bucket: %w", err)
+		}
+		buckets = append(buckets, b)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate metric buckets: %w", err)
+	}
+	return buckets, nil
+}
+
+func (db *SQLiteDB) DeleteOldMetricBuckets(ctx context.Context, beforeBucketHour int64) (int64, error) {
+	result, err := db.db.ExecContext(ctx, `DELETE FROM execution_metrics WHERE bucket_hour < ?`, beforeBucketHour)
+	if err != nil {
+		return 0, fmt.Errorf("failed to delete old metric buckets: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	return rowsAffected, nil
+}
+
 // API Token operations
 
 func (db *SQLiteDB) CreateAPIToken(ctx context.Context, token APIToken) (APIToken, error) {

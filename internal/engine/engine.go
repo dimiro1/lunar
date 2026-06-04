@@ -177,6 +177,15 @@ func (e *DefaultEngine) Execute(ctx context.Context, req ExecutionRequest) (*Exe
 		slog.Error("Failed to update execution status", "execution_id", executionID, "error", err)
 	}
 
+	// Fold this execution into its hourly metric bucket. Best-effort: metrics are
+	// a durable-but-approximate observability signal, so a failure here must never
+	// fail or roll back the execution itself — it is logged and ignored. The bucket
+	// is keyed by the execution's start time truncated to the hour (UTC).
+	bucketHour := (startTime.Unix() / 3600) * 3600
+	if err := e.db.IncrementMetricBucket(ctx, req.FunctionID, bucketHour, status == store.ExecutionStatusError, durationMs); err != nil {
+		slog.Error("Failed to record metric bucket", "execution_id", executionID, "error", err)
+	}
+
 	// Log error if execution failed
 	if runErr != nil {
 		e.logger.Error(req.FunctionID, runErr.Error())

@@ -72,6 +72,7 @@ export default {
     code: "Code",
     versions: "Versions",
     executions: "Executions",
+    metrics: "Metrics",
     settings: "Settings",
     test: "Test",
     data: "KV Store",
@@ -201,6 +202,32 @@ export default {
     },
   },
 
+  // Metrics dashboard
+  metrics: {
+    title: "Metrics",
+    rangeLabel: "Time range",
+    range: {
+      "24h": "24h",
+      "7d": "7d",
+      "30d": "30d",
+    },
+    totalExecutions: "Total executions",
+    errorRate: "Error rate",
+    errorCount: "{{count}} errored",
+    avgDuration: "Avg duration",
+    maxDuration: "Max duration",
+    volumeTitle: "Executions over time",
+    durationTitle: "Average duration over time",
+    legend: {
+      success: "Success",
+      error: "Error",
+    },
+    bucketTooltip: "{{time}} · {{count}} executions, {{errors}} errors",
+    durationTooltip: "{{time}} · {{value}}",
+    emptyState:
+      "No metrics in this range yet. Once this function runs, its metrics will appear here.",
+  },
+
   // Test page
   test: {
     response: "Response",
@@ -226,6 +253,7 @@ export default {
       goToCode: "Go to Code",
       viewVersions: "View version history",
       viewExecutions: "View execution logs",
+      viewMetrics: "View metrics",
       configureFunction: "Configure function",
       testFunction: "Test function",
       viewClients: "View connected clients",

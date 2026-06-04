@@ -1,0 +1,59 @@
+# Metrics domain: pre-aggregated execution metrics for a function, powering the
+# per-function metrics dashboard. Buckets outlive the raw executions they are
+# derived from (see docs/adr/0014-metrics-rollup-table.md), so trends survive the
+# much shorter execution-retention window.
+
+"""The size of each bucket in a metric time series."""
+enum MetricGranularity {
+  hour
+  day
+}
+
+"""Aggregated execution metrics for a function over a time window."""
+type FunctionMetrics {
+  """Roll-up totals across the whole requested window."""
+  summary: MetricsSummary!
+  """
+  Time series of buckets at the requested granularity, oldest first. Only
+  buckets that contain executions are returned; gaps mean no executions ran.
+  """
+  buckets: [MetricBucket!]!
+  """The granularity the buckets are aggregated at."""
+  granularity: MetricGranularity!
+}
+
+"""Roll-up totals over the whole window."""
+type MetricsSummary {
+  """Total completed executions."""
+  count: Int!
+  """How many of those executions errored."""
+  errorCount: Int!
+  """Fraction of executions that errored, 0.0–1.0. Zero when there were none."""
+  errorRate: Float!
+  """Mean wall-clock duration in milliseconds. Zero when there were none."""
+  avgDurationMs: Float!
+  """Slowest single execution in the window, in milliseconds."""
+  maxDurationMs: Int!
+}
+
+"""Execution metrics aggregated over a single bucket of the time series."""
+type MetricBucket {
+  """Start of the bucket (unix seconds, UTC)."""
+  bucketStart: Int!
+  """Completed executions in this bucket."""
+  count: Int!
+  """How many of them errored."""
+  errorCount: Int!
+  """Mean wall-clock duration in milliseconds for this bucket."""
+  avgDurationMs: Float!
+  """Slowest single execution in this bucket, in milliseconds."""
+  maxDurationMs: Int!
+}
+
+extend type Function {
+  """
+  Aggregated execution metrics over the half-open window [from, to) (unix
+  seconds). Fetched lazily. Buckets are grouped at the requested granularity.
+  """
+  metrics(from: Int!, to: Int!, granularity: MetricGranularity = hour): FunctionMetrics!
+}

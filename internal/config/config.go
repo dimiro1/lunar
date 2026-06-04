@@ -36,6 +36,10 @@ type Config struct {
 	ExecutionTimeout time.Duration `env:"EXECUTION_TIMEOUT" envDefault:"300"` // seconds
 	APIKey           string        `env:"API_KEY"`
 	BaseURL          string        `env:"BASE_URL"`
+	// MetricsRetentionDays is how long pre-aggregated metric buckets are kept.
+	// Metrics outlive executions (default 7-day retention) so dashboards can show
+	// long-range trends; housekeeping deletes buckets older than this.
+	MetricsRetentionDays int `env:"METRICS_RETENTION_DAYS" envDefault:"365"`
 }
 
 // Load reads configuration from the process environment.

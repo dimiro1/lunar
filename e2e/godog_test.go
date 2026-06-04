@@ -63,8 +63,12 @@ func TestMain(m *testing.M) {
 }
 
 // InitializeTestSuite wires suite-level lifecycle hooks. The shared headless
-// Chrome process is torn down after every scenario has run.
+// Chrome process is warmed up before the first scenario and torn down after the
+// last one has run.
 func InitializeTestSuite(ctx *godog.TestSuiteContext) {
+	ctx.BeforeSuite(func() {
+		warmUpBrowser()
+	})
 	ctx.AfterSuite(func() {
 		shutdownAllocator()
 	})

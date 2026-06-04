@@ -3,6 +3,7 @@ package housekeeping
 import (
 	"context"
 
+	"github.com/dimiro1/lunar/internal/config"
 	"github.com/dimiro1/lunar/internal/store"
 	"go.uber.org/fx"
 )
@@ -15,8 +16,8 @@ var Module = fx.Module("housekeeping",
 	fx.Invoke(registerScheduler),
 )
 
-func provideScheduler(db store.DB) *Scheduler {
-	return NewScheduler(db)
+func provideScheduler(db store.DB, cfg config.Config) *Scheduler {
+	return NewScheduler(db, cfg.MetricsRetentionDays)
 }
 
 func registerScheduler(lc fx.Lifecycle, s *Scheduler) {

@@ -16,6 +16,7 @@ import { FunctionCreate } from "./views/function-create.js";
 import { FunctionCode } from "./views/function-code.js";
 import { FunctionVersions } from "./views/function-versions.js";
 import { FunctionExecutions } from "./views/function-executions.js";
+import { FunctionMetrics } from "./views/function-metrics.js";
 import { FunctionSettings } from "./views/function-settings.js";
 import { FunctionTest } from "./views/function-test.js";
 import { FunctionData } from "./views/function-data.js";
@@ -106,6 +107,14 @@ m.route(document.getElementById("app"), "/functions", {
         Layout,
         { breadcrumbKey: "tabs.executions" },
         m(FunctionExecutions, { ...vnode.attrs, key: vnode.attrs.id }),
+      ),
+  },
+  "/functions/:id/metrics": {
+    render: (vnode) =>
+      m(
+        Layout,
+        { breadcrumbKey: "tabs.metrics" },
+        m(FunctionMetrics, { ...vnode.attrs, key: vnode.attrs.id }),
       ),
   },
   "/functions/:id/settings": {

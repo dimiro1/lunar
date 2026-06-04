@@ -283,6 +283,11 @@ const EMAIL_REQUEST_FIELDS = `
 `;
 const NEXT_RUN_FIELDS =
   `hasSchedule cronSchedule cronStatus isPaused nextRun nextRunHuman`;
+const METRICS_FIELDS = `
+  summary { count errorCount errorRate avgDurationMs maxDurationMs }
+  buckets { bucketStart count errorCount avgDurationMs maxDurationMs }
+  granularity
+`;
 const TOKEN_FIELDS = `id name createdAt lastUsed revoked`;
 const DIFF_FIELDS =
   `oldVersion newVersion lines { lineType oldLine newLine content }`;
@@ -457,6 +462,32 @@ export const API = {
         func: mapFunction(data.function),
         executions: data.executions.nodes.map(mapExecution),
         pagination: data.executions.pageInfo,
+      })),
+
+    /**
+     * Gets a function (header fields) together with its aggregated execution
+     * metrics over the half-open window [from, to) (unix seconds) in one
+     * round-trip. Used by the metrics view on load and on range changes.
+     * @param {string} id - Function ID
+     * @param {number} from - Window start (unix seconds, inclusive)
+     * @param {number} to - Window end (unix seconds, exclusive)
+     * @param {"hour"|"day"} granularity - Bucket granularity
+     * @returns {Promise<{func: LunarFunction, metrics: Object}>}
+     */
+    getWithMetrics: (id, from, to, granularity) =>
+      gqlRequest(
+        `query ($id: ID!, $from: Int!, $to: Int!, $granularity: MetricGranularity!) {
+          function(id: $id) {
+            ${FUNCTION_SUMMARY_FIELDS}
+            metrics(from: $from, to: $to, granularity: $granularity) {
+              ${METRICS_FIELDS}
+            }
+          }
+        }`,
+        { id, from, to, granularity },
+      ).then((data) => ({
+        func: mapFunction(data.function),
+        metrics: data.function ? data.function.metrics : null,
       })),
 
     /**
