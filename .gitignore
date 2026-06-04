@@ -27,3 +27,6 @@ logo/logo.af~lock~
 
 # Playwright MCP scratch (browser snapshots/screenshots)
 .playwright-mcp/
+
+# Grill/design glossary (kept local, not tracked)
+CONTEXT.md
