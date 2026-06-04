@@ -88,6 +88,11 @@ jobs:
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
+    # The browser suite is slower than the unit tests; give it a clear ceiling
+    # that sits above the `go test -timeout 20m` budget in `mise run test-e2e`,
+    # so a genuine hang is reported by go test (with a stack dump) before the job
+    # is force-killed.
+    timeout-minutes: 25
 
     steps:
       - name: Checkout code

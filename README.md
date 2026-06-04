@@ -450,21 +450,37 @@ This starts a local Go server and opens the test runner at `http://localhost:888
 - Route URL generators
 - UI components (Button, Badge, Table, Pagination, ...)
 
-### E2E Tests (chromedp)
+### E2E Tests (Cucumber + chromedp)
 
-End-to-end tests use [chromedp](https://github.com/chromedp/chromedp) to run a headless Chrome browser:
+End-to-end tests are written as [Cucumber](https://cucumber.io/) feature files
+and run with [godog](https://github.com/cucumber/godog). Each scenario drives the
+real dashboard in a headless Chrome browser (via
+[chromedp](https://github.com/chromedp/chromedp)) against an in-process server —
+true black-box testing through the UI a user actually sees. The only thing done
+outside the browser is invoking a deployed function, which is a public HTTP
+endpoint a real client would call directly.
+
+The feature files in `e2e/features/` read like a product spec (no selectors, no
+implementation detail); the step definitions in `e2e/*_test.go` translate that
+intent into browser interactions.
 
 Make sure Chrome or Chromium is installed before running them.
 
 ```bash
 mise run test-e2e
+# Run a single feature while iterating:
+GODOG_FEATURE=e2e/features/sign_in.feature go test ./e2e/
 ```
 
-E2E tests cover:
+E2E scenarios cover:
 
-- Login flow
-- Page navigation
-- Functions list rendering
+- Signing in and out of the dashboard
+- Creating, listing, renaming, and deleting functions
+- Invoking functions over HTTP (Lua, Starlark, templates, methods, env vars)
+- Editing code, version history, rollback, and version comparison
+- Execution history and disabled/deleted-function behaviour
+- The key-value store and cron scheduling
+- The connected clients page
 
 ### Run All Tests
 
