@@ -7,13 +7,13 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/dimiro1/lunar.svg)](https://pkg.go.dev/github.com/dimiro1/lunar)
 [![Go Report Card](https://goreportcard.com/badge/github.com/dimiro1/lunar)](https://goreportcard.com/report/github.com/dimiro1/lunar)
 
-A lightweight, self-hosted Function-as-a-Service platform written in Go with Lua scripting.
+A lightweight, self-hosted Function-as-a-Service platform written in Go with Lua and Starlark scripting.
 
-> **Beta Phase Notice**: This project is currently in beta. New features and changes are actively being developed, but I promise to maintain backward compatibility for all Lua APIs. 
+> **Beta Phase Notice**: This project is currently in beta. New features and changes are actively being developed, but I promise to maintain backward compatibility for all Lua and Starlark APIs. 
 
 ## Features
 
-* **Simple Lua Functions** - Write serverless functions in Lua
+* **Lua & Starlark Functions** - Write serverless functions in Lua or Starlark (a sandboxed Python dialect)
 * **Code Editor** - Monaco Editor with autocomplete and inline documentation
 * **HTTP Triggers** - Execute functions via HTTP requests
 * **Built-in APIs** - HTTP client, KV store, environment variables, logging, and more
@@ -118,7 +118,12 @@ You should get back a JSON response. After that, open the function's execution h
 
 ## Writing Functions
 
-Functions are written in Lua and must export a `handler` function:
+Functions can be written in **Lua** or **Starlark** (a deterministic, sandboxed
+dialect of Python). A function's language is chosen when it is created and stays
+fixed for its lifetime — both languages expose the same set of built-in APIs.
+Every function must define a `handler` function.
+
+### Lua
 
 ```lua
 function handler(ctx, event)
@@ -134,6 +139,26 @@ function handler(ctx, event)
   }
 end
 ```
+
+### Starlark
+
+```python
+def handler(ctx, event):
+    # ctx contains execution context (executionId, functionId, etc.)
+    # event contains HTTP request data (method, path, query, body, headers)
+
+    log.info("Function started")
+
+    return {
+        "statusCode": 200,
+        "headers": {"Content-Type": "application/json"},
+        "body": json.encode({"message": "Hello, World!"}),
+    }
+```
+
+> Starlark is **not** full Python: there is no `while` loop, no recursion, no
+> classes, no exceptions, and no Python standard library. Use the built-in
+> modules below for I/O and helpers.
 
 ### Available APIs
 
@@ -153,7 +178,7 @@ end
 
 ### LLM-Assisted Development
 
-Lunar provides an [`llms.txt`](https://llmstxt.org/) file at `/llms.txt` with the complete Lua API reference, including function signatures, parameters, and code examples. You can use this with any LLM-powered coding assistant to get accurate help when writing Lunar functions.
+Lunar provides an [`llms.txt`](https://llmstxt.org/) file at `/llms.txt` with the complete Lua and Starlark API reference, including function signatures, parameters, and code examples. You can use this with any LLM-powered coding assistant to get accurate help when writing Lunar functions.
 
 ### Example: Counter Function
 
@@ -304,8 +329,9 @@ Lunar ships built-in skill definitions that teach your AI coding agent how to us
 
 ```bash
 lunar-cli skills list             # show available skills
-lunar-cli skills show lunar-cli   # CLI command reference
-lunar-cli skills show lunar-lua   # Lua function authoring guide
+lunar-cli skills show lunar-cli       # CLI command reference
+lunar-cli skills show lunar-lua       # Lua function authoring guide
+lunar-cli skills show lunar-starlark  # Starlark function authoring guide
 ```
 
 To install them, ask your agent:
@@ -360,6 +386,7 @@ Flags and environment variables always take precedence over the config file:
 ```bash
 lunar-cli functions list [--limit 20] [--offset 0]
 lunar-cli functions create --name hello-world --code handler.lua
+lunar-cli functions create --name hello-world --code handler.star --language starlark
 lunar-cli functions create --name hello-world --code -  # read code from stdin
 lunar-cli functions get <id>
 lunar-cli functions update <id> --name new-name
@@ -494,7 +521,7 @@ This runs Go unit tests and E2E tests. Run `mise run test-frontend` separately t
 
 * **Backend** - Go with standard library HTTP server, SQLite database
 * **Frontend** - Mithril.js SPA with Monaco Editor
-* **Runtime** - GopherLua for Lua script execution
+* **Runtime** - GopherLua for Lua and starlark-go for Starlark script execution
 * **Storage** - SQLite for functions, versions, executions, KV store, and environment variables
 
 ### Frontend Dependencies
